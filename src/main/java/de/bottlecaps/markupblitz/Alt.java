@@ -7,21 +7,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Alt extends Node {
-  private static int n = 0;
-  private List<Term> terms;
+  static int n = 0;
+  private final List<Term> terms;
 
   public Alt() {
     terms = new ArrayList<>();
   }
 
+  public List<Term> getTerms() {
+    return terms;
+  }
+
   public Term removeLast() {
     return terms.remove(terms.size() - 1);
   }
-
-//  public Alt addTerm(Term t) {
-//    terms.add(t);
-//    return this;
-//  }
 
   public Alt addNonterminal(Mark mark, String name) {
     terms.add(new Nonterminal(mark, name));
@@ -70,7 +69,7 @@ public class Alt extends Node {
     return Stream.concat(Stream.of(alt), rules.stream()).toArray(Node[]::new);
   }
 
-  private Alt mergeTerm(Term term, List<Node> rules) {
+  Alt mergeTerm(Term term, List<Node> rules) {
     if (! (term instanceof Alts)) {
       terms.add(term);
     }
@@ -95,170 +94,9 @@ public class Alt extends Node {
     return terms.stream().map(Term::toString).collect(Collectors.joining(", "));
   }
 
-  public static abstract class Term extends Node {
-  }
-
-  public static class Nonterminal extends Term {
-    private Mark mark;
-    private String name;
-
-    public Nonterminal(Mark mark, String name) {
-      this.mark = mark;
-      this.name = name;
-    }
-
-    @Override
-    public String toString() {
-      return mark + name;
-    }
-  }
-
-  public static class Literal extends Term {
-    protected boolean deleted;
-    protected String value;
-    protected Boolean isHex;
-
-    public Literal(boolean deleted, String value, boolean isHex) {
-      this.deleted = deleted;
-      this.value = value;
-      this.isHex = isHex;
-    }
-
-    @Override
-    public String toString() {
-      return
-          (deleted ? "-" : "") +
-          (isHex ? value : "'" + value.replace("'", "''") + "'");
-    }
-  }
-
-  public static class Insertion extends Literal {
-
-    public Insertion(String value, boolean isHex) {
-      super(false, value, isHex);
-    }
-
-    @Override
-    public String toString() {
-      return "+" + super.toString();
-    }
-  }
-
-  public static class Control extends Term {
-    private Occurrence occurrence;
-    private Term term;
-    private Term separator;
-
-    public Control(Occurrence occurrence, Term term, Term separator) {
-      this.occurrence = occurrence;
-      this.term = term;
-      this.separator = separator;
-    }
-
-    @Override
-    public Node[] toBnf() {
-      Node[] termBnf = term.toBnf();
-      List<Node> rules = new ArrayList<>();
-      switch (occurrence) {
-      case ONE_OR_MORE:
-        if (separator == null) {
-          // e* ==> x where -x: e; x, e.
-          String name = "x" + ++n;
-          Rule rule = new Rule(Mark.DELETED, name);
-          rule.addAlt(new Alt()
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          rule.addAlt(new Alt()
-              .addNonterminal(Mark.NONE, name)
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          return Stream.concat(Stream.concat(Stream.concat(
-                Stream.of(new Nonterminal(Mark.NONE, name)),
-                Arrays.stream(termBnf).skip(1)),
-                Stream.of(rule)),
-                rules.stream())
-              .toArray(Node[]::new);
-        }
-        else {
-          // e* ==> x where -x: e; x, s, e.
-          String name = "x" + ++n;
-          Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-          Rule rule = new Rule(Mark.DELETED, name);
-          rule.addAlt(new Alt()
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          rule.addAlt(new Alt()
-              .addNonterminal(Mark.NONE, name)
-              .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules)
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          return Stream.concat(Stream.concat(Stream.concat(Stream.concat(
-                Stream.of(new Nonterminal(Mark.NONE, name)),
-                Arrays.stream(termBnf).skip(1)),
-                Arrays.stream(separatorBnf).skip(1)),
-                Stream.of(rule)),
-                rules.stream())
-              .toArray(Node[]::new);
-        }
-      case ZERO_OR_MORE:
-        if (separator == null) {
-          // e* ==> x where -x: ; x, e.
-          String name = "x" + ++n;
-          Rule rule = new Rule(Mark.DELETED, name);
-          rule.addAlt(new Alt());
-          rule.addAlt(new Alt()
-              .addNonterminal(Mark.NONE, name)
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          return Stream.concat(Stream.concat(Stream.concat(
-                Stream.of(new Nonterminal(Mark.NONE, name)),
-                Arrays.stream(termBnf).skip(1)),
-                Stream.of(rule)),
-                rules.stream())
-              .toArray(Node[]::new);
-        }
-        else {
-          // e* ==> x where -x: ; x, y. -y: e; y, s, e.
-          String name1 = "x" + ++n;
-          String name2 = "x" + ++n;
-          Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-          Rule rule1 = new Rule(Mark.DELETED, name1);
-          rule1.addAlt(new Alt());
-          rule1.addAlt(new Alt()
-              .addNonterminal(Mark.NONE, name2));
-          Rule rule2 = new Rule(Mark.DELETED, name2);
-          rule2.addAlt(new Alt()
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          rule2.addAlt(new Alt()
-              .addNonterminal(Mark.NONE, name2)
-              .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules)
-              .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-          return Stream.concat(Stream.concat(Stream.concat(Stream.concat(Stream.concat(
-                Stream.of(new Nonterminal(Mark.NONE, name1)),
-                Arrays.stream(termBnf).skip(1)),
-                Arrays.stream(separatorBnf).skip(1)),
-                Stream.of(rule1)),
-                Stream.of(rule2)),
-                rules.stream())
-              .toArray(Node[]::new);
-        }
-      case ZERO_OR_ONE:
-        // e? ==> x where -x: ; e.
-        String name = "x" + ++n;
-        Rule rule = new Rule(Mark.DELETED, name);
-        rule.addAlt(new Alt());
-        rule.addAlt(new Alt().mergeTerm(term, rules));
-        return Stream.concat(Stream.concat(
-              Stream.of(new Nonterminal(Mark.NONE, name)),
-              Stream.of(rule)),
-              rules.stream())
-            .toArray(Node[]::new);
-      default:
-        throw new IllegalArgumentException();
-      }
-    }
-
-    @Override
-    public String toString() {
-      return term.toString() + occurrence.toString()
-           + (separator == null
-             ? ""
-             : occurrence.toString() + separator.toString());
-    }
+  @Override
+  public void accept(Visitor v) {
+    for (Term term : terms)
+      term.accept(v);
   }
 }

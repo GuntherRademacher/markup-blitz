@@ -31,27 +31,27 @@
                                                               alts.peek().last().addAlts(nested);
                                                             ?>
       repeat0::= factor ( '*' s                             <?java
-                                                              Alt.Term term = alts.peek().last().removeLast();
+                                                              Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, null);
                                                             ?>
                                | '**' s sep                 <?java
-                                                              Alt.Term sep = alts.peek().last().removeLast();
-                                                              Alt.Term term = alts.peek().last().removeLast();
+                                                              Term sep = alts.peek().last().removeLast();
+                                                              Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, sep);
                                                             ?>
                                             )
       repeat1::= factor ( '+' s                             <?java
-                                                              Alt.Term term = alts.peek().last().removeLast();
+                                                              Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, null);
                                                             ?>
                                 | '++' s sep                <?java
-                                                              Alt.Term sep = alts.peek().last().removeLast();
-                                                              Alt.Term term = alts.peek().last().removeLast();
+                                                              Term sep = alts.peek().last().removeLast();
+                                                              Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, sep);
                                                             ?>
                                              )
        option::= factor '?' s                               <?java
-                                                              Alt.Term term = alts.peek().last().removeLast();
+                                                              Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ZERO_OR_ONE, term, null);
                                                             ?>
           sep::= factor
@@ -89,11 +89,12 @@
           hex::= '#'                                        <?java hexBegin = b0;?>
                  hexdigit+                                  <?java codePoint = input.subSequence(hexBegin, e0).toString();?>
 
-      charset::=                                            <?java charSet = new CharSet(deleted);?>
-                 ( inclusion | exclusion                    <?java charSet.setExclusion();?>
-                 )
-    inclusion::=       set
-    exclusion::= '~' s set
+      charset::= inclusion
+               | exclusion
+    inclusion::=                                            <?java charSet = new CharSet(deleted, false);?>
+                       set
+    exclusion::= '~' s                                      <?java charSet = new CharSet(deleted, true);?>
+                       set
           set::= '[' s  (member s ( ( ( ';' | '|' ) s) member s )* )? ']'
        member::= string                                     <?java charSet.addLiteral(stringBuilder.toString(), false);?>
                | hex                                        <?java charSet.addLiteral(codePoint, true);?>

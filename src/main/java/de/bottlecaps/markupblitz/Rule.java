@@ -3,12 +3,20 @@ package de.bottlecaps.markupblitz;
 import java.util.stream.Collectors;
 
 public class Rule extends Alts {
-  private Mark mark;
-  private String name;
+  private final Mark mark;
+  private final String name;
 
   public Rule(Mark mark, String name) {
     this.mark = mark;
     this.name = name;
+  }
+
+  public Mark getMark() {
+    return mark;
+  }
+
+  public String getName() {
+    return name;
   }
 
   @Override
@@ -25,5 +33,11 @@ public class Rule extends Alts {
     if (padding1Length < 0)
       prefix += "\n" + padding2;
     return alts.stream().map(Alt::toString).collect(Collectors.joining(";\n" + padding2, padding1 + prefix, "."));
+  }
+
+  @Override
+  public void accept(Visitor v) {
+    for (Alt alt : alts)
+      alt.accept(v);
   }
 }

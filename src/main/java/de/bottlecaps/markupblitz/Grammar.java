@@ -6,10 +6,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Grammar extends Node {
-  private List<Rule> rules;
+  private final List<Rule> rules;
 
   public Grammar() {
     this.rules = new ArrayList<>();
+  }
+
+  public List<Rule> getRules() {
+    return rules;
   }
 
   @Override
@@ -31,5 +35,11 @@ public class Grammar extends Node {
         .forEach(grammar::addRule);
     });
     return new Node[] {grammar};
+  }
+
+  @Override
+  public void accept(Visitor v) {
+    for (Rule rule: rules)
+      rule.accept(v);
   }
 }

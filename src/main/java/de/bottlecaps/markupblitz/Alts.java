@@ -6,11 +6,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Alts extends Alt.Term {
-  protected List<Alt> alts;
+public class Alts extends Term {
+  protected final List<Alt> alts;
 
   public Alts() {
     alts = new ArrayList<>();
+  }
+
+  public List<Alt> getAlts() {
+    return alts;
   }
 
   public void addAlt(Alt alt) {
@@ -41,5 +45,11 @@ public class Alts extends Alt.Term {
   @Override
   public String toString() {
     return alts.stream().map(Alt::toString).collect(Collectors.joining("; ", "(", ")"));
+  }
+
+  @Override
+  public void accept(Visitor v) {
+    for (Alt alt : alts)
+      alt.accept(v);
   }
 }
