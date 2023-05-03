@@ -1,0 +1,39 @@
+        -json: ws, -value, ws.
+        value: map;
+               array;
+               number;
+               string;
+               boolean;
+               null.
+      boolean: 'false';
+               'true'.
+         null: -'null'.
+          map: -'{', (ws, member)**(ws, -','), ws, -'}'.
+       member: key, ws, -':', ws, value.
+          key: -string.
+        array: -'[', (ws, -value)**(ws, -','), ws, -']'.
+       number: '-'?, int, frac?, exp?.
+    -digit1-9: ['1'-'9'].
+           -e: ['eE'].
+         -exp: e, ['-+']?, DIGIT+.
+        -frac: '.', DIGIT+.
+         -int: '0';
+               digit1-9, DIGIT*.
+       string: -'"', char*, -'"'.
+        -char: ~['"\'; #9; #a; #d];
+               -'\', escaped.
+     -escaped: '"';
+               '\';
+               '/';
+               -'b', +#8;
+               -'f', +#c;
+               -'n', +#a;
+               -'r', +#d;
+               -'t', +#9;
+               unicode.
+      unicode: -'u', code.
+        @code: HEXDIG, HEXDIG, HEXDIG, HEXDIG.
+       -DIGIT: ['0'-'9'].
+      -HEXDIG: DIGIT;
+               ['a'-'f'; 'A'-'F'].
+          -ws: -[' '; #9; #a; #d]*.
