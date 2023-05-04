@@ -1,7 +1,7 @@
-// This file was generated on Wed May 3, 2023 08:02 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
-// REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markupblitz.Ixml ixml.ebnf
+// This file was generated on Wed May 3, 2023 22:48 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.PriorityQueue;
 
@@ -531,283 +531,284 @@ public class Ixml
         break;
       case 1:
         {
-                                                            // line 11 "ixml.ebnf"
-                                                            alts.push(new Rule(mark, nameBuilder.toString()));
-                                                            // line 537 "Ixml.java"
+                                                            // line 12 "ixml.ebnf"
+                                                            alts.push(new Alts());
+                                                            grammar.addRule(new Rule(mark, nameBuilder.toString(), alts.peek()));
+                                                            // line 538 "Ixml.java"
         }
         break;
       case 2:
         {
-                                                            // line 12 "ixml.ebnf"
-                                                            grammar.addRule((Rule) alts.pop());
-                                                            // line 544 "Ixml.java"
+                                                            // line 15 "ixml.ebnf"
+                                                            alts.pop();
+                                                            // line 545 "Ixml.java"
         }
         break;
       case 3:
         {
-                                                            // line 13 "ixml.ebnf"
+                                                            // line 16 "ixml.ebnf"
                                                             mark = Mark.ATTRIBUTE;
-                                                            // line 551 "Ixml.java"
+                                                            // line 552 "Ixml.java"
         }
         break;
       case 4:
         {
-                                                            // line 14 "ixml.ebnf"
+                                                            // line 17 "ixml.ebnf"
                                                             mark = Mark.ELEMENT;
-                                                            // line 558 "Ixml.java"
+                                                            // line 559 "Ixml.java"
         }
         break;
       case 5:
         {
-                                                            // line 15 "ixml.ebnf"
+                                                            // line 18 "ixml.ebnf"
                                                             mark = Mark.DELETED;
-                                                            // line 565 "Ixml.java"
+                                                            // line 566 "Ixml.java"
         }
         break;
       case 6:
         {
-                                                            // line 16 "ixml.ebnf"
+                                                            // line 19 "ixml.ebnf"
                                                             mark = Mark.NONE;
-                                                            // line 572 "Ixml.java"
+                                                            // line 573 "Ixml.java"
         }
         break;
       case 7:
         {
-                                                            // line 19 "ixml.ebnf"
+                                                            // line 22 "ixml.ebnf"
                                                             alts.peek().addAlt(new Alt());
-                                                            // line 579 "Ixml.java"
+                                                            // line 580 "Ixml.java"
         }
         break;
       case 8:
         {
-                                                            // line 28 "ixml.ebnf"
+                                                            // line 31 "ixml.ebnf"
                                                             alts.push(new Alts());
-                                                            // line 586 "Ixml.java"
+                                                            // line 587 "Ixml.java"
         }
         break;
       case 9:
         {
-                                                            // line 30 "ixml.ebnf"
+                                                            // line 33 "ixml.ebnf"
                                                             Alts nested = alts.pop();
                                                             alts.peek().last().addAlts(nested);
-                                                            // line 594 "Ixml.java"
+                                                            // line 595 "Ixml.java"
         }
         break;
       case 10:
         {
-                                                            // line 34 "ixml.ebnf"
+                                                            // line 37 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, null);
-                                                            // line 602 "Ixml.java"
+                                                            // line 603 "Ixml.java"
         }
         break;
       case 11:
         {
-                                                            // line 38 "ixml.ebnf"
+                                                            // line 41 "ixml.ebnf"
                                                             Term sep = alts.peek().last().removeLast();
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, sep);
-                                                            // line 611 "Ixml.java"
+                                                            // line 612 "Ixml.java"
         }
         break;
       case 12:
         {
-                                                            // line 44 "ixml.ebnf"
+                                                            // line 47 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, null);
-                                                            // line 619 "Ixml.java"
+                                                            // line 620 "Ixml.java"
         }
         break;
       case 13:
         {
-                                                            // line 48 "ixml.ebnf"
+                                                            // line 51 "ixml.ebnf"
                                                             Term sep = alts.peek().last().removeLast();
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, sep);
-                                                            // line 628 "Ixml.java"
+                                                            // line 629 "Ixml.java"
         }
         break;
       case 14:
         {
-                                                            // line 54 "ixml.ebnf"
+                                                            // line 57 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_ONE, term, null);
-                                                            // line 636 "Ixml.java"
+                                                            // line 637 "Ixml.java"
         }
         break;
       case 15:
         {
-                                                            // line 58 "ixml.ebnf"
+                                                            // line 61 "ixml.ebnf"
                                                             alts.peek().last().addNonterminal(mark, nameBuilder.toString());
-                                                            // line 643 "Ixml.java"
+                                                            // line 644 "Ixml.java"
         }
         break;
       case 16:
         {
-                                                            // line 60 "ixml.ebnf"
+                                                            // line 63 "ixml.ebnf"
                                                             nameBuilder.setLength(0);
-                                                            // line 650 "Ixml.java"
+                                                            // line 651 "Ixml.java"
         }
         break;
       case 17:
         {
-                                                            // line 61 "ixml.ebnf"
+                                                            // line 64 "ixml.ebnf"
                                                             nameBuilder.append(input.charAt(b0));
-                                                            // line 657 "Ixml.java"
+                                                            // line 658 "Ixml.java"
         }
         break;
       case 18:
         {
-                                                            // line 73 "ixml.ebnf"
+                                                            // line 76 "ixml.ebnf"
                                                             deleted = false;
-                                                            // line 664 "Ixml.java"
+                                                            // line 665 "Ixml.java"
         }
         break;
       case 19:
         {
-                                                            // line 76 "ixml.ebnf"
+                                                            // line 79 "ixml.ebnf"
                                                             alts.peek().last().addCharSet(charSet);
-                                                            // line 671 "Ixml.java"
+                                                            // line 672 "Ixml.java"
         }
         break;
       case 20:
         {
-                                                            // line 80 "ixml.ebnf"
+                                                            // line 83 "ixml.ebnf"
                                                             deleted = true;
-                                                            // line 678 "Ixml.java"
+                                                            // line 679 "Ixml.java"
         }
         break;
       case 21:
         {
-                                                            // line 81 "ixml.ebnf"
+                                                            // line 84 "ixml.ebnf"
                                                             alts.peek().last().addString(deleted, stringBuilder.toString());
-                                                            // line 685 "Ixml.java"
+                                                            // line 686 "Ixml.java"
         }
         break;
       case 22:
         {
-                                                            // line 82 "ixml.ebnf"
+                                                            // line 85 "ixml.ebnf"
                                                             alts.peek().last().addCodePoint(deleted, codePoint);
-                                                            // line 692 "Ixml.java"
+                                                            // line 693 "Ixml.java"
         }
         break;
       case 23:
         {
-                                                            // line 83 "ixml.ebnf"
+                                                            // line 86 "ixml.ebnf"
                                                             stringBuilder.setLength(0);
-                                                            // line 699 "Ixml.java"
+                                                            // line 700 "Ixml.java"
         }
         break;
       case 24:
         {
-                                                            // line 84 "ixml.ebnf"
+                                                            // line 87 "ixml.ebnf"
                                                             stringBuilder.append(input.charAt(b0));
-                                                            // line 706 "Ixml.java"
+                                                            // line 707 "Ixml.java"
         }
         break;
       case 25:
         {
-                                                            // line 89 "ixml.ebnf"
+                                                            // line 92 "ixml.ebnf"
                                                             hexBegin = b0;
-                                                            // line 713 "Ixml.java"
+                                                            // line 714 "Ixml.java"
         }
         break;
       case 26:
         {
-                                                            // line 90 "ixml.ebnf"
+                                                            // line 93 "ixml.ebnf"
                                                             codePoint = input.subSequence(hexBegin, e0).toString();
-                                                            // line 720 "Ixml.java"
+                                                            // line 721 "Ixml.java"
         }
         break;
       case 27:
         {
-                                                            // line 94 "ixml.ebnf"
+                                                            // line 97 "ixml.ebnf"
                                                             charSet = new CharSet(deleted, false);
-                                                            // line 727 "Ixml.java"
+                                                            // line 728 "Ixml.java"
         }
         break;
       case 28:
         {
-                                                            // line 96 "ixml.ebnf"
+                                                            // line 99 "ixml.ebnf"
                                                             charSet = new CharSet(deleted, true);
-                                                            // line 734 "Ixml.java"
+                                                            // line 735 "Ixml.java"
         }
         break;
       case 29:
         {
-                                                            // line 99 "ixml.ebnf"
+                                                            // line 102 "ixml.ebnf"
                                                             charSet.addLiteral(stringBuilder.toString(), false);
-                                                            // line 741 "Ixml.java"
+                                                            // line 742 "Ixml.java"
         }
         break;
       case 30:
         {
-                                                            // line 100 "ixml.ebnf"
+                                                            // line 103 "ixml.ebnf"
                                                             charSet.addLiteral(codePoint, true);
-                                                            // line 748 "Ixml.java"
+                                                            // line 749 "Ixml.java"
         }
         break;
       case 31:
         {
-                                                            // line 101 "ixml.ebnf"
+                                                            // line 104 "ixml.ebnf"
                                                             charSet.addRange(firstCodePoint, lastCodePoint);
-                                                            // line 755 "Ixml.java"
+                                                            // line 756 "Ixml.java"
         }
         break;
       case 32:
         {
-                                                            // line 102 "ixml.ebnf"
+                                                            // line 105 "ixml.ebnf"
                                                             charSet.addClass(clazz);
-                                                            // line 762 "Ixml.java"
+                                                            // line 763 "Ixml.java"
         }
         break;
       case 33:
         {
-                                                            // line 104 "ixml.ebnf"
+                                                            // line 107 "ixml.ebnf"
                                                             firstCodePoint = codePoint;
-                                                            // line 769 "Ixml.java"
+                                                            // line 770 "Ixml.java"
         }
         break;
       case 34:
         {
-                                                            // line 105 "ixml.ebnf"
+                                                            // line 108 "ixml.ebnf"
                                                             lastCodePoint = codePoint;
-                                                            // line 776 "Ixml.java"
+                                                            // line 777 "Ixml.java"
         }
         break;
       case 35:
         {
-                                                            // line 106 "ixml.ebnf"
+                                                            // line 109 "ixml.ebnf"
                                                             codePoint = input.subSequence(b0, e0).toString();
-                                                            // line 783 "Ixml.java"
+                                                            // line 784 "Ixml.java"
         }
         break;
       case 36:
         {
-                                                            // line 111 "ixml.ebnf"
+                                                            // line 114 "ixml.ebnf"
                                                             clazz += input.charAt(b0);
-                                                            // line 790 "Ixml.java"
+                                                            // line 791 "Ixml.java"
         }
         break;
       case 37:
         {
-                                                            // line 113 "ixml.ebnf"
+                                                            // line 116 "ixml.ebnf"
                                                             alts.peek().last().addStringInsertion(stringBuilder.toString());
-                                                            // line 797 "Ixml.java"
+                                                            // line 798 "Ixml.java"
         }
         break;
       case 38:
         {
-                                                            // line 114 "ixml.ebnf"
+                                                            // line 117 "ixml.ebnf"
                                                             alts.peek().last().addHexInsertion(codePoint);
-                                                            // line 804 "Ixml.java"
+                                                            // line 805 "Ixml.java"
         }
         break;
       case 39:
         {
-                                                            // line 120 "ixml.ebnf"
+                                                            // line 123 "ixml.ebnf"
                                                             clazz = Character.toString(input.charAt(b0));
-                                                            // line 811 "Ixml.java"
+                                                            // line 812 "Ixml.java"
         }
         break;
       default:
@@ -1702,7 +1703,7 @@ public class Ixml
     "IMPLICIT-52"
   };
 
-                                                            // line 919 "ixml.ebnf"
+                                                            // line 922 "ixml.ebnf"
                                                             private int hexBegin;
                                                               private boolean deleted;
                                                               private String codePoint;
@@ -1713,13 +1714,15 @@ public class Ixml
                                                               private Alt alt;
                                                               private Grammar grammar;
                                                               private Mark mark;
+                                                              private Rule rule;
                                                               private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                               private StringBuilder stringBuilder = new StringBuilder();
                                                               private StringBuilder nameBuilder = new StringBuilder();
 
                                                               public Grammar grammar() {
+                                                                new PostProcess(grammar).visit(grammar);
                                                                 return grammar;
                                                               }
                                                             }
-                                                            // line 1725 "Ixml.java"
+                                                            // line 1728 "Ixml.java"
 // End

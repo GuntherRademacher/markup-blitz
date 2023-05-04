@@ -1,4 +1,4 @@
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Alt extends Node {
-  static int n = 0;
   private final List<Term> terms;
 
   public Alt() {
@@ -61,7 +60,8 @@ public class Alt extends Node {
     List<Node> rules = new ArrayList<>();
     terms.forEach(a -> {
       Node[] bnf = a.toBnf();
-      alt.mergeTerm((Term) bnf[0], rules);
+      bnf[0].accept(new PostProcess(getGrammar()));
+      alt.mergeTerm((Term) bnf[0], rules, getGrammar());
       Arrays.stream(bnf)
         .skip(1)
         .forEach(r -> rules.add(r));
@@ -69,7 +69,7 @@ public class Alt extends Node {
     return Stream.concat(Stream.of(alt), rules.stream()).toArray(Node[]::new);
   }
 
-  Alt mergeTerm(Term term, List<Node> rules) {
+  Alt mergeTerm(Term term, List<Node> rules, Grammar names) {
     if (! (term instanceof Alts)) {
       terms.add(term);
     }
@@ -79,14 +79,19 @@ public class Alt extends Node {
     }
     else {
       // (e1; e2; ...; en) ==> x where -x: e1; e2; ...; en.
-      String name = "x" + ++n;
+      String name = names.getAdditionalName(term.toString());
       terms.add(new Nonterminal(Mark.NONE, name));
-      Rule rule = new Rule(Mark.DELETED, name);
+      Alts alts = new Alts();
       for (Alt a : ((Alts) term).alts)
-        rule.addAlt(a);
-      rules.add(rule);
+        alts.addAlt(a);
+      rules.add(new Rule(Mark.DELETED, name, alts));
     }
     return this;
+  }
+
+  @Override
+  public void accept(Visitor v) {
+    v.visit(this);
   }
 
   @Override
@@ -95,8 +100,26 @@ public class Alt extends Node {
   }
 
   @Override
-  public void accept(Visitor v) {
-    for (Term term : terms)
-      term.accept(v);
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((terms == null) ? 0 : terms.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!(obj instanceof Alt))
+      return false;
+    Alt other = (Alt) obj;
+    if (terms == null) {
+      if (other.terms != null)
+        return false;
+    }
+    else if (!terms.equals(other.terms))
+      return false;
+    return true;
   }
 }

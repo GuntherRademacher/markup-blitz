@@ -8,8 +8,11 @@
        prolog::= version s
       version::= 'i' 'x' 'm' 'l' RS 'v' 'e' 'r' 's' 'i' 'o' 'n' RS string s '.'
 
-         rule::= mark name                                  <?java alts.push(new Rule(mark, nameBuilder.toString()));?>
-                                s ( '=' | ':' ) s alts '.'  <?java grammar.addRule((Rule) alts.pop());?>
+         rule::= mark name                                  <?java
+                                                               alts.push(new Alts());
+                                                               grammar.addRule(new Rule(mark, nameBuilder.toString(), alts.peek()));
+                                                            ?>
+                                s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
          mark::= ( '@' s                                    <?java mark = Mark.ATTRIBUTE;?>
                  | '^' s                                    <?java mark = Mark.ELEMENT;?>
                  | '-' s                                    <?java mark = Mark.DELETED;?>
@@ -926,11 +929,13 @@ namefollower^token << '.' 'x'
                                                                 private Alt alt;
                                                                 private Grammar grammar;
                                                                 private Mark mark;
+                                                                private Rule rule;
                                                                 private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                                 private StringBuilder stringBuilder = new StringBuilder();
                                                                 private StringBuilder nameBuilder = new StringBuilder();
                                                                 
                                                                 public Grammar grammar() {
+                                                                  new PostProcess(grammar).visit(grammar);
                                                                   return grammar;
                                                                 }
                                                               }

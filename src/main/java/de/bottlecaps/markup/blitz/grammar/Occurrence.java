@@ -1,4 +1,4 @@
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 public enum Occurrence {
   ZERO_OR_ONE("?"),

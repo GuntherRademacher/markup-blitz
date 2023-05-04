@@ -1,4 +1,4 @@
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,18 +31,21 @@ public class Control extends Term {
   @Override
   public Node[] toBnf() {
     Node[] termBnf = term.toBnf();
+    termBnf[0].accept(new PostProcess(getGrammar()));
     List<Node> rules = new ArrayList<>();
+    Grammar names = getRule().getGrammar();
     switch (occurrence) {
     case ONE_OR_MORE:
       if (separator == null) {
         // e* ==> x where -x: e; x, e.
-        String name = "x" + ++Alt.n;
-        Rule rule = new Rule(Mark.DELETED, name);
-        rule.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-        rule.addAlt(new Alt()
+        String name = names.getAdditionalName(term.toString());
+        Alts alts = new Alts();
+        Rule rule = new Rule(Mark.DELETED, name, alts);
+        alts.addAlt(new Alt()
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
+        alts.addAlt(new Alt()
             .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
         return Stream.concat(Stream.concat(Stream.concat(
               Stream.of(new Nonterminal(Mark.NONE, name)),
               Arrays.stream(termBnf).skip(1)),
@@ -52,15 +55,16 @@ public class Control extends Term {
       }
       else {
         // e* ==> x where -x: e; x, s, e.
-        String name = "x" + ++Alt.n;
+        String name = names.getAdditionalName(term.toString());
         Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-        Rule rule = new Rule(Mark.DELETED, name);
-        rule.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-        rule.addAlt(new Alt()
+        Alts alts = new Alts();
+        Rule rule = new Rule(Mark.DELETED, name, alts);
+        alts.addAlt(new Alt()
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
+        alts.addAlt(new Alt()
             .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
+            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules, names)
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
         return Stream.concat(Stream.concat(Stream.concat(Stream.concat(
               Stream.of(new Nonterminal(Mark.NONE, name)),
               Arrays.stream(termBnf).skip(1)),
@@ -72,12 +76,13 @@ public class Control extends Term {
     case ZERO_OR_MORE:
       if (separator == null) {
         // e* ==> x where -x: ; x, e.
-        String name = "x" + ++Alt.n;
-        Rule rule = new Rule(Mark.DELETED, name);
-        rule.addAlt(new Alt());
-        rule.addAlt(new Alt()
+        String name = names.getAdditionalName(term.toString());
+        Alts alts = new Alts();
+        Rule rule = new Rule(Mark.DELETED, name, alts);
+        alts.addAlt(new Alt());
+        alts.addAlt(new Alt()
             .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
         return Stream.concat(Stream.concat(Stream.concat(
               Stream.of(new Nonterminal(Mark.NONE, name)),
               Arrays.stream(termBnf).skip(1)),
@@ -87,20 +92,22 @@ public class Control extends Term {
       }
       else {
         // e* ==> x where -x: ; x, y. -y: e; y, s, e.
-        String name1 = "x" + ++Alt.n;
-        String name2 = "x" + ++Alt.n;
+        String name1 = names.getAdditionalName(term.toString());
+        String name2 = names.getAdditionalName(term.toString());
         Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-        Rule rule1 = new Rule(Mark.DELETED, name1);
-        rule1.addAlt(new Alt());
-        rule1.addAlt(new Alt()
+        Alts alts1 = new Alts();
+        Rule rule1 = new Rule(Mark.DELETED, name1, alts1);
+        alts1.addAlt(new Alt());
+        alts1.addAlt(new Alt()
             .addNonterminal(Mark.NONE, name2));
-        Rule rule2 = new Rule(Mark.DELETED, name2);
-        rule2.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
-        rule2.addAlt(new Alt()
+        Alts alts2 = new Alts();
+        Rule rule2 = new Rule(Mark.DELETED, name2, alts2);
+        alts2.addAlt(new Alt()
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
+        alts2.addAlt(new Alt()
             .addNonterminal(Mark.NONE, name2)
-            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules));
+            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules, names)
+            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
         return Stream.concat(Stream.concat(Stream.concat(Stream.concat(Stream.concat(
               Stream.of(new Nonterminal(Mark.NONE, name1)),
               Arrays.stream(termBnf).skip(1)),
@@ -112,18 +119,25 @@ public class Control extends Term {
       }
     case ZERO_OR_ONE:
       // e? ==> x where -x: ; e.
-      String name = "x" + ++Alt.n;
-      Rule rule = new Rule(Mark.DELETED, name);
-      rule.addAlt(new Alt());
-      rule.addAlt(new Alt().mergeTerm(term, rules));
-      return Stream.concat(Stream.concat(
+      String name = names.getAdditionalName(term.toString());
+      Alts alts = new Alts();
+      Rule rule = new Rule(Mark.DELETED, name, alts);
+      alts.addAlt(new Alt());
+      alts.addAlt(new Alt().mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
+      return Stream.concat(Stream.concat(Stream.concat(
             Stream.of(new Nonterminal(Mark.NONE, name)),
+            Arrays.stream(termBnf).skip(1)),
             Stream.of(rule)),
             rules.stream())
           .toArray(Node[]::new);
     default:
       throw new IllegalArgumentException();
     }
+  }
+
+  @Override
+  public void accept(Visitor v) {
+    v.visit(this);
   }
 
   @Override
@@ -135,9 +149,36 @@ public class Control extends Term {
   }
 
   @Override
-  public void accept(Visitor v) {
-    term.accept(v);
-    if (separator != null)
-      separator.accept(v);
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((occurrence == null) ? 0 : occurrence.hashCode());
+    result = prime * result + ((separator == null) ? 0 : separator.hashCode());
+    result = prime * result + ((term == null) ? 0 : term.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!(obj instanceof Control))
+      return false;
+    Control other = (Control) obj;
+    if (occurrence != other.occurrence)
+      return false;
+    if (separator == null) {
+      if (other.separator != null)
+        return false;
+    }
+    else if (!separator.equals(other.separator))
+      return false;
+    if (term == null) {
+      if (other.term != null)
+        return false;
+    }
+    else if (!term.equals(other.term))
+      return false;
+    return true;
   }
 }

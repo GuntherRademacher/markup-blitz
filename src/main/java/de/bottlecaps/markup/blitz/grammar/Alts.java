@@ -1,4 +1,4 @@
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,13 +43,36 @@ public class Alts extends Term {
   }
 
   @Override
+  public void accept(Visitor v) {
+    v.visit(this);
+  }
+
+  @Override
   public String toString() {
     return alts.stream().map(Alt::toString).collect(Collectors.joining("; ", "(", ")"));
   }
 
   @Override
-  public void accept(Visitor v) {
-    for (Alt alt : alts)
-      alt.accept(v);
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((alts == null) ? 0 : alts.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!(obj instanceof Alts))
+      return false;
+    Alts other = (Alts) obj;
+    if (alts == null) {
+      if (other.alts != null)
+        return false;
+    }
+    else if (!alts.equals(other.alts))
+      return false;
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-package de.bottlecaps.markupblitz;
+package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +37,7 @@ public class CharSet extends Term {
 
   @Override
   public void accept(Visitor v) {
-    for (Member member : members)
-      member.accept(v);
+    v.visit(this);
   }
 
   public void addClass(String clazz) {
@@ -51,5 +50,35 @@ public class CharSet extends Term {
                   + (exclusion ? "~" : "")
                   + "[";
     return members.stream().map(Member::toString).collect(Collectors.joining("; ", prefix, "]"));
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (deleted ? 1231 : 1237);
+    result = prime * result + (exclusion ? 1231 : 1237);
+    result = prime * result + ((members == null) ? 0 : members.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!(obj instanceof CharSet))
+      return false;
+    CharSet other = (CharSet) obj;
+    if (deleted != other.deleted)
+      return false;
+    if (exclusion != other.exclusion)
+      return false;
+    if (members == null) {
+      if (other.members != null)
+        return false;
+    }
+    else if (!members.equals(other.members))
+      return false;
+    return true;
   }
 }
