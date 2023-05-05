@@ -5,6 +5,8 @@ package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.PriorityQueue;
 
+import de.bottlecaps.markup.blitz.transform.PostProcess;
+
 public class Ixml
 {
   public static void main(String args[]) throws Exception

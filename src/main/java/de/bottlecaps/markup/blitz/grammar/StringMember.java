@@ -1,6 +1,8 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-class StringMember extends Member {
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
+public class StringMember extends Member {
   private final boolean isHex;
   private final String value;
 

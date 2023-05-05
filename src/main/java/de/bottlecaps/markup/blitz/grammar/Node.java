@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public abstract class Node implements Cloneable {
   private Grammar grammar;
   private Rule rule;
@@ -32,8 +34,18 @@ public abstract class Node implements Cloneable {
   }
 
   public Node[] toBnf() {
+    return new Node[] {(Node) this.clone()};
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Node> T copy() {
+    return (T) this.clone();
+  }
+
+  @Override
+  protected Object clone() {
     try {
-      return new Node[] {(Node) this.clone()};
+      return super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e.getMessage(), e);

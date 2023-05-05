@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class CharSet extends Term {
   private final boolean deleted;
   private final boolean exclusion;

@@ -5,10 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import de.bottlecaps.markup.blitz.transform.PostProcess;
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Control extends Term {
   private final Occurrence occurrence;
   private final Term term;
   private final Term separator;
+  private String listBnfRuleName;
 
   public Control(Occurrence occurrence, Term term, Term separator) {
     this.occurrence = occurrence;
@@ -28,6 +32,14 @@ public class Control extends Term {
     return separator;
   }
 
+  public void setListBnfRuleName(String listBnfRuleName) {
+    this.listBnfRuleName = listBnfRuleName;
+  }
+
+  public String getListBnfRuleName() {
+    return listBnfRuleName;
+  }
+
   @Override
   public Node[] toBnf() {
     Node[] termBnf = term.toBnf();
@@ -38,7 +50,7 @@ public class Control extends Term {
     case ONE_OR_MORE:
       if (separator == null) {
         // e* ==> x where -x: e; x, e.
-        String name = names.getAdditionalName(term.toString());
+        String name = "__x";
         Alts alts = new Alts();
         Rule rule = new Rule(Mark.DELETED, name, alts);
         alts.addAlt(new Alt()
@@ -55,7 +67,7 @@ public class Control extends Term {
       }
       else {
         // e* ==> x where -x: e; x, s, e.
-        String name = names.getAdditionalName(term.toString());
+        String name = "__x";
         Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
         Alts alts = new Alts();
         Rule rule = new Rule(Mark.DELETED, name, alts);
@@ -76,7 +88,7 @@ public class Control extends Term {
     case ZERO_OR_MORE:
       if (separator == null) {
         // e* ==> x where -x: ; x, e.
-        String name = names.getAdditionalName(term.toString());
+        String name = "__x";
         Alts alts = new Alts();
         Rule rule = new Rule(Mark.DELETED, name, alts);
         alts.addAlt(new Alt());
@@ -92,8 +104,8 @@ public class Control extends Term {
       }
       else {
         // e* ==> x where -x: ; x, y. -y: e; y, s, e.
-        String name1 = names.getAdditionalName(term.toString());
-        String name2 = names.getAdditionalName(term.toString());
+        String name1 = "__x";
+        String name2 = "__y";
         Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
         Alts alts1 = new Alts();
         Rule rule1 = new Rule(Mark.DELETED, name1, alts1);
@@ -119,7 +131,7 @@ public class Control extends Term {
       }
     case ZERO_OR_ONE:
       // e? ==> x where -x: ; e.
-      String name = names.getAdditionalName(term.toString());
+      String name = "__x";
       Alts alts = new Alts();
       Rule rule = new Rule(Mark.DELETED, name, alts);
       alts.addAlt(new Alt());

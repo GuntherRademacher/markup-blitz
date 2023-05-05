@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Nonterminal extends Term {
   private final Mark mark;
   private final String name;

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Alts extends Term {
   protected final List<Alt> alts;
 
@@ -27,10 +29,7 @@ public class Alts extends Term {
 
   @Override
   public Node[] toBnf() {
-    return toBnf(new Alts());
-  }
-
-  protected Node[] toBnf(Alts a) {
+    Alts a = new Alts();
     List<Node> rules = new ArrayList<>();
     alts.forEach(alt -> {
       Node[] bnf = alt.toBnf();

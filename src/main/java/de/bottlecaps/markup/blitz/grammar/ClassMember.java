@@ -1,6 +1,8 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-class ClassMember extends Member {
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
+public class ClassMember extends Member {
   private final String value;
 
   public ClassMember(String value) {

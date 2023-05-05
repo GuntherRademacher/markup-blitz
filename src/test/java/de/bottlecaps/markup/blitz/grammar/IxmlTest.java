@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
+import de.bottlecaps.markup.blitz.transform.Copy;
 
 public class IxmlTest {
     private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
@@ -33,16 +34,8 @@ public class IxmlTest {
 
     @Test
     public void testIxmlResource() throws Exception {
-      Ixml parser = new Ixml(ixmlIxmlResourceContent);
-      try
-      {
-        parser.parse_ixml();
-      }
-      catch (ParseException pe)
-      {
-        throw new RuntimeException("ParseException while processing " + ixmlResource + ":\n" + parser.getErrorMessage(pe), pe);
-      }
-      assertEquals(ixmlIxmlResourceContent, parser.grammar().toString(), "roundtrip failed for " + ixmlResource);
+      Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
+      assertEquals(ixmlIxmlResourceContent, grammar.toString(), "roundtrip failed for " + ixmlResource);
     }
 
     @Test
@@ -56,17 +49,37 @@ public class IxmlTest {
       testUrlContent(invisiblexmlOrgUrl, ixmlResource, ixmlIxmlResourceContent);
     }
 
+    @Test
+    public void testCopyIxmlResource() {
+      Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
+      Grammar copy = new Copy(grammar).get();
+      assertEquals(grammar.toString(), copy.toString());
+      assertEquals(grammar, copy);
+    }
+
+    @Test
+    public void testCopyJsonResource() {
+      Grammar grammar = parse(jsonIxmlResourceContent, jsonIxmlResource);
+      Grammar copy = new Copy(grammar).get();
+      assertEquals(grammar.toString(), copy.toString());
+      assertEquals(grammar, copy);
+    }
+
     private void testUrlContent(String url, String resource, String resourceContent) throws IOException, MalformedURLException {
-      String input = urlContent(new URL(url));
-      Ixml parser = new Ixml(input);
+      Grammar grammar = parse(urlContent(new URL(url)), url);
+      assertEquals(resourceContent, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
+    }
+
+    private Grammar parse(String content, String source) {
+      Ixml parser = new Ixml(content);
       try
       {
         parser.parse_ixml();
       }
       catch (ParseException pe)
       {
-        throw new RuntimeException("ParseException while processing " + url + ":\n" + parser.getErrorMessage(pe), pe);
+        throw new RuntimeException("ParseException while processing " + source + ":\n" + parser.getErrorMessage(pe), pe);
       }
-      assertEquals(resourceContent, parser.grammar().toString(), "parsing content of " + url + " did not yield " + resource);
+      return parser.grammar();
     }
 }

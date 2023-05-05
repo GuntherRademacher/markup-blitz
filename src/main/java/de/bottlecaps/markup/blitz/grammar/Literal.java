@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Literal extends Term {
   protected final boolean deleted;
   protected final String value;

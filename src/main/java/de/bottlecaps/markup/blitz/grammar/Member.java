@@ -1,4 +1,4 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-abstract class Member extends Node {
+public abstract class Member extends Node {
 }

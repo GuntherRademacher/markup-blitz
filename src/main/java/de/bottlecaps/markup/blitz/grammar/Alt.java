@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.bottlecaps.markup.blitz.transform.PostProcess;
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Alt extends Node {
   private final List<Term> terms;
 
@@ -79,7 +82,7 @@ public class Alt extends Node {
     }
     else {
       // (e1; e2; ...; en) ==> x where -x: e1; e2; ...; en.
-      String name = names.getAdditionalName(term.toString());
+      String name = "__x";
       terms.add(new Nonterminal(Mark.NONE, name));
       Alts alts = new Alts();
       for (Alt a : ((Alts) term).alts)

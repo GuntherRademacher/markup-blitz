@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
 public class Insertion extends Literal {
 
   public Insertion(String value, boolean isHex) {

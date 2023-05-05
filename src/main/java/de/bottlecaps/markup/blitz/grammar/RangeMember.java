@@ -1,6 +1,8 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-class RangeMember extends Member {
+import de.bottlecaps.markup.blitz.transform.Visitor;
+
+public class RangeMember extends Member {
   private final String firstValue;
   private final String lastValue;
   private final int firstCodePoint;

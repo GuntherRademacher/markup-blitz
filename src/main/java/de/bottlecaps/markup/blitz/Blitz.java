@@ -14,13 +14,13 @@ import java.nio.charset.StandardCharsets;
 
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
-import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
+import de.bottlecaps.markup.blitz.transform.BNF;
 
 public class Blitz {
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
-    if (args.length != 1)
-      usage();
+//    if (args.length != 1)
+//      usage();
 
     URI uri = null;
     try {
@@ -46,8 +46,13 @@ public class Blitz {
 
     Grammar grammar = parser.grammar();
 
-    Node[] node = grammar.toBnf();
-    System.out.println(node[0]);
+//    Node[] node = grammar.toBnf();
+//    System.out.println(node[0]);
+
+//    grammar.accept(new OrderDepthFirst());
+//    System.out.println(grammar);
+
+    System.out.println(new BNF(grammar).get());
  }
 
   private static void usage() {
