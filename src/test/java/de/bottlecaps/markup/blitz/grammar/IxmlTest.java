@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
-import de.bottlecaps.markup.blitz.transform.Copy;
 
 public class IxmlTest {
     private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
@@ -52,7 +51,8 @@ public class IxmlTest {
     @Test
     public void testCopyIxmlResource() {
       Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
-      Grammar copy = new Copy(grammar).get();
+//      Grammar copy = new Copy(grammar).get();
+      Grammar copy = grammar.copy();
       assertEquals(grammar.toString(), copy.toString());
       assertEquals(grammar, copy);
     }
@@ -60,7 +60,8 @@ public class IxmlTest {
     @Test
     public void testCopyJsonResource() {
       Grammar grammar = parse(jsonIxmlResourceContent, jsonIxmlResource);
-      Grammar copy = new Copy(grammar).get();
+//      Grammar copy = new Copy(grammar).get();
+      Grammar copy = grammar.copy();
       assertEquals(grammar.toString(), copy.toString());
       assertEquals(grammar, copy);
     }

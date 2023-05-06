@@ -49,12 +49,14 @@ public class PostProcess extends Visitor {
     }
     super.visit(g);
 
-    System.out.println();
-    System.out.println();
-    nameByRhs.forEach((k,v) -> System.out.println(v + ": " + k));
-    System.out.println();
-    System.out.println();
-
+// TODO: remove
+//
+//    System.out.println();
+//    System.out.println();
+//    nameByRhs.forEach((k,v) -> System.out.println(v + ": " + k));
+//    System.out.println();
+//    System.out.println();
+//
   }
 
   @Override

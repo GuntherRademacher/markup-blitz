@@ -1,12 +1,9 @@
 package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import de.bottlecaps.markup.blitz.transform.PostProcess;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Alt extends Node {
@@ -57,21 +54,6 @@ public class Alt extends Node {
     terms.add(new Insertion(hex, true));
   }
 
-  @Override
-  public Node[] toBnf() {
-    Alt alt = new Alt();
-    List<Node> rules = new ArrayList<>();
-    terms.forEach(a -> {
-      Node[] bnf = a.toBnf();
-      bnf[0].accept(new PostProcess(getGrammar()));
-      alt.mergeTerm((Term) bnf[0], rules, getGrammar());
-      Arrays.stream(bnf)
-        .skip(1)
-        .forEach(r -> rules.add(r));
-    });
-    return Stream.concat(Stream.of(alt), rules.stream()).toArray(Node[]::new);
-  }
-
   Alt mergeTerm(Term term, List<Node> rules, Grammar names) {
     if (! (term instanceof Alts)) {
       terms.add(term);
@@ -95,6 +77,15 @@ public class Alt extends Node {
   @Override
   public void accept(Visitor v) {
     v.visit(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Alt copy() {
+    Alt alt = new Alt();
+    for (Term term : terms)
+      alt.getTerms().add(term.copy());
+    return alt;
   }
 
   @Override

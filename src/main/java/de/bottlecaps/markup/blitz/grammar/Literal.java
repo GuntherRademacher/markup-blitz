@@ -5,7 +5,7 @@ import de.bottlecaps.markup.blitz.transform.Visitor;
 public class Literal extends Term {
   protected final boolean deleted;
   protected final String value;
-  protected final Boolean isHex;
+  protected final boolean isHex;
 
   public boolean isDeleted() {
     return deleted;
@@ -42,7 +42,7 @@ public class Literal extends Term {
     final int prime = 31;
     int result = 1;
     result = prime * result + (deleted ? 1231 : 1237);
-    result = prime * result + ((isHex == null) ? 0 : isHex.hashCode());
+    result = prime * result + (isHex ? 1231 : 1237);
     result = prime * result + ((value == null) ? 0 : value.hashCode());
     return result;
   }
@@ -56,11 +56,7 @@ public class Literal extends Term {
     Literal other = (Literal) obj;
     if (deleted != other.deleted)
       return false;
-    if (isHex == null) {
-      if (other.isHex != null)
-        return false;
-    }
-    else if (!isHex.equals(other.isHex))
+    if (isHex != other.isHex)
       return false;
     if (value == null) {
       if (other.value != null)

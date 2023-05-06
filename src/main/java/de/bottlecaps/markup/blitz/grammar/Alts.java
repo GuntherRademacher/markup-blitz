@@ -1,10 +1,8 @@
 package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
@@ -28,22 +26,17 @@ public class Alts extends Term {
   }
 
   @Override
-  public Node[] toBnf() {
-    Alts a = new Alts();
-    List<Node> rules = new ArrayList<>();
-    alts.forEach(alt -> {
-      Node[] bnf = alt.toBnf();
-      a.alts.add((Alt) bnf[0]);
-      Arrays.stream(bnf)
-        .skip(1)
-        .forEach(r -> rules.add(r));
-    });
-    return Stream.concat(Stream.of(a), rules.stream()).toArray(Node[]::new);
-  }
-
-  @Override
   public void accept(Visitor v) {
     v.visit(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Alts copy() {
+    Alts alts = new Alts();
+    for (Alt alt : this.alts)
+      alts.getAlts().add(alt.copy());
+    return alts;
   }
 
   @Override

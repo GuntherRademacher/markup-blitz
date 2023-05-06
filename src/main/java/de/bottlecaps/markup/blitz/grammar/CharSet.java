@@ -46,6 +46,15 @@ public class CharSet extends Term {
     members.add(new ClassMember(clazz));
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public CharSet copy() {
+    CharSet charSet = new CharSet(deleted, exclusion);
+    for (Member member : members)
+      charSet.getMembers().add(member.copy());
+    return charSet;
+  }
+
   @Override
   public String toString() {
     String prefix = (deleted ? "-" : "")

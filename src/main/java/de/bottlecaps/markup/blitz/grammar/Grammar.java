@@ -1,11 +1,9 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import de.bottlecaps.markup.blitz.transform.PostProcess;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Grammar extends Node {
@@ -24,20 +22,17 @@ public class Grammar extends Node {
   }
 
   @Override
-  public Node[] toBnf() {
-    Grammar grammar = new Grammar();
-    rules.values().forEach(rule ->{
-      Arrays.stream(rule.toBnf())
-        .map(Rule.class::cast)
-        .forEach(grammar::addRule);
-    });
-    new PostProcess(grammar).visit(grammar);
-    return new Node[] {grammar};
-  }
-
-  @Override
   public void accept(Visitor v) {
     v.visit(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Grammar copy() {
+    Grammar grammar = new Grammar();
+    for (Rule rule : rules.values())
+      grammar.getRules().put(rule.getName(), rule.copy());
+    return grammar;
   }
 
   @Override

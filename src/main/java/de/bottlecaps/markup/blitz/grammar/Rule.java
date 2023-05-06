@@ -1,8 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
@@ -10,7 +8,6 @@ public class Rule extends Node {
   private final Mark mark;
   private final String name;
   private final Alts alts;
-  private Grammar grammar;
 
   public Rule(Mark mark, String name, Alts alts) {
     this.mark = mark;
@@ -29,26 +26,15 @@ public class Rule extends Node {
   public Alts getAlts() {
     return alts;
   }
-
-  @Override
-  public void setGrammar(Grammar grammar) {
-    this.grammar = grammar;
-  }
-
-  @Override
-  public Grammar getGrammar() {
-    return grammar;
-  }
-
-  @Override
-  public Node[] toBnf() {
-    Node[] bnf = alts.toBnf();
-    return Stream.concat(Stream.of(new Rule(mark, name, (Alts) bnf[0])), Arrays.stream(bnf).skip(1)).toArray(Node[]::new);
-  }
-
   @Override
   public void accept(Visitor v) {
     v.visit(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Rule copy() {
+    return new Rule(mark, name, alts.copy());
   }
 
   @Override

@@ -1,11 +1,5 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
-import de.bottlecaps.markup.blitz.transform.PostProcess;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Control extends Term {
@@ -41,115 +35,17 @@ public class Control extends Term {
   }
 
   @Override
-  public Node[] toBnf() {
-    Node[] termBnf = term.toBnf();
-    termBnf[0].accept(new PostProcess(getGrammar()));
-    List<Node> rules = new ArrayList<>();
-    Grammar names = getRule().getGrammar();
-    switch (occurrence) {
-    case ONE_OR_MORE:
-      if (separator == null) {
-        // e* ==> x where -x: e; x, e.
-        String name = "__x";
-        Alts alts = new Alts();
-        Rule rule = new Rule(Mark.DELETED, name, alts);
-        alts.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        alts.addAlt(new Alt()
-            .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        return Stream.concat(Stream.concat(Stream.concat(
-              Stream.of(new Nonterminal(Mark.NONE, name)),
-              Arrays.stream(termBnf).skip(1)),
-              Stream.of(rule)),
-              rules.stream())
-            .toArray(Node[]::new);
-      }
-      else {
-        // e* ==> x where -x: e; x, s, e.
-        String name = "__x";
-        Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-        Alts alts = new Alts();
-        Rule rule = new Rule(Mark.DELETED, name, alts);
-        alts.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        alts.addAlt(new Alt()
-            .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules, names)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        return Stream.concat(Stream.concat(Stream.concat(Stream.concat(
-              Stream.of(new Nonterminal(Mark.NONE, name)),
-              Arrays.stream(termBnf).skip(1)),
-              Arrays.stream(separatorBnf).skip(1)),
-              Stream.of(rule)),
-              rules.stream())
-            .toArray(Node[]::new);
-      }
-    case ZERO_OR_MORE:
-      if (separator == null) {
-        // e* ==> x where -x: ; x, e.
-        String name = "__x";
-        Alts alts = new Alts();
-        Rule rule = new Rule(Mark.DELETED, name, alts);
-        alts.addAlt(new Alt());
-        alts.addAlt(new Alt()
-            .addNonterminal(Mark.NONE, name)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        return Stream.concat(Stream.concat(Stream.concat(
-              Stream.of(new Nonterminal(Mark.NONE, name)),
-              Arrays.stream(termBnf).skip(1)),
-              Stream.of(rule)),
-              rules.stream())
-            .toArray(Node[]::new);
-      }
-      else {
-        // e* ==> x where -x: ; x, y. -y: e; y, s, e.
-        String name1 = "__x";
-        String name2 = "__y";
-        Node[] separatorBnf = separator == null ? new Node[] {} : separator.toBnf();
-        Alts alts1 = new Alts();
-        Rule rule1 = new Rule(Mark.DELETED, name1, alts1);
-        alts1.addAlt(new Alt());
-        alts1.addAlt(new Alt()
-            .addNonterminal(Mark.NONE, name2));
-        Alts alts2 = new Alts();
-        Rule rule2 = new Rule(Mark.DELETED, name2, alts2);
-        alts2.addAlt(new Alt()
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        alts2.addAlt(new Alt()
-            .addNonterminal(Mark.NONE, name2)
-            .mergeTerm((Term) separatorBnf[0].toBnf()[0], rules, names)
-            .mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-        return Stream.concat(Stream.concat(Stream.concat(Stream.concat(Stream.concat(
-              Stream.of(new Nonterminal(Mark.NONE, name1)),
-              Arrays.stream(termBnf).skip(1)),
-              Arrays.stream(separatorBnf).skip(1)),
-              Stream.of(rule1)),
-              Stream.of(rule2)),
-              rules.stream())
-            .toArray(Node[]::new);
-      }
-    case ZERO_OR_ONE:
-      // e? ==> x where -x: ; e.
-      String name = "__x";
-      Alts alts = new Alts();
-      Rule rule = new Rule(Mark.DELETED, name, alts);
-      alts.addAlt(new Alt());
-      alts.addAlt(new Alt().mergeTerm((Term) termBnf[0].toBnf()[0], rules, names));
-      return Stream.concat(Stream.concat(Stream.concat(
-            Stream.of(new Nonterminal(Mark.NONE, name)),
-            Arrays.stream(termBnf).skip(1)),
-            Stream.of(rule)),
-            rules.stream())
-          .toArray(Node[]::new);
-    default:
-      throw new IllegalArgumentException();
-    }
-  }
-
-  @Override
   public void accept(Visitor v) {
     v.visit(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Control copy() {
+    Term s = separator == null
+        ? null
+        : separator.copy();
+    return new Control(occurrence, term.copy(), s);
   }
 
   @Override

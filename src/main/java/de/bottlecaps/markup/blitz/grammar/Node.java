@@ -33,10 +33,6 @@ public abstract class Node implements Cloneable {
     return parent;
   }
 
-  public Node[] toBnf() {
-    return new Node[] {(Node) this.clone()};
-  }
-
   @SuppressWarnings("unchecked")
   public <T extends Node> T copy() {
     return (T) this.clone();

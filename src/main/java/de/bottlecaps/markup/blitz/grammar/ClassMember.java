@@ -14,13 +14,13 @@ public class ClassMember extends Member {
   }
 
   @Override
-  public String toString() {
-    return value;
+  public void accept(Visitor v) {
+    v.visit(this);
   }
 
   @Override
-  public void accept(Visitor v) {
-    v.visit(this);
+  public String toString() {
+    return value;
   }
 
   @Override
