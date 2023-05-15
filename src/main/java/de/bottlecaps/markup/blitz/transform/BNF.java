@@ -9,7 +9,7 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
-import de.bottlecaps.markup.blitz.grammar.CharSet;
+import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -208,10 +208,10 @@ public class BNF extends Visitor {
   }
 
   @Override
-  public void visit(CharSet c) {
+  public void visit(Charset c) {
     String name = c.getBnfRuleName();
     if (name == null) {
-      CharSet set = new CharSet(c.isDeleted(), c.isExclusion());
+      Charset set = new Charset(c.isDeleted(), c.isExclusion());
       members = set.getMembers();
       for (Member member : c.getMembers())
         member.accept(this);
@@ -240,10 +240,10 @@ public class BNF extends Visitor {
             }
           }
           else {
-            CharSet charSet = new CharSet(c.isDeleted(), false);
-            charSet.getMembers().add(member.copy());
+            Charset charset = new Charset(c.isDeleted(), false);
+            charset.getMembers().add(member.copy());
             Alt alt = new Alt();
-            alt.addCharSet(charSet);
+            alt.addCharset(charset);
             alts.addAlt(alt);
           }
         }
@@ -252,40 +252,6 @@ public class BNF extends Visitor {
         justAdded.offer(additionalRule);
       }
     }
-  }
-
-  private CharSet normalize(CharSet c) {
-    // TODO: handle exclusions
-    CharSet normalizedCharSet = new CharSet(c.isDeleted(), false);
-    for (Member member : c.getMembers()) {
-//
-//    if (member instanceof StringMember) {
-//      StringMember m = (StringMember) member;
-//      if (m.isHex()) {
-//        Alt alt = new Alt();
-//        alt.addCodePoint(c.isDeleted(), name);
-//        alts.addAlt(alt);
-//      }
-//      else {
-//        for (char chr : m.getValue().toCharArray()) {
-//          Alt alt = new Alt();
-//          alt.addString(c.isDeleted(), String.valueOf(chr));
-//          alts.addAlt(alt);
-//        }
-//      }
-//    }
-//    else {
-//      CharSet charSet = new CharSet(c.isDeleted(), false);
-//      charSet.getMembers().add(member.copy());
-//      Alt alt = new Alt();
-//      alt.addCharSet(charSet);
-//      alts.addAlt(alt);
-//    }
-//
-
-      // TODO populate with code
-    }
-    return normalizedCharSet;
   }
 
   @Override

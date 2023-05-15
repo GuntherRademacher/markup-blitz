@@ -1,11 +1,9 @@
-// This file was generated on Wed May 3, 2023 22:48 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Mon May 15, 2023 20:41 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.PriorityQueue;
-
-import de.bottlecaps.markup.blitz.transform.PostProcess;
 
 public class Ixml
 {
@@ -669,7 +667,7 @@ public class Ixml
       case 19:
         {
                                                             // line 79 "ixml.ebnf"
-                                                            alts.peek().last().addCharSet(charSet);
+                                                            alts.peek().last().addCharset(charset);
                                                             // line 672 "Ixml.java"
         }
         break;
@@ -725,42 +723,42 @@ public class Ixml
       case 27:
         {
                                                             // line 97 "ixml.ebnf"
-                                                            charSet = new CharSet(deleted, false);
+                                                            charset = new Charset(deleted, false);
                                                             // line 728 "Ixml.java"
         }
         break;
       case 28:
         {
                                                             // line 99 "ixml.ebnf"
-                                                            charSet = new CharSet(deleted, true);
+                                                            charset = new Charset(deleted, true);
                                                             // line 735 "Ixml.java"
         }
         break;
       case 29:
         {
                                                             // line 102 "ixml.ebnf"
-                                                            charSet.addLiteral(stringBuilder.toString(), false);
+                                                            charset.addLiteral(stringBuilder.toString(), false);
                                                             // line 742 "Ixml.java"
         }
         break;
       case 30:
         {
                                                             // line 103 "ixml.ebnf"
-                                                            charSet.addLiteral(codePoint, true);
+                                                            charset.addLiteral(codePoint, true);
                                                             // line 749 "Ixml.java"
         }
         break;
       case 31:
         {
                                                             // line 104 "ixml.ebnf"
-                                                            charSet.addRange(firstCodePoint, lastCodePoint);
+                                                            charset.addRange(firstCodePoint, lastCodePoint);
                                                             // line 756 "Ixml.java"
         }
         break;
       case 32:
         {
                                                             // line 105 "ixml.ebnf"
-                                                            charSet.addClass(clazz);
+                                                            charset.addClass(clazz);
                                                             // line 763 "Ixml.java"
         }
         break;
@@ -1712,7 +1710,7 @@ public class Ixml
                                                               private String firstCodePoint;
                                                               private String lastCodePoint;
                                                               private String clazz;
-                                                              private CharSet charSet;
+                                                              private Charset charset;
                                                               private Alt alt;
                                                               private Grammar grammar;
                                                               private Mark mark;
@@ -1722,9 +1720,8 @@ public class Ixml
                                                               private StringBuilder nameBuilder = new StringBuilder();
 
                                                               public Grammar grammar() {
-                                                                new PostProcess(grammar).visit(grammar);
                                                                 return grammar;
                                                               }
                                                             }
-                                                            // line 1728 "Ixml.java"
+                                                            // line 1727 "Ixml.java"
 // End

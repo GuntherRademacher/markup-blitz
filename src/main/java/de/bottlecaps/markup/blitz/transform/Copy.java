@@ -5,7 +5,7 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
-import de.bottlecaps.markup.blitz.grammar.CharSet;
+import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -86,8 +86,8 @@ public class Copy extends Visitor {
   }
 
   @Override
-  public void visit(CharSet c) {
-    CharSet set = new CharSet(c.isDeleted(), c.isExclusion());
+  public void visit(Charset c) {
+    Charset set = new Charset(c.isDeleted(), c.isExclusion());
     members = set.getMembers();
     for (Member member : c.getMembers())
       member.accept(this);

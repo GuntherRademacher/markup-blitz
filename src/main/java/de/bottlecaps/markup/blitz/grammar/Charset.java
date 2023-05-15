@@ -6,13 +6,13 @@ import java.util.stream.Collectors;
 
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
-public class CharSet extends Term {
+public class Charset extends Term {
   private final boolean deleted;
   private final boolean exclusion;
   private final List<Member> members;
   protected String bnfRuleName;
 
-  public CharSet(boolean deleted, boolean exclusion) {
+  public Charset(boolean deleted, boolean exclusion) {
     this.deleted = deleted;
     this.exclusion = exclusion;
     members = new ArrayList<>();
@@ -57,11 +57,11 @@ public class CharSet extends Term {
 
   @SuppressWarnings("unchecked")
   @Override
-  public CharSet copy() {
-    CharSet charSet = new CharSet(deleted, exclusion);
+  public Charset copy() {
+    Charset charset = new Charset(deleted, exclusion);
     for (Member member : members)
-      charSet.getMembers().add(member.copy());
-    return charSet;
+      charset.getMembers().add(member.copy());
+    return charset;
   }
 
   @Override
@@ -86,9 +86,9 @@ public class CharSet extends Term {
   public boolean equals(Object obj) {
     if (this == obj)
       return true;
-    if (!(obj instanceof CharSet))
+    if (!(obj instanceof Charset))
       return false;
-    CharSet other = (CharSet) obj;
+    Charset other = (Charset) obj;
     if (deleted != other.deleted)
       return false;
     if (exclusion != other.exclusion)

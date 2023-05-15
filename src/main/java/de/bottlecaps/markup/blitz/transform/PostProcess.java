@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
-import de.bottlecaps.markup.blitz.grammar.CharSet;
+import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -75,7 +75,7 @@ public class PostProcess extends Visitor {
   }
 
   @Override
-  public void visit(CharSet c) {
+  public void visit(Charset c) {
     super.visit(c);
     if (! (    c.getParent() instanceof Alt
             && ((Alt) c.getParent()).getTerms().size() == 1

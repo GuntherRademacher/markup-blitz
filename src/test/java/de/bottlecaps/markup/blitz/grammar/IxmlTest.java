@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
+import de.bottlecaps.markup.blitz.transform.PostProcess;
 
 public class IxmlTest {
     private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
@@ -87,6 +88,8 @@ public class IxmlTest {
       {
         throw new RuntimeException("ParseException while processing " + source + ":\n" + parser.getErrorMessage(pe), pe);
       }
-      return parser.grammar();
+      Grammar grammar = parser.grammar();
+      new PostProcess(grammar).visit(grammar);
+      return grammar;
     }
 }

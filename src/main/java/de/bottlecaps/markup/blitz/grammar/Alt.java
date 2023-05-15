@@ -34,8 +34,8 @@ public class Alt extends Node {
     terms.add(new Literal(deleted, value, true));
   }
 
-  public void addCharSet(CharSet charSet) {
-    terms.add(charSet);
+  public void addCharset(Charset charset) {
+    terms.add(charset);
   }
 
   public void addAlts(Alts alts) {

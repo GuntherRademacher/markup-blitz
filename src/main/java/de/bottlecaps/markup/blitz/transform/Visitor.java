@@ -2,7 +2,7 @@ package de.bottlecaps.markup.blitz.transform;
 
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
-import de.bottlecaps.markup.blitz.grammar.CharSet;
+import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -32,7 +32,7 @@ public abstract class Visitor {
     visitPostOrder(a);
   }
 
-  public void visit(CharSet c) {
+  public void visit(Charset c) {
     visitPreOrder(c);
     for (Member member : c.getMembers())
       member.accept(this);

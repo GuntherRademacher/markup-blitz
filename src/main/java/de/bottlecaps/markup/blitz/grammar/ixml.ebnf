@@ -76,7 +76,7 @@
      terminal::=                                            <?java deleted = false;?>
                  ( tmark s )?
                  ( literal
-                 | charset                                  <?java alts.peek().last().addCharSet(charSet);?>
+                 | charset                                  <?java alts.peek().last().addCharset(charset);?>
                  )
                  s
         tmark::= '^'
@@ -94,15 +94,15 @@
 
       charset::= inclusion
                | exclusion
-    inclusion::=                                            <?java charSet = new CharSet(deleted, false);?>
+    inclusion::=                                            <?java charset = new Charset(deleted, false);?>
                        set
-    exclusion::= '~' s                                      <?java charSet = new CharSet(deleted, true);?>
+    exclusion::= '~' s                                      <?java charset = new Charset(deleted, true);?>
                        set
           set::= '[' s  (member s ( ( ( ';' | '|' ) s) member s )* )? ']'
-       member::= string                                     <?java charSet.addLiteral(stringBuilder.toString(), false);?>
-               | hex                                        <?java charSet.addLiteral(codePoint, true);?>
-               | range                                      <?java charSet.addRange(firstCodePoint, lastCodePoint);?>
-               | class                                      <?java charSet.addClass(clazz);?>
+       member::= string                                     <?java charset.addLiteral(stringBuilder.toString(), false);?>
+               | hex                                        <?java charset.addLiteral(codePoint, true);?>
+               | range                                      <?java charset.addRange(firstCodePoint, lastCodePoint);?>
+               | class                                      <?java charset.addClass(clazz);?>
         range::= from s '-' s to
          from::= character                                  <?java firstCodePoint = codePoint;?>
            to::= character                                  <?java lastCodePoint = codePoint;?>
@@ -925,7 +925,7 @@ namefollower^token << '.' 'x'
                                                                 private String firstCodePoint;
                                                                 private String lastCodePoint;
                                                                 private String clazz;
-                                                                private CharSet charSet;
+                                                                private Charset charset;
                                                                 private Alt alt;
                                                                 private Grammar grammar;
                                                                 private Mark mark;
@@ -935,7 +935,6 @@ namefollower^token << '.' 'x'
                                                                 private StringBuilder nameBuilder = new StringBuilder();
                                                                 
                                                                 public Grammar grammar() {
-                                                                  new PostProcess(grammar).visit(grammar);
                                                                   return grammar;
                                                                 }
                                                               }

@@ -16,6 +16,7 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
 import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
 import de.bottlecaps.markup.blitz.transform.BNF;
+import de.bottlecaps.markup.blitz.transform.PostProcess;
 
 public class Blitz {
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
@@ -45,6 +46,7 @@ public class Blitz {
     }
 
     Grammar grammar = parser.grammar();
+    new PostProcess(grammar).visit(grammar);
 
 //    Node[] node = grammar.toBnf();
 //    System.out.println(node[0]);
