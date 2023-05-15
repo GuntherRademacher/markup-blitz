@@ -42,7 +42,6 @@ public class BNF extends Visitor {
   @Override
   public void visit(Grammar g) {
     copy = new Grammar();
-    // TODO: prevent duplicate rules (original + extra), making sure that result has proper mark
     super.visit(g);
     new PostProcess(copy).visit(copy);
   }
@@ -100,7 +99,24 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Literal l) {
-    alts.peek().last().getTerms().add(l.copy());
+    if (l.isHex() || l.getValue().length() == 1) {
+      alts.peek().last().getTerms().add(l.copy());
+    }
+    else {
+      Alt alt = new Alt();
+      for (char chr : l.getValue().toCharArray()) {
+        alt.addString(l.isDeleted(), String.valueOf(chr));
+      }
+      if (l.getParent() instanceof Alt) {
+        for (Term t : alt.getTerms())
+          alts.peek().last().getTerms().add(t);
+      }
+      else {
+        Alts a = new Alts();
+        a.addAlt(alt);
+        alts.peek().last().getTerms().add(a);
+      }
+    }
   }
 
   @Override
@@ -115,7 +131,6 @@ public class BNF extends Visitor {
         ? null
         : alts.peek().last().removeLast();
     Term term = alts.peek().last().removeLast();
-    // TODO: add rule
     String name = c.getBnfRuleName();
     alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETED, name));
     if (! additionalRules.contains(name)) {
@@ -194,17 +209,83 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(CharSet c) {
-    if (c.getBnfRuleName() != null) {
-      Nonterminal nonterminal = new Nonterminal(Mark.DELETED, c.getBnfRuleName());
-      alts.peek().last().getTerms().add(nonterminal);
-    }
-    else {
+    String name = c.getBnfRuleName();
+    if (name == null) {
       CharSet set = new CharSet(c.isDeleted(), c.isExclusion());
       members = set.getMembers();
       for (Member member : c.getMembers())
         member.accept(this);
       alts.peek().last().getTerms().add(set);
     }
+    else {
+      // TODO: calculate complement set for exclusions
+      Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
+      alts.peek().last().getTerms().add(nonterminal);
+      if (! additionalRules.contains(name)) {
+        Alts alts = new Alts();
+        for (Member member : c.getMembers()) {
+          if (member instanceof StringMember) {
+            StringMember m = (StringMember) member;
+            if (m.isHex()) {
+              Alt alt = new Alt();
+              alt.addCodePoint(c.isDeleted(), name);
+              alts.addAlt(alt);
+            }
+            else {
+              for (char chr : m.getValue().toCharArray()) {
+                Alt alt = new Alt();
+                alt.addString(c.isDeleted(), String.valueOf(chr));
+                alts.addAlt(alt);
+              }
+            }
+          }
+          else {
+            CharSet charSet = new CharSet(c.isDeleted(), false);
+            charSet.getMembers().add(member.copy());
+            Alt alt = new Alt();
+            alt.addCharSet(charSet);
+            alts.addAlt(alt);
+          }
+        }
+        Rule additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+        additionalRules.add(additionalRule.getName());
+        justAdded.offer(additionalRule);
+      }
+    }
+  }
+
+  private CharSet normalize(CharSet c) {
+    // TODO: handle exclusions
+    CharSet normalizedCharSet = new CharSet(c.isDeleted(), false);
+    for (Member member : c.getMembers()) {
+//
+//    if (member instanceof StringMember) {
+//      StringMember m = (StringMember) member;
+//      if (m.isHex()) {
+//        Alt alt = new Alt();
+//        alt.addCodePoint(c.isDeleted(), name);
+//        alts.addAlt(alt);
+//      }
+//      else {
+//        for (char chr : m.getValue().toCharArray()) {
+//          Alt alt = new Alt();
+//          alt.addString(c.isDeleted(), String.valueOf(chr));
+//          alts.addAlt(alt);
+//        }
+//      }
+//    }
+//    else {
+//      CharSet charSet = new CharSet(c.isDeleted(), false);
+//      charSet.getMembers().add(member.copy());
+//      Alt alt = new Alt();
+//      alt.addCharSet(charSet);
+//      alts.addAlt(alt);
+//    }
+//
+
+      // TODO populate with code
+    }
+    return normalizedCharSet;
   }
 
   @Override

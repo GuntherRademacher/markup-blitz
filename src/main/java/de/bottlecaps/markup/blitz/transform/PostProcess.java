@@ -6,15 +6,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.CharSet;
 import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
+import de.bottlecaps.markup.blitz.grammar.Literal;
+import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Occurrence;
+import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
@@ -28,10 +32,12 @@ public class PostProcess extends Visitor {
   private Grammar grammar;
   private Rule rule;
   private Node parent;
+  private RangeSet.Builder charRanges;
 
   public PostProcess(Grammar grammar) {
     this.grammar = grammar;
     this.nameByRhs = new HashMap<>();
+    this.charRanges = new RangeSet.Builder();
   }
 
   @Override
@@ -48,15 +54,11 @@ public class PostProcess extends Visitor {
       }
     }
     super.visit(g);
+    grammar.setCharRanges(charRanges.build().split());
 
 // TODO: remove
-//
-//    System.out.println();
-//    System.out.println();
-//    nameByRhs.forEach((k,v) -> System.out.println(v + ": " + k));
-//    System.out.println();
-//    System.out.println();
-//
+    System.out.println("-------------------------");
+    System.out.println(grammar.getCharRanges());
   }
 
   @Override
@@ -85,6 +87,33 @@ public class PostProcess extends Visitor {
            )
        )
       c.setBnfRuleName(getAdditionalName(c, "choice"));
+    RangeSet.Builder builder = new RangeSet.Builder();
+    for (Member member : c.getMembers()) {
+      if (member instanceof StringMember) {
+        StringMember m = (StringMember) member;
+        String value = m.getValue();
+        if (m.isHex()) {
+          int codePoint = Integer.parseInt(value.substring(1), 16);
+          builder.add(codePoint);
+        }
+        else {
+          for (char chr : value.toCharArray())
+            builder.add(chr);
+        }
+      }
+      else if (member instanceof RangeMember) {
+        builder.add(((RangeMember) member).getRange());
+      }
+      else if (member instanceof ClassMember) {
+        // TODO: remove
+        System.out.println("unicode char class: " + ((ClassMember) member).getValue());
+        // TODO: throw new UnsupportedOperationException();
+      }
+      else {
+        throw new IllegalStateException();
+      }
+    }
+    builder.build().join().forEach(charRanges::add);
   }
 
   @Override
@@ -112,6 +141,20 @@ public class PostProcess extends Visitor {
   @Override
   public void visit(Nonterminal n) {
     super.visit(n);
+  }
+
+  @Override
+  public void visit(Literal l) {
+    super.visit(l);
+    String value = l.getValue();
+    if (l.isHex()) {
+      int codePoint = Integer.parseInt(value.substring(1), 16);
+      charRanges.add(codePoint);
+    }
+    else {
+      for (char chr : l.getValue().toCharArray())
+        charRanges.add(chr);
+    }
   }
 
   @Override

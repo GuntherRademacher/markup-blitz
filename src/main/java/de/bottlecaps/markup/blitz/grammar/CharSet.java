@@ -10,6 +10,7 @@ public class CharSet extends Term {
   private final boolean deleted;
   private final boolean exclusion;
   private final List<Member> members;
+  protected String bnfRuleName;
 
   public CharSet(boolean deleted, boolean exclusion) {
     this.deleted = deleted;
@@ -27,6 +28,14 @@ public class CharSet extends Term {
 
   public List<Member> getMembers() {
     return members;
+  }
+
+  public void setBnfRuleName(String bnfRuleName) {
+    this.bnfRuleName = bnfRuleName;
+  }
+
+  public String getBnfRuleName() {
+    return bnfRuleName;
   }
 
   public void addLiteral(String literal, boolean isHex) {

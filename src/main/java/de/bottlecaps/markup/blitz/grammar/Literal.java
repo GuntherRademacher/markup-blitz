@@ -7,6 +7,12 @@ public class Literal extends Term {
   protected final String value;
   protected final boolean isHex;
 
+  public Literal(boolean deleted, String value, boolean isHex) {
+    this.deleted = deleted;
+    this.value = value;
+    this.isHex = isHex;
+  }
+
   public boolean isDeleted() {
     return deleted;
   }
@@ -15,14 +21,8 @@ public class Literal extends Term {
     return value;
   }
 
-  public Boolean getIsHex() {
+  public boolean isHex() {
     return isHex;
-  }
-
-  public Literal(boolean deleted, String value, boolean isHex) {
-    this.deleted = deleted;
-    this.value = value;
-    this.isHex = isHex;
   }
 
   @Override

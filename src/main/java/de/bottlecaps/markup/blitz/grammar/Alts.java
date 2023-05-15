@@ -8,6 +8,7 @@ import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Alts extends Term {
   protected final List<Alt> alts;
+  protected String bnfRuleName;
 
   public Alts() {
     alts = new ArrayList<>();
@@ -15,6 +16,14 @@ public class Alts extends Term {
 
   public List<Alt> getAlts() {
     return alts;
+  }
+
+  public void setBnfRuleName(String bnfRuleName) {
+    this.bnfRuleName = bnfRuleName;
+  }
+
+  public String getBnfRuleName() {
+    return bnfRuleName;
   }
 
   public void addAlt(Alt alt) {

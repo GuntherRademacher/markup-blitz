@@ -38,6 +38,12 @@ public class IxmlTest {
     }
 
     @Test
+    public void testJsonIxmlResource() throws Exception {
+      Grammar grammar = parse(jsonIxmlResourceContent, jsonIxmlResource);
+      assertEquals(jsonIxmlResourceContent, grammar.toString(), "roundtrip failed for " + jsonIxmlResource);
+    }
+
+    @Test
     public void testGithubJsonIxmlUrl() throws Exception {
       testUrlContent(githubJsonIxmlUrl, jsonIxmlResource, jsonIxmlResourceContent);
     }

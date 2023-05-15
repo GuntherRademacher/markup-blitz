@@ -4,10 +4,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.character.Range;
+import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Grammar extends Node {
   private final Map<String, Rule> rules;
+  // metadata
+  private RangeSet charRanges = null;
+  private Map<Range, Integer> charClasses = null;
 
   public Grammar() {
     this.rules = new LinkedHashMap<>();
@@ -15,6 +20,18 @@ public class Grammar extends Node {
 
   public Map<String, Rule> getRules() {
     return rules;
+  }
+
+  public void setCharRanges(RangeSet charRanges) {
+    this.charRanges = charRanges;
+  }
+
+  public RangeSet getCharRanges() {
+    return charRanges;
+  }
+
+  public Map<Range, Integer> getCharClasses() {
+    return charClasses;
   }
 
   public void addRule(Rule rule) {
