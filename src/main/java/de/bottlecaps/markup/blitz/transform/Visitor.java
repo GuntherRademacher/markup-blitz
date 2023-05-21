@@ -17,7 +17,6 @@ import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public abstract class Visitor {
-
   public void visit(Alt a) {
     visitPreOrder(a);
     for (Term term : a.getTerms())

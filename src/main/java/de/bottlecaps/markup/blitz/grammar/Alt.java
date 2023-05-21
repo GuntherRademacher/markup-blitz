@@ -34,12 +34,13 @@ public class Alt extends Node {
     terms.add(new Literal(deleted, value, true));
   }
 
-  public void addCharset(Charset charset) {
+  public Alt addCharset(Charset charset) {
     terms.add(charset);
+    return this;
   }
 
   public void addAlts(Alts alts) {
-    terms.add(alts);
+      terms.add(alts);
   }
 
   public void addControl(Occurrence occurrence, Term term, Term separator) {
@@ -52,26 +53,6 @@ public class Alt extends Node {
 
   public void addHexInsertion(String hex) {
     terms.add(new Insertion(hex, true));
-  }
-
-  Alt mergeTerm(Term term, List<Node> rules, Grammar names) {
-    if (! (term instanceof Alts)) {
-      terms.add(term);
-    }
-    else if (((Alts) term).alts.size() == 1) {
-      for (Term t : ((Alts) term).alts.get(0).terms)
-        terms.add(t);
-    }
-    else {
-      // (e1; e2; ...; en) ==> x where -x: e1; e2; ...; en.
-      String name = "__x";
-      terms.add(new Nonterminal(Mark.NONE, name));
-      Alts alts = new Alts();
-      for (Alt a : ((Alts) term).alts)
-        alts.addAlt(a);
-      rules.add(new Rule(Mark.DELETED, name, alts));
-    }
-    return this;
   }
 
   @Override

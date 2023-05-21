@@ -6,8 +6,12 @@ import de.bottlecaps.markup.blitz.transform.Visitor;
 public class RangeMember extends Member {
   private final Range range;
 
+  public RangeMember(Range range) {
+    this.range = range;
+  }
+
   public RangeMember(String firstValue, String lastValue) {
-    this.range = new Range(codePoint(firstValue), codePoint(lastValue));
+    this(new Range(codePoint(firstValue), codePoint(lastValue)));
   }
 
   public Range getRange() {

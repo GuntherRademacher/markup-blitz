@@ -3,9 +3,9 @@ package de.bottlecaps.markup.blitz.grammar;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public abstract class Node implements Cloneable {
-  private Grammar grammar;
-  private Rule rule;
-  private Node parent;
+  protected Grammar grammar;
+  protected Rule rule;
+  protected Node parent;
 
   public abstract void accept(Visitor v);
 

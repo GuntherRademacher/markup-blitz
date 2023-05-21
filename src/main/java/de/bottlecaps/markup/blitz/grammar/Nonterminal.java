@@ -19,6 +19,15 @@ public class Nonterminal extends Term {
     return name;
   }
 
+  public Mark getEffectiveMark() {
+    if (mark != Mark.NONE)
+      return mark;
+    Rule definition = grammar.getRules().get(name);
+    return definition.getMark() == Mark.NONE
+        ? Mark.ELEMENT
+        : definition.getMark();
+  }
+
   @Override
   public void accept(Visitor v) {
     v.visit(this);

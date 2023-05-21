@@ -6,8 +6,6 @@ public class Control extends Term {
   private final Occurrence occurrence;
   private final Term term;
   private final Term separator;
-  private String bnfRuleName;
-  private String listBnfRuleName;
 
   public Control(Occurrence occurrence, Term term, Term separator) {
     this.occurrence = occurrence;
@@ -25,22 +23,6 @@ public class Control extends Term {
 
   public Term getSeparator() {
     return separator;
-  }
-
-  public void setBnfRuleName(String bnfRuleName) {
-    this.bnfRuleName = bnfRuleName;
-  }
-
-  public String getBnfRuleName() {
-    return bnfRuleName;
-  }
-
-  public void setListBnfRuleName(String listBnfRuleName) {
-    this.listBnfRuleName = listBnfRuleName;
-  }
-
-  public String getListBnfRuleName() {
-    return listBnfRuleName;
   }
 
   @Override

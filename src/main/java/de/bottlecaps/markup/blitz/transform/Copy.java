@@ -20,22 +20,17 @@ import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class Copy extends Visitor {
   protected List<Member> members;
-  protected Stack<Alts> alts = new Stack<>();
-  protected Grammar copy;
+  protected final Stack<Alts> alts = new Stack<>();
+  protected final Grammar copy = new Grammar();
 
-  public Copy(Grammar g) {
-    visit(g);
+  protected Copy() {
   }
 
-  public Grammar get() {
-    return copy;
-  }
-
-  @Override
-  public void visit(Grammar g) {
-    copy = new Grammar();
-    super.visit(g);
-    new PostProcess(copy).visit(copy);
+  public static Grammar process(Grammar g) {
+    Copy c = new Copy();
+    c.visit(g);
+    PostProcess.process(c.copy);
+    return  c.copy;
   }
 
   @Override
@@ -46,9 +41,11 @@ public class Copy extends Visitor {
 
   @Override
   public void visit(Alts a) {
+    boolean topLevel = alts.isEmpty();
     alts.push(new Alts());
     super.visit(a);
-    if (alts.size() != 1) {
+    // if not rule level, integrate into enclosing term
+    if (! topLevel) {
       Alts nested = alts.pop();
       alts.peek().last().addAlts(nested);
     }

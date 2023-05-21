@@ -26,6 +26,7 @@ public class Rule extends Node {
   public Alts getAlts() {
     return alts;
   }
+
   @Override
   public void accept(Visitor v) {
     v.visit(this);

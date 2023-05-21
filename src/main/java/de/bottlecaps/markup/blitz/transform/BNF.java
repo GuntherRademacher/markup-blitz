@@ -3,6 +3,7 @@ package de.bottlecaps.markup.blitz.transform;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -28,22 +29,34 @@ public class BNF extends Visitor {
   private List<Member> members;
   private Stack<Alts> alts = new Stack<>();
   private Grammar copy;
+  private Map<Term, String[]> additionalNames;
   private Queue<Rule> justAdded = new LinkedList<>();
   private Set<String> additionalRules = new HashSet<>();
+  private Grammar grammar;
 
-  public BNF(Grammar g) {
-    visit(g);
+  private BNF(Grammar grammar, Map<Term, String[]> additionalNames) {
+    this.grammar = grammar;
+    this.additionalNames = additionalNames;
   }
 
-  public Grammar get() {
-    return copy;
+  public static Grammar process(Grammar g) {
+    CombineCharsets cc = new CombineCharsets();
+    Grammar grammar = cc.combine(g);
+
+    GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar);
+    generateNames.visit(g);
+
+    BNF bnf = new BNF(grammar, generateNames.getAdditionalNames());
+    bnf.visit(g);
+
+    PostProcess.process(bnf.copy);
+    return bnf.copy;
   }
 
   @Override
   public void visit(Grammar g) {
     copy = new Grammar();
     super.visit(g);
-    new PostProcess(copy).visit(copy);
   }
 
   @Override
@@ -58,8 +71,8 @@ public class BNF extends Visitor {
   public void visit(Alts a) {
     alts.push(new Alts());
     super.visit(a);
-    String name = a.getBnfRuleName();
-    if (name == null) {
+    String[] names = additionalNames.get(a);
+    if (names == null) {
       // add to enclosing term, unless rule level Alts
       if (alts.size() != 1) {
         Alts nested = alts.pop();
@@ -67,6 +80,7 @@ public class BNF extends Visitor {
       }
     }
     else {
+      String name = names[0];
       Alts pop = alts.pop();
       Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
       alts.peek().last().getTerms().add(nonterminal);
@@ -80,7 +94,7 @@ public class BNF extends Visitor {
   }
 
   private Mark mark(String name, Node context, Mark defaultMark) {
-    Rule rule = context.getGrammar().getRules().get(name);
+    Rule rule = grammar.getRules().get(name);
     return rule == null
         ? defaultMark
         : rule.getMark();
@@ -131,7 +145,8 @@ public class BNF extends Visitor {
         ? null
         : alts.peek().last().removeLast();
     Term term = alts.peek().last().removeLast();
-    String name = c.getBnfRuleName();
+    String[] names = additionalNames.get(c);
+    String name = names[0];
     alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETED, name));
     if (! additionalRules.contains(name)) {
       Rule additionalRule;
@@ -166,12 +181,13 @@ public class BNF extends Visitor {
             justAdded.offer(additionalRule);
           }
           else {
-            String listName = c.getListBnfRuleName(); {
+            String listName = names[1]; {
               Alts alts = new Alts();
               Alt alt1 = new Alt();
               alt1.getTerms().add(term.copy());
               Alt alt2 = new Alt();
               alt2.addNonterminal(Mark.DELETED, listName);
+              alt2.getTerms().add(separator.copy());
               alt2.getTerms().add(term.copy());
               alts.addAlt(alt1);
               alts.addAlt(alt2);
@@ -209,8 +225,8 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    String name = c.getBnfRuleName();
-    if (name == null) {
+    String[] names = additionalNames.get(c);
+    if (names == null) {
       Charset set = new Charset(c.isDeleted(), c.isExclusion());
       members = set.getMembers();
       for (Member member : c.getMembers())
@@ -218,6 +234,7 @@ public class BNF extends Visitor {
       alts.peek().last().getTerms().add(set);
     }
     else {
+      String name = names[0];
       // TODO: calculate complement set for exclusions
       Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
       alts.peek().last().getTerms().add(nonterminal);
@@ -228,7 +245,7 @@ public class BNF extends Visitor {
             StringMember m = (StringMember) member;
             if (m.isHex()) {
               Alt alt = new Alt();
-              alt.addCodePoint(c.isDeleted(), name);
+              alt.addCodePoint(c.isDeleted(), m.getValue());
               alts.addAlt(alt);
             }
             else {
