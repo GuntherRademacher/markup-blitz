@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
@@ -47,7 +48,8 @@ public class CombineCharsets extends Copy {
       g.getRules().get(name).accept(this);
     }
     PostProcess.process(copy);
-    CollectRanges.process(copy);
+    RangeCollector.process(copy, new TreeMap<>());
+
     return copy;
   }
 
@@ -213,19 +215,43 @@ public class CombineCharsets extends Copy {
     }
   }
 
-  private static class CollectRanges extends Visitor {
-    private Set<RangeSet> allRangeSets = new HashSet<>();
-    private RangeSet.Builder builder = new RangeSet.Builder();
+  private static class RangeCollector extends Visitor {
+    /** All (combined) sets that are used in the grammar. */
+    private Set<RangeSet> allRangeSets;
+    /** Builder for the set of all ranges from all sets. */
+    private RangeSet.Builder builder;
+    /** All ranges that are used in the grammar . */
+    private RangeSet allRanges;
+    /** The set of sets using each range. The distinct values of this provide the char classes. */
+    private Map<Range, Set<RangeSet>> rangeToUsingSets = new TreeMap<>();
+    /** The char classes by their using sets. */
+    private Map<Set<RangeSet>, RangeSet> usingSetsToCharclasses;
 
-    public static Grammar process(Grammar g) {
-      CollectRanges cr = new CollectRanges();
+    /**
+     * Process a grammar and populate the mapping from charsets to charclass sets.
+     *
+     * @param g the grammar.
+     * @param charsetToCharclasses the resulting mapping from original sets to charclass
+     *   sets. Should be passed as an empty map.
+     */
+    public static void process(Grammar g, Map<RangeSet, Set<RangeSet>> charsetToCharclasses) {
+      RangeCollector cr = new RangeCollector();
+      cr.allRangeSets = new HashSet<>();
+      cr.builder = new RangeSet.Builder();
       cr.visit(g);
-      RangeSet allRanges = cr.builder.build().split();
 
-      Map<Range, Set<RangeSet>> rangeToUsingSets = new TreeMap<>();
+      System.out.println("========= " + cr.allRangeSets.size() + " distinct range sets");
+      cr.allRangeSets.forEach(v -> System.out.println("     " + v));
+
+      cr.allRanges = cr.builder.build().split();
+
+      System.out.println("========= " + cr.allRanges.size() + " distinct ranges:");
+      cr.allRanges.forEach(v -> System.out.println("     " + v));
+
+      cr.rangeToUsingSets = new TreeMap<>();
       for (RangeSet rangeSet : cr.allRangeSets) {
-        for (Range range : allRanges.split(rangeSet)) {
-          rangeToUsingSets.compute(range, (k, v) -> {
+        for (Range range : cr.allRanges.split(rangeSet)) {
+          cr.rangeToUsingSets.compute(range, (k, v) -> {
             if (v == null) v = new HashSet<>();
             v.add(rangeSet);
             return v;
@@ -233,12 +259,12 @@ public class CombineCharsets extends Copy {
         }
       }
 
-      System.out.println("========= " + rangeToUsingSets.size() + " ranges and using range sets:");
-      rangeToUsingSets.forEach((k, v) -> System.out.println("     " + k + " is used in:" + v));
+      System.out.println("========= " + cr.rangeToUsingSets.size() + " ranges and using range sets:");
+      cr.rangeToUsingSets.forEach((k, v) -> System.out.println("     " + k + " is used in:" + v));
 
-      Map<Set<RangeSet>, RangeSet> charclassToRanges = new HashMap<>();
-      rangeToUsingSets.forEach((range, usingSets) -> {
-        charclassToRanges.compute(usingSets, (charclass, ranges) -> {
+      cr.usingSetsToCharclasses = new HashMap<>();
+      cr.rangeToUsingSets.forEach((range, usingSets) -> {
+        cr.usingSetsToCharclasses.compute(usingSets, (charclass, ranges) -> {
           Builder builder = new RangeSet.Builder();
           if (ranges != null)
             ranges.forEach(builder::add);
@@ -247,11 +273,26 @@ public class CombineCharsets extends Copy {
         });
       });
 
-      System.out.println("========= " + charclassToRanges.size() + " charclasses:");
-      charclassToRanges.values().stream().sorted().forEach(v -> System.out.println("     " + v));
+      System.out.println("========= " + cr.usingSetsToCharclasses.size() + " charclasses:");
+      cr.usingSetsToCharclasses.values().stream().sorted().forEach(v -> System.out.println("     " + v));
+
+      charsetToCharclasses.clear();
+      for (RangeSet set : cr.allRangeSets) {
+        Set<RangeSet> charclasses = new TreeSet<>();
+        for (Range range : cr.allRanges.split(set))
+          charclasses.add(cr.usingSetsToCharclasses.get(cr.rangeToUsingSets.get(range)));
+        charsetToCharclasses.put(set, charclasses);
+      }
+
+      System.out.println("========= " + charsetToCharclasses.size() + " set to charclasses mappings:");
+      charsetToCharclasses.forEach((k, v) -> System.out.println("     " + k + " =>\n         " + v));
+
       System.out.println("=========");
 
-      return g;
+      // TODO: create mapping each original (combined) charset to a choice over a set of charclasses.
+      // Then replace in the grammar. After that each Literal should be a single char and each
+      // Charset should represent a charclass. The only thing left to do is to separate out
+      // hex Literals and Charsets and non-singular Charsets into token rules.
     }
 
     @Override
@@ -276,5 +317,9 @@ public class CombineCharsets extends Copy {
         }
       }
     }
+  }
+
+  private static class ReplaceCharsets extends Copy {
+
   }
 }
