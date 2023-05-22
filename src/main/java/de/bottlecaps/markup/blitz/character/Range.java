@@ -38,10 +38,14 @@ public class Range implements Comparable<Range> {
   private String toString(int codePoint) {
     if (codePoint == '\'')
       return "\"'\"";
-    else if (codePoint >= ' ' && codePoint <= '~')
+    else if (isAscii(codePoint))
       return "'" + (char) codePoint + "'";
     else
       return "#" + Integer.toHexString(codePoint);
+  }
+
+  public static boolean isAscii(int codePoint) {
+    return codePoint >= ' ' && codePoint <= '~';
   }
 
   @Override
@@ -74,5 +78,9 @@ public class Range implements Comparable<Range> {
     if ( lastCodePoint < other. lastCodePoint) return -1;
     if ( lastCodePoint > other. lastCodePoint) return  1;
                                                return  0;
+  }
+
+  public int size() {
+    return lastCodePoint - firstCodePoint + 1;
   }
 }

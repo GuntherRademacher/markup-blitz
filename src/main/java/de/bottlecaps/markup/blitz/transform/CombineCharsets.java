@@ -28,6 +28,7 @@ import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.StringMember;
+import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class CombineCharsets extends Copy {
   private Queue<String> todo;
@@ -48,9 +49,10 @@ public class CombineCharsets extends Copy {
       g.getRules().get(name).accept(this);
     }
     PostProcess.process(copy);
-    RangeCollector.process(copy, new TreeMap<>());
+    Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
+    RangeCollector.process(copy, charsetToCharclasses);
 
-    return copy;
+    return ReplaceCharsets.process(copy, charsetToCharclasses);
   }
 
   @Override
@@ -217,7 +219,7 @@ public class CombineCharsets extends Copy {
 
   private static class RangeCollector extends Visitor {
     /** All (combined) sets that are used in the grammar. */
-    private Set<RangeSet> allRangeSets;
+    private Map<Term, RangeSet> allRangeSets;
     /** Builder for the set of all ranges from all sets. */
     private RangeSet.Builder builder;
     /** All ranges that are used in the grammar . */
@@ -234,14 +236,14 @@ public class CombineCharsets extends Copy {
      * @param charsetToCharclasses the resulting mapping from original sets to charclass
      *   sets. Should be passed as an empty map.
      */
-    public static void process(Grammar g, Map<RangeSet, Set<RangeSet>> charsetToCharclasses) {
+    public static void process(Grammar g, Map<Charset, Set<RangeSet>> charsetToCharclasses) {
       RangeCollector cr = new RangeCollector();
-      cr.allRangeSets = new HashSet<>();
+      cr.allRangeSets = new HashMap<>();
       cr.builder = new RangeSet.Builder();
       cr.visit(g);
 
-      System.out.println("========= " + cr.allRangeSets.size() + " distinct range sets");
-      cr.allRangeSets.forEach(v -> System.out.println("     " + v));
+      System.out.println("========= " + cr.allRangeSets.values().size() + " distinct range sets");
+      cr.allRangeSets.values().forEach(v -> System.out.println("     " + v));
 
       cr.allRanges = cr.builder.build().split();
 
@@ -249,7 +251,7 @@ public class CombineCharsets extends Copy {
       cr.allRanges.forEach(v -> System.out.println("     " + v));
 
       cr.rangeToUsingSets = new TreeMap<>();
-      for (RangeSet rangeSet : cr.allRangeSets) {
+      for (RangeSet rangeSet : cr.allRangeSets.values()) {
         for (Range range : cr.allRanges.split(rangeSet)) {
           cr.rangeToUsingSets.compute(range, (k, v) -> {
             if (v == null) v = new HashSet<>();
@@ -276,13 +278,13 @@ public class CombineCharsets extends Copy {
       System.out.println("========= " + cr.usingSetsToCharclasses.size() + " charclasses:");
       cr.usingSetsToCharclasses.values().stream().sorted().forEach(v -> System.out.println("     " + v));
 
-      charsetToCharclasses.clear();
-      for (RangeSet set : cr.allRangeSets) {
+      cr.allRangeSets.forEach((term, set) -> {
         Set<RangeSet> charclasses = new TreeSet<>();
         for (Range range : cr.allRanges.split(set))
           charclasses.add(cr.usingSetsToCharclasses.get(cr.rangeToUsingSets.get(range)));
-        charsetToCharclasses.put(set, charclasses);
-      }
+        if (term instanceof Charset)
+          charsetToCharclasses.put((Charset) term, charclasses);
+      });
 
       System.out.println("========= " + charsetToCharclasses.size() + " set to charclasses mappings:");
       charsetToCharclasses.forEach((k, v) -> System.out.println("     " + k + " =>\n         " + v));
@@ -298,7 +300,7 @@ public class CombineCharsets extends Copy {
     @Override
     public void visit(Charset c) {
       RangeSet set = RangeSet.of(c).join();
-      allRangeSets.add(set);
+      allRangeSets.put(c, set);
       set.forEach(builder::add);
     }
 
@@ -306,13 +308,13 @@ public class CombineCharsets extends Copy {
     public void visit(Literal l) {
       if (l.isHex()) {
         Range range = new Range(Integer.parseInt(l.getValue().substring(1), 16));
-        allRangeSets.add(RangeSet.of(range));
+        allRangeSets.put(l, RangeSet.of(range));
         builder.add(range);
       }
       else {
         for (char c : l.getValue().toCharArray()) {
           Range range = new Range(c);
-          allRangeSets.add(RangeSet.of(range));
+          allRangeSets.put(new Literal(l.isDeleted(), Character.toString(c), false), RangeSet.of(range));
           builder.add(range);
         }
       }
@@ -320,6 +322,47 @@ public class CombineCharsets extends Copy {
   }
 
   private static class ReplaceCharsets extends Copy {
+    private Map<Charset, Set<RangeSet>> charsetToCharclasses;
 
+    private ReplaceCharsets() {
+    }
+
+    public static Grammar process(Grammar g, Map<Charset, Set<RangeSet>> charsetToCharclasses) {
+      ReplaceCharsets rc = new ReplaceCharsets();
+      rc.charsetToCharclasses = charsetToCharclasses;
+      rc.visit(g);
+      PostProcess.process(rc.copy);
+      return rc.copy;
+    }
+
+    @Override
+    public void visit(Charset c) {
+      Set<RangeSet> rangeSets = charsetToCharclasses.get(c);
+
+      if (rangeSets.size() == 1) {
+        RangeSet firstSet = rangeSets.iterator().next();
+        Range firstRange = firstSet.iterator().next();
+        if (firstSet.size() == 1 && firstRange.size() == 1) {
+          // single character, represent as Literal
+          int codePoint = firstRange.getFirstCodePoint();
+          Literal literal = Range.isAscii(codePoint)
+              ? new Literal(c.isDeleted(), Character.toString(codePoint), false)
+              : new Literal(c.isDeleted(), "#" + Integer.toHexString(codePoint), true);
+          alts.peek().last().getTerms().add(literal);
+        }
+        else {
+          alts.peek().last().getTerms().add(firstSet.toTerm(c.isDeleted()));
+        }
+      }
+      else {
+        Alts a = new Alts();
+        for (RangeSet rangeSet : rangeSets) {
+          Alt alt = new Alt();
+          alt.getTerms().add(rangeSet.toTerm(c.isDeleted()));
+          a.addAlt(alt);
+        }
+        alts.peek().last().getTerms().add(a);
+      }
+    }
   }
 }

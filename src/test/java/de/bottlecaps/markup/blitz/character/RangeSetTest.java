@@ -157,7 +157,7 @@ public class RangeSetTest {
         new Range('a', 'z')
       )
       .complement();
-      assertEquals("[#9-#a; #d; ' '-'`'; '{'-#d7ff; #e000-#fffd; #10000-#10ffff]", set.toString());
+      assertEquals("[#9-#a; #d; ' '-'`'; '{'-#d7ff; #e000-#fffd; #10000-#10fffd]", set.toString());
       assertEquals("['a'-'z']", set.complement().toString());
     }
   }

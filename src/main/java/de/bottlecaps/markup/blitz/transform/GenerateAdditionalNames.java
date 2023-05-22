@@ -88,6 +88,7 @@ public class GenerateAdditionalNames extends Visitor {
       String name0 = getAdditionalName(c, "list_option");
       if (c.getSeparator() != null) {
         Control list = new Control(Occurrence.ONE_OR_MORE, c.getTerm(), c.getSeparator());
+        list.setRule(c.getRule());
         String name1 = getAdditionalName(list, "list");
         addAdditionalNames(c, name0, name1);
       }
@@ -104,6 +105,7 @@ public class GenerateAdditionalNames extends Visitor {
   }
 
   public String getAdditionalName(Term term, String suffix) {
+    String proposal = term.getRule().getName();
     Alts alts;
     if (term instanceof Alts) {
       alts = (Alts) term;
@@ -117,7 +119,8 @@ public class GenerateAdditionalNames extends Visitor {
     }
     String name = nameByRhs.get(alts);
     if (name == null) {
-      name = getAdditionalName(term.toString(), suffix);
+//      name = getAdditionalName(term.toString(), suffix);
+      name = getAdditionalName(proposal, suffix);
       nameByRhs.put(alts, name);
     }
     return name;
@@ -132,6 +135,8 @@ public class GenerateAdditionalNames extends Visitor {
       if (chr == '_' && last == '_') continue;
       last = chr;
       sb.append(last);
+      if (sb.length() >= 48)
+        break;
     }
     if (sb.length() != 0 && sb.charAt(sb.length() - 1) != '_') {
       sb.append("_");

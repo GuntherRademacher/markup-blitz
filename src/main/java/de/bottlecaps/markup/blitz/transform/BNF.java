@@ -44,10 +44,10 @@ public class BNF extends Visitor {
     Grammar grammar = cc.combine(g);
 
     GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar);
-    generateNames.visit(g);
+    generateNames.visit(grammar);
 
     BNF bnf = new BNF(grammar, generateNames.getAdditionalNames());
-    bnf.visit(g);
+    bnf.visit(grammar);
 
     PostProcess.process(bnf.copy);
     return bnf.copy;
