@@ -32,6 +32,29 @@ public class PostProcess extends Visitor {
   }
 
   @Override
+  public void visit(Alts a) {
+    visitPreOrder(a);
+    List<Alt> flattenedAlts = new ArrayList<>();
+    for (Alt alt : a.getAlts()) {
+      if (alt.getTerms().size() != 1 || ! (alt.getTerms().get(0) instanceof Alts)) {
+        visit(alt);
+        flattenedAlts.add(alt);
+      }
+      else {
+        Alts nestedAlts = (Alts) alt.getTerms().get(0);
+        visit(nestedAlts);
+        for (Alt nestedAlt : nestedAlts.getAlts()) {
+          nestedAlt.setParent(a);
+          flattenedAlts.add(nestedAlt);
+        }
+      }
+    }
+    a.getAlts().clear();
+    a.getAlts().addAll(flattenedAlts);
+    visitPostOrder(a);
+  }
+
+  @Override
   public void visit(Alt a) {
     visitPreOrder(a);
     List<Term> flattenedTerms = new ArrayList<>();

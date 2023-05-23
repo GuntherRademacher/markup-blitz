@@ -40,11 +40,17 @@ public class BNF extends Visitor {
   }
 
   public static Grammar process(Grammar g) {
+    System.out.println("-------- before combine:\n" + g);
+
     CombineCharsets cc = new CombineCharsets();
     Grammar grammar = cc.combine(g);
 
     GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar);
     generateNames.visit(grammar);
+
+    System.out.println("-------- after combine:\n" + grammar);
+
+    System.out.println("-------- after bnf:");
 
     BNF bnf = new BNF(grammar, generateNames.getAdditionalNames());
     bnf.visit(grammar);

@@ -10,12 +10,10 @@ import java.util.regex.Pattern;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
-import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class GenerateAdditionalNames extends Visitor {
@@ -63,18 +61,13 @@ public class GenerateAdditionalNames extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    super.visit(c);
-    if (! (    c.getParent() instanceof Alt
-            && ((Alt) c.getParent()).getTerms().size() == 1
-          )
-        && (   c.isExclusion()
-            || c.getMembers().size() > 1
-            || c.getMembers().stream().anyMatch(m -> m instanceof StringMember && ((StringMember) m).getValue().length() > 1)
-            || c.getMembers().stream().anyMatch(m -> m instanceof ClassMember)
-           )
-       ) {
-      addAdditionalNames(c, getAdditionalName(c, "choice"));
+    if (c.isDeleted()) {
+      Charset nonDeletedSet = new Charset(false, false);
+      nonDeletedSet.getMembers().addAll(c.getMembers());
+      nonDeletedSet.setRule(c.getRule());
+      c = nonDeletedSet;
     }
+    addAdditionalNames(c, getAdditionalName(c, "token"));
   }
 
   @Override
