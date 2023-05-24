@@ -31,7 +31,23 @@ import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class CombineCharsets extends Copy {
+  /** All (combined) sets that are used in the grammar. */
+  private Map<Term, RangeSet> allRangeSets;
+  /** Builder for the set of all ranges from all sets. */
+  private RangeSet.Builder builder;
+  /** All ranges that are used in the grammar . */
+  private RangeSet allRanges;
+  /** The set of sets using each range. The distinct values of this provide the char classes. */
+  private Map<Range, Set<RangeSet>> rangeToUsingSets = new TreeMap<>();
+  /** The char classes by their using sets. */
+  private Map<Set<RangeSet>, RangeSet> usingSetsToCharclasses;
+  /** The originating rules for each charset in the grammar. */
+  private Map<RangeSet, Set<String>> usingSetToOrigins;
+  /** The characters mentioned in each rule. */
+  private Map<String, RangeSet> originToChars;
+
   private Queue<String> todo;
+
   private Set<String> done;
 
   public CombineCharsets() {
@@ -40,6 +56,11 @@ public class CombineCharsets extends Copy {
   public Grammar combine(Grammar g) {
     todo = new LinkedList<>();
     done = new HashSet<>();
+    usingSetToOrigins = new HashMap<>();
+    originToChars = new HashMap<>();
+    allRangeSets = new HashMap<>();
+    builder = new RangeSet.Builder();
+
     Rule firstRule = g.getRules().values().iterator().next();
     done.add(firstRule.getName());
     firstRule.accept(this);
@@ -49,11 +70,96 @@ public class CombineCharsets extends Copy {
       g.getRules().get(name).accept(this);
     }
     PostProcess.process(copy);
+
     Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
-    RangeCollector.process(copy, charsetToCharclasses);
+//  RangeCollector.process(copy, charsetToCharclasses);
+    collectRanges(charsetToCharclasses);
 
     System.out.println("-------- before replace:\n" + copy);
     return ReplaceCharsets.process(copy, charsetToCharclasses);
+  }
+
+  private void collectRanges(Map<Charset, Set<RangeSet>> charsetToCharclasses) {
+    System.out.println("========= " + allRangeSets.values().size() + " distinct range sets");
+    allRangeSets.values().forEach(v -> System.out.println("     " + v));
+
+    allRanges = builder.build().split();
+
+    System.out.println("========= " + allRanges.size() + " distinct ranges:");
+    allRanges.forEach(v -> System.out.println("     " + v));
+
+    rangeToUsingSets = new TreeMap<>();
+    for (RangeSet rangeSet : allRangeSets.values()) {
+      for (Range range : allRanges.split(rangeSet)) {
+        rangeToUsingSets.compute(range, (k, v) -> {
+          if (v == null) v = new HashSet<>();
+          v.add(rangeSet);
+          return v;
+        });
+      }
+    }
+
+    System.out.println("========= " + rangeToUsingSets.size() + " ranges and using range sets:");
+    rangeToUsingSets.forEach((k, v) -> System.out.println("     " + k + " is used in:" + v));
+
+    usingSetsToCharclasses = new HashMap<>();
+    rangeToUsingSets.forEach((range, usingSets) -> {
+      usingSetsToCharclasses.compute(usingSets, (charclass, ranges) -> {
+        Builder builder = new RangeSet.Builder();
+        if (ranges != null)
+          ranges.forEach(builder::add);
+        builder.add(range);
+        return builder.build();
+      });
+    });
+
+    System.out.println("========= " + usingSetsToCharclasses.size() + " charclasses:");
+    usingSetsToCharclasses.forEach((k, v) -> {
+      int smallestEnclosingSetSize = Integer.MAX_VALUE;
+      Set<String> originsOfSmallestEnclosingSet = new HashSet<>();
+      for (RangeSet set : k) {
+        int setSize = set.stream().mapToInt(Range::size).sum();
+        if (setSize <= smallestEnclosingSetSize) {
+          if (setSize < smallestEnclosingSetSize) {
+            smallestEnclosingSetSize = setSize;
+            originsOfSmallestEnclosingSet.clear();
+          }
+          originsOfSmallestEnclosingSet.addAll(usingSetToOrigins.get(set));
+        }
+      }
+      int minSetSize = Integer.MAX_VALUE;
+      String originWithLeastChars = null;
+      for (String name : originsOfSmallestEnclosingSet) {
+        int size = originToChars.get(name).stream().mapToInt(Range::size).sum();
+        if (size < minSetSize)
+          originWithLeastChars = name;
+      }
+      System.out.println("     from " + originWithLeastChars + ": " + v);
+    });
+
+    allRangeSets.forEach((term, set) -> {
+      Set<RangeSet> charclasses = new TreeSet<>();
+      for (Range range : allRanges.split(set))
+        charclasses.add(usingSetsToCharclasses.get(rangeToUsingSets.get(range)));
+      if (term instanceof Charset)
+        charsetToCharclasses.put((Charset) term, charclasses);
+    });
+
+    System.out.println("========= " + charsetToCharclasses.size() + " set to charclasses mappings:");
+    charsetToCharclasses.forEach((k, v) -> System.out.println("     " + k + " =>\n         " + v));
+
+    System.out.println("=========");
+
+    // TODO: create mapping each original (combined) charset to a choice over a set of charclasses.
+    // Then replace in the grammar. After that each Literal should be a single char and each
+    // Charset should represent a charclass. The only thing left to do is to separate out
+    // hex Literals and Charsets and non-singular Charsets into token rules.
+  }
+
+  @Override
+  public void visit(Charset c) {
+    super.visit(c);
+    collect(RangeSet.of(c).join(), c, c.getRule().getName());
   }
 
   @Override
@@ -63,6 +169,7 @@ public class CombineCharsets extends Copy {
       System.out.println(">>>>>> replacement for " + n);
       System.out.println("               chars: " + charset);
       alts.peek().last().getTerms().add(charset);
+      collect(RangeSet.of(charset).join(), charset, n.getName());
     }
     else {
       if (! done.contains(n.getName()))
@@ -105,10 +212,14 @@ public class CombineCharsets extends Copy {
         System.out.println("               other: " + other);
 
       Alts replacement = new Alts();
-      if (hasDeletedChars)
+      if (hasDeletedChars) {
         replacement.addAlt(new Alt().addCharset(deletedChars));
-      if (hasPreservedChars)
+        collect(RangeSet.of(deletedChars).join(), deletedChars, a.getRule().getName());
+      }
+      if (hasPreservedChars) {
         replacement.addAlt(new Alt().addCharset(preservedChars));
+        collect(RangeSet.of(preservedChars).join(), preservedChars, a.getRule().getName());
+      }
 
       boolean topLevel = alts.isEmpty();
       alts.push(replacement);
@@ -120,6 +231,40 @@ public class CombineCharsets extends Copy {
         alts.peek().last().addAlts(nested);
       }
     }
+  }
+
+  @Override
+  public void visit(Literal l) {
+    super.visit(l);
+    if (l.isHex()) {
+      Range range = new Range(Integer.parseInt(l.getValue().substring(1), 16));
+      collect(RangeSet.of(range), l, l.getRule().getName());
+    }
+    else {
+      for (char c : l.getValue().toCharArray()) {
+        Literal origin = new Literal(l.isDeleted(), Character.toString(c), false);
+        origin.setRule(l.getRule());
+        collect(RangeSet.of(new Range(c)), origin, l.getRule().getName());
+      }
+    }
+  }
+
+  private void collect(RangeSet set, Term origin, String name) {
+    usingSetToOrigins.compute(set, (k, v) -> {
+      if (v == null) v = new HashSet<>();
+      v.add(name);
+      return v;
+    });
+    originToChars.compute(name, (k, v) -> {
+      if (v == null)
+        return set;
+      RangeSet.Builder builder = new RangeSet.Builder();
+      set.forEach(builder::add);
+      v.forEach(builder::add);
+      return builder.build();
+    });
+    allRangeSets.put(origin, set);
+    set.forEach(builder::add);
   }
 
   private static class CharsetCollector extends Visitor {
@@ -214,155 +359,6 @@ public class CombineCharsets extends Copy {
     @Override
     public void visit(Rule r) {
       members = null;
-    }
-  }
-
-  private static class RangeCollector extends Visitor {
-    /** All (combined) sets that are used in the grammar. */
-    private Map<Term, RangeSet> allRangeSets;
-    /** Builder for the set of all ranges from all sets. */
-    private RangeSet.Builder builder;
-    /** All ranges that are used in the grammar . */
-    private RangeSet allRanges;
-    /** The set of sets using each range. The distinct values of this provide the char classes. */
-    private Map<Range, Set<RangeSet>> rangeToUsingSets = new TreeMap<>();
-    /** The char classes by their using sets. */
-    private Map<Set<RangeSet>, RangeSet> usingSetsToCharclasses;
-    /** The originating rules for each charset in the grammar. */
-    private Map<RangeSet, Set<String>> usingSetToOrigins;
-    /** The characters mentioned in each rule. */
-    private Map<String, RangeSet> originToChars;
-
-    /**
-     * Process a grammar and populate the mapping from charsets to charclass sets.
-     *
-     * @param g the grammar.
-     * @param charsetToCharclasses the resulting mapping from original sets to charclass
-     *   sets. Should be passed as an empty map.
-     */
-    public static void process(Grammar g, Map<Charset, Set<RangeSet>> charsetToCharclasses) {
-      RangeCollector cr = new RangeCollector();
-      cr.usingSetToOrigins = new HashMap<>();
-      cr.originToChars = new HashMap<>();
-      cr.allRangeSets = new HashMap<>();
-      cr.builder = new RangeSet.Builder();
-      cr.visit(g);
-
-      System.out.println("========= " + cr.allRangeSets.values().size() + " distinct range sets");
-      cr.allRangeSets.values().forEach(v -> System.out.println("     " + v));
-
-      cr.allRanges = cr.builder.build().split();
-
-      System.out.println("========= " + cr.allRanges.size() + " distinct ranges:");
-      cr.allRanges.forEach(v -> System.out.println("     " + v));
-
-      cr.rangeToUsingSets = new TreeMap<>();
-      for (RangeSet rangeSet : cr.allRangeSets.values()) {
-        for (Range range : cr.allRanges.split(rangeSet)) {
-          cr.rangeToUsingSets.compute(range, (k, v) -> {
-            if (v == null) v = new HashSet<>();
-            v.add(rangeSet);
-            return v;
-          });
-        }
-      }
-
-      System.out.println("========= " + cr.rangeToUsingSets.size() + " ranges and using range sets:");
-      cr.rangeToUsingSets.forEach((k, v) -> System.out.println("     " + k + " is used in:" + v));
-
-      cr.usingSetsToCharclasses = new HashMap<>();
-      cr.rangeToUsingSets.forEach((range, usingSets) -> {
-        cr.usingSetsToCharclasses.compute(usingSets, (charclass, ranges) -> {
-          Builder builder = new RangeSet.Builder();
-          if (ranges != null)
-            ranges.forEach(builder::add);
-          builder.add(range);
-          return builder.build();
-        });
-      });
-
-      System.out.println("========= " + cr.usingSetsToCharclasses.size() + " charclasses:");
-      cr.usingSetsToCharclasses.forEach((k, v) -> {
-        int smallestEnclosingSetSize = Integer.MAX_VALUE;
-        Set<String> originsOfSmallestEnclosingSet = new HashSet<>();
-        for (RangeSet set : k) {
-          int setSize = set.stream().mapToInt(Range::size).sum();
-          if (setSize <= smallestEnclosingSetSize) {
-            if (setSize < smallestEnclosingSetSize) {
-              smallestEnclosingSetSize = setSize;
-              originsOfSmallestEnclosingSet.clear();
-            }
-            originsOfSmallestEnclosingSet.addAll(cr.usingSetToOrigins.get(set));
-          }
-        }
-        int minSetSize = Integer.MAX_VALUE;
-        String originWithLeastChars = null;
-        for (String name : originsOfSmallestEnclosingSet) {
-          int size = cr.originToChars.get(name).stream().mapToInt(Range::size).sum();
-          if (size < minSetSize)
-            originWithLeastChars = name;
-        }
-        System.out.println("     from " + originWithLeastChars + ": " + v);
-      });
-
-      cr.allRangeSets.forEach((term, set) -> {
-        Set<RangeSet> charclasses = new TreeSet<>();
-        for (Range range : cr.allRanges.split(set))
-          charclasses.add(cr.usingSetsToCharclasses.get(cr.rangeToUsingSets.get(range)));
-        if (term instanceof Charset)
-          charsetToCharclasses.put((Charset) term, charclasses);
-      });
-
-      System.out.println("========= " + charsetToCharclasses.size() + " set to charclasses mappings:");
-      charsetToCharclasses.forEach((k, v) -> System.out.println("     " + k + " =>\n         " + v));
-
-      System.out.println("=========");
-
-      // TODO: create mapping each original (combined) charset to a choice over a set of charclasses.
-      // Then replace in the grammar. After that each Literal should be a single char and each
-      // Charset should represent a charclass. The only thing left to do is to separate out
-      // hex Literals and Charsets and non-singular Charsets into token rules.
-    }
-
-    @Override
-    public void visit(Charset c) {
-      RangeSet set = RangeSet.of(c).join();
-      Term term = c;
-      collect(set, term);
-    }
-
-    @Override
-    public void visit(Literal l) {
-      if (l.isHex()) {
-        Range range = new Range(Integer.parseInt(l.getValue().substring(1), 16));
-        collect(RangeSet.of(range), l);
-      }
-      else {
-        for (char c : l.getValue().toCharArray()) {
-          Literal origin = new Literal(l.isDeleted(), Character.toString(c), false);
-          origin.setRule(l.getRule());
-          collect(RangeSet.of(new Range(c)), origin);
-        }
-      }
-    }
-
-    private void collect(RangeSet set, Term origin) {
-      String name = origin.getRule().getName();
-      usingSetToOrigins.compute(set, (k, v) -> {
-        if (v == null) v = new HashSet<>();
-        v.add(name);
-        return v;
-      });
-      originToChars.compute(name, (k, v) -> {
-        if (v == null)
-          return set;
-        RangeSet.Builder builder = new RangeSet.Builder();
-        set.forEach(builder::add);
-        v.forEach(builder::add);
-        return builder.build();
-      });
-      allRangeSets.put(origin, set);
-      set.forEach(builder::add);
     }
   }
 
