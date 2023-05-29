@@ -21,3 +21,13 @@ testing {
         }
     }
 }
+
+test {
+    maxHeapSize = "1536m"
+    jvmArgs "-XX:MaxPermSize=384m"
+}
+
+tasks.compileJava {
+    options.fork = true
+    options.forkOptions.jvmArgs += ['-Xss4m']
+}
