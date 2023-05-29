@@ -2,11 +2,12 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -23,10 +24,12 @@ public class GenerateAdditionalNames extends Visitor {
   private final Map<Alts, String> nameByRhs;
   private String additionalNamePrefix;
   private Map<Term, String[]> additionalNames;
+  private Function<RangeSet, String> originOf;
 
-  public GenerateAdditionalNames(Grammar grammar) {
+  public GenerateAdditionalNames(Grammar grammar, Function<RangeSet, String> originOf) {
     this.nameByRhs = new HashMap<>();
-    this.additionalNames = new IdentityHashMap<>();
+    this.additionalNames = new HashMap<>();
+    this.originOf = originOf;
   }
 
   public Map<Term, String[]> getAdditionalNames() {
@@ -52,7 +55,7 @@ public class GenerateAdditionalNames extends Visitor {
   public void visit(Alts a) {
     super.visit(a);
     if (! (a.getParent() instanceof Rule) && a.getAlts().size() > 1)
-      addAdditionalNames(a, getAdditionalName(a, "choice"));
+      addAdditionalNames(a, getAdditionalName(a.getRule().getName(), a, "choice"));
   }
 
   private void addAdditionalNames(Term t, String... names) {
@@ -61,13 +64,10 @@ public class GenerateAdditionalNames extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    if (c.isDeleted()) {
-      Charset nonDeletedSet = new Charset(false, false);
-      nonDeletedSet.getMembers().addAll(c.getMembers());
-      nonDeletedSet.setRule(c.getRule());
-      c = nonDeletedSet;
-    }
-    addAdditionalNames(c, getAdditionalName(c, "token"));
+    String suffix = c.isDeleted()
+        ? "deleted_chars"
+        : "preserved_chars";
+    addAdditionalNames(c, getAdditionalName(originOf.apply(RangeSet.of(c)), c, suffix));
   }
 
   @Override
@@ -75,14 +75,13 @@ public class GenerateAdditionalNames extends Visitor {
     super.visit(c);
     switch (c.getOccurrence()) {
     case ONE_OR_MORE:
-      addAdditionalNames(c, getAdditionalName(c, "list"));
+      addAdditionalNames(c, getAdditionalName(c.getRule().getName(), c, "list"));
       break;
     case ZERO_OR_MORE:
-      String name0 = getAdditionalName(c, "list_option");
+      String name0 = getAdditionalName(c.getRule().getName(), c, "list_option");
       if (c.getSeparator() != null) {
         Control list = new Control(Occurrence.ONE_OR_MORE, c.getTerm(), c.getSeparator());
-        list.setRule(c.getRule());
-        String name1 = getAdditionalName(list, "list");
+        String name1 = getAdditionalName(c.getRule().getName(), list, "list");
         addAdditionalNames(c, name0, name1);
       }
       else {
@@ -90,15 +89,14 @@ public class GenerateAdditionalNames extends Visitor {
       }
       break;
     case ZERO_OR_ONE:
-      addAdditionalNames(c, getAdditionalName(c, "option"));
+      addAdditionalNames(c, getAdditionalName(c.getRule().getName(), c, "option"));
       break;
     default:
       throw new IllegalStateException();
     }
   }
 
-  public String getAdditionalName(Term term, String suffix) {
-    String proposal = term.getRule().getName();
+  public String getAdditionalName(String proposal, Term term, String suffix) {
     Alts alts;
     if (term instanceof Alts) {
       alts = (Alts) term;
@@ -112,7 +110,6 @@ public class GenerateAdditionalNames extends Visitor {
     }
     String name = nameByRhs.get(alts);
     if (name == null) {
-//      name = getAdditionalName(term.toString(), suffix);
       name = getAdditionalName(proposal, suffix);
       nameByRhs.put(alts, name);
     }
@@ -128,8 +125,6 @@ public class GenerateAdditionalNames extends Visitor {
       if (chr == '_' && last == '_') continue;
       last = chr;
       sb.append(last);
-      if (sb.length() >= 48)
-        break;
     }
     if (sb.length() != 0 && sb.charAt(sb.length() - 1) != '_') {
       sb.append("_");

@@ -11,9 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
-import de.bottlecaps.markup.blitz.grammar.Ixml.ParseException;
 import de.bottlecaps.markup.blitz.transform.BNF;
-import de.bottlecaps.markup.blitz.transform.PostProcess;
 
 public class Blitz {
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
@@ -32,16 +30,8 @@ public class Blitz {
       uri = new URI(args[0]);
 
     String input = urlContent(uri.toURL());
-    Ixml parser = new Ixml(input);
-    try {
-      parser.parse_ixml();
-    }
-    catch (ParseException pe) {
-      throw new RuntimeException("ParseException while processing " + args[0] + ":\n" + parser.getErrorMessage(pe), pe);
-    }
 
-    Grammar grammar = parser.grammar();
-    PostProcess.process(grammar);
+    Grammar grammar = Ixml.parse(input, args[0]);
 
     grammar = BNF.process(grammar);
 

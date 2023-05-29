@@ -115,25 +115,7 @@ public class CombineCharsets extends Copy {
 
     System.out.println("========= " + usingSetsToCharclasses.size() + " charclasses:");
     usingSetsToCharclasses.forEach((k, v) -> {
-      int smallestEnclosingSetSize = Integer.MAX_VALUE;
-      Set<String> originsOfSmallestEnclosingSet = new HashSet<>();
-      for (RangeSet set : k) {
-        int setSize = set.stream().mapToInt(Range::size).sum();
-        if (setSize <= smallestEnclosingSetSize) {
-          if (setSize < smallestEnclosingSetSize) {
-            smallestEnclosingSetSize = setSize;
-            originsOfSmallestEnclosingSet.clear();
-          }
-          originsOfSmallestEnclosingSet.addAll(usingSetToOrigins.get(set));
-        }
-      }
-      int minSetSize = Integer.MAX_VALUE;
-      String originWithLeastChars = null;
-      for (String name : originsOfSmallestEnclosingSet) {
-        int size = originToChars.get(name).stream().mapToInt(Range::size).sum();
-        if (size < minSetSize)
-          originWithLeastChars = name;
-      }
+      String originWithLeastChars = smallestUsingNonterminal(v.iterator().next());
       System.out.println("     from " + originWithLeastChars + ": " + v);
     });
 
@@ -154,6 +136,30 @@ public class CombineCharsets extends Copy {
     // Then replace in the grammar. After that each Literal should be a single char and each
     // Charset should represent a charclass. The only thing left to do is to separate out
     // hex Literals and Charsets and non-singular Charsets into token rules.
+  }
+
+  public String smallestUsingNonterminal(Range range) {
+    Set<RangeSet> rangeSet = rangeToUsingSets.get(range);
+    int smallestEnclosingSetSize = Integer.MAX_VALUE;
+    Set<String> originsOfSmallestEnclosingSet = new HashSet<>();
+    for (RangeSet set : rangeSet) {
+      int setSize = set.stream().mapToInt(Range::size).sum();
+      if (setSize <= smallestEnclosingSetSize) {
+        if (setSize < smallestEnclosingSetSize) {
+          smallestEnclosingSetSize = setSize;
+          originsOfSmallestEnclosingSet.clear();
+        }
+        originsOfSmallestEnclosingSet.addAll(usingSetToOrigins.get(set));
+      }
+    }
+    int minSetSize = Integer.MAX_VALUE;
+    String originWithLeastChars = null;
+    for (String name : originsOfSmallestEnclosingSet) {
+      int size = originToChars.get(name).stream().mapToInt(Range::size).sum();
+      if (size < minSetSize)
+        originWithLeastChars = name;
+    }
+    return originWithLeastChars;
   }
 
   @Override

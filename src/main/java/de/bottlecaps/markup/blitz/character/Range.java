@@ -44,6 +44,22 @@ public class Range implements Comparable<Range> {
       return "#" + Integer.toHexString(codePoint);
   }
 
+  public String toJava() {
+    return ".add("
+        + toJava(firstCodePoint)
+        + (firstCodePoint == lastCodePoint ? "" : (", " + toJava(lastCodePoint)))
+        + ")";
+  }
+
+  private String toJava(int codePoint) {
+    if (codePoint == '\'')
+      return "";
+    else if (isAscii(codePoint))
+      return "'" + (char) codePoint + "'";
+    else
+      return "0x" + Integer.toHexString(codePoint);
+  }
+
   public static boolean isAscii(int codePoint) {
     return codePoint >= ' ' && codePoint <= '~';
   }

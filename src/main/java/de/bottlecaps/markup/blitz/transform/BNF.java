@@ -2,7 +2,6 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -11,26 +10,22 @@ import java.util.Stack;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
-import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
-import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
-import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class BNF extends Visitor {
-  private List<Member> members;
   private Stack<Alts> alts = new Stack<>();
   private Grammar copy;
   private Map<Term, String[]> additionalNames;
   private Queue<Rule> justAdded = new LinkedList<>();
+  private Queue<Rule> charsets = new LinkedList<>();
   private Set<String> additionalRules = new HashSet<>();
   private Grammar grammar;
 
@@ -45,7 +40,7 @@ public class BNF extends Visitor {
     CombineCharsets cc = new CombineCharsets();
     Grammar grammar = cc.combine(g);
 
-    GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar);
+    GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar, r -> cc.smallestUsingNonterminal(r.iterator().next()));
     generateNames.visit(grammar);
 
     System.out.println("-------- after combine:\n" + grammar);
@@ -70,6 +65,8 @@ public class BNF extends Visitor {
     super.visit(r);
     copy.addRule(new Rule(r.getMark(), r.getName(), alts.pop()));
     for (Rule rule; (rule = justAdded.poll()) != null; )
+      copy.getRules().put(rule.getName(), rule);
+    for (Rule rule; (rule = charsets.poll()) != null; )
       copy.getRules().put(rule.getName(), rule);
   }
 
@@ -233,62 +230,21 @@ public class BNF extends Visitor {
   public void visit(Charset c) {
     String[] names = additionalNames.get(c);
     if (names == null) {
-      Charset set = new Charset(c.isDeleted(), c.isExclusion());
-      members = set.getMembers();
-      for (Member member : c.getMembers())
-        member.accept(this);
-      alts.peek().last().getTerms().add(set);
+      alts.peek().last().getTerms().add(c.copy());
     }
     else {
       String name = names[0];
-      // TODO: calculate complement set for exclusions
       Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
       alts.peek().last().getTerms().add(nonterminal);
       if (! additionalRules.contains(name)) {
         Alts alts = new Alts();
-        for (Member member : c.getMembers()) {
-          if (member instanceof StringMember) {
-            StringMember m = (StringMember) member;
-            if (m.isHex()) {
-              Alt alt = new Alt();
-              alt.addCodePoint(c.isDeleted(), m.getValue());
-              alts.addAlt(alt);
-            }
-            else {
-              for (char chr : m.getValue().toCharArray()) {
-                Alt alt = new Alt();
-                alt.addString(c.isDeleted(), String.valueOf(chr));
-                alts.addAlt(alt);
-              }
-            }
-          }
-          else {
-            Charset charset = new Charset(c.isDeleted(), false);
-            charset.getMembers().add(member.copy());
-            Alt alt = new Alt();
-            alt.addCharset(charset);
-            alts.addAlt(alt);
-          }
-        }
+        Alt alt = new Alt();
+        alt.addCharset(c);
+        alts.addAlt(alt);
         Rule additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
         additionalRules.add(additionalRule.getName());
-        justAdded.offer(additionalRule);
+        charsets.offer(additionalRule);
       }
     }
-  }
-
-  @Override
-  public void visit(StringMember s) {
-    members.add(s.copy());
-  }
-
-  @Override
-  public void visit(RangeMember r) {
-    members.add(r.copy());
-  }
-
-  @Override
-  public void visit(ClassMember c) {
-    members.add(c.copy());
   }
 }

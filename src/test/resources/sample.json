@@ -1,0 +1,14 @@
+{
+  "string": "Hello, World!",
+  "number": 42,
+  "boolean": true,
+  "nullValue": null,
+  "arrayEmpty": [],
+  "arraySingle": [1],
+  "arrayMultiple": [1, 2],
+  "object": {
+    "property": "value"
+  },
+  "escapedString": "This string contains escape sequences: \\\" \\\\ \\/ \\b \\f \\n \\r \\t",
+  "unicodeString": "\u20AC"
+}

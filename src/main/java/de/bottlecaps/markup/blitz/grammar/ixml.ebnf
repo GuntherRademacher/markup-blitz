@@ -933,9 +933,22 @@ namefollower^token << '.' 'x'
                                                                 private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                                 private StringBuilder stringBuilder = new StringBuilder();
                                                                 private StringBuilder nameBuilder = new StringBuilder();
-                                                                
-                                                                public Grammar grammar() {
-                                                                  return grammar;
+
+                                                                private Ixml() {
+                                                                }
+
+                                                                public static Grammar parse(String content, String sourceId) {
+                                                                  Ixml parser = new Ixml(content);
+                                                                  try
+                                                                  {
+                                                                    parser.parse_ixml();
+                                                                  }
+                                                                  catch (ParseException pe)
+                                                                  {
+                                                                    throw new RuntimeException("ParseException while processing " + sourceId + ":\n" + parser.getErrorMessage(pe), pe);
+                                                                  }
+                                                                  de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
+                                                                  return parser.grammar;
                                                                 }
                                                               }
                                                             ?>

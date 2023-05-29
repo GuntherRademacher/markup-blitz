@@ -1,4 +1,4 @@
-// This file was generated on Mon May 15, 2023 20:41 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Sun May 28, 2023 10:53 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1719,9 +1719,22 @@ public class Ixml
                                                               private StringBuilder stringBuilder = new StringBuilder();
                                                               private StringBuilder nameBuilder = new StringBuilder();
 
-                                                              public Grammar grammar() {
-                                                                return grammar;
+                                                              private Ixml() {
+                                                              }
+
+                                                              public static Grammar parse(String content, String sourceId) {
+                                                                Ixml parser = new Ixml(content);
+                                                                try
+                                                                {
+                                                                  parser.parse_ixml();
+                                                                }
+                                                                catch (ParseException pe)
+                                                                {
+                                                                  throw new RuntimeException("ParseException while processing " + sourceId + ":\n" + parser.getErrorMessage(pe), pe);
+                                                                }
+                                                                de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
+                                                                return parser.grammar;
                                                               }
                                                             }
-                                                            // line 1727 "Ixml.java"
+                                                            // line 1740 "Ixml.java"
 // End
