@@ -3,7 +3,6 @@ plugins {
 }
 
 repositories {
-    // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
 
@@ -12,11 +11,9 @@ dependencies {
     testImplementation 'org.nineml:coffeegrinder:2.1.0'
 }
 
-testing {
+testing {	
     suites {
-        // Configure the built-in test suite
         test {
-            // Use JUnit Jupiter test framework
             useJUnitJupiter('5.9.1')
         }
     }
@@ -24,10 +21,9 @@ testing {
 
 test {
     maxHeapSize = "1536m"
-    jvmArgs "-XX:MaxPermSize=384m"
 }
 
-tasks.compileJava {
+tasks.withType(JavaCompile) {
     options.fork = true
     options.forkOptions.jvmArgs += ['-Xss4m']
 }
