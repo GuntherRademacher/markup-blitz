@@ -75,8 +75,12 @@ public class ToREx extends Visitor {
           paddingLength = padding.length() - 2;
         }
         tb.append(padding.substring(0, paddingLength));
-        tb.append(rangeSet.stream().map(Range::toREx).collect(Collectors.joining("\n" + padding + "| ", "::= ", "")));
-        charsets.put(name[0], tb.toString());
+        tb.append("::= ");
+        if (c == Charset.END)
+          tb.append("$");
+        else
+          tb.append(rangeSet.stream().map(Range::toREx).collect(Collectors.joining("\n" + padding + "| ")));
+          charsets.put(name[0], tb.toString());
       }
     }
   }
