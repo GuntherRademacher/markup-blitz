@@ -67,6 +67,7 @@ public class BNF extends Visitor {
   @Override
   public void visit(Rule r) {
     if (copy.getRules().isEmpty()) {
+      // augment grammar with rule: _start: someNonterminal _end.
       Alt alt = new Alt();
       alt.addNonterminal(Mark.NONE, r.getName());
       alt.addCharset(Charset.END);
@@ -127,24 +128,7 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Literal l) {
-    if (l.isHex() || l.getValue().length() == 1) {
-      alts.peek().last().getTerms().add(l.copy());
-    }
-    else {
-      Alt alt = new Alt();
-      for (char chr : l.getValue().toCharArray()) {
-        alt.addString(l.isDeleted(), String.valueOf(chr));
-      }
-      if (l.getParent() instanceof Alt) {
-        for (Term t : alt.getTerms())
-          alts.peek().last().getTerms().add(t);
-      }
-      else {
-        Alts a = new Alts();
-        a.addAlt(alt);
-        alts.peek().last().getTerms().add(a);
-      }
-    }
+    throw new IllegalStateException();
   }
 
   @Override

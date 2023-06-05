@@ -59,33 +59,35 @@ public class ToREx extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    String[] name = grammar.getAdditionalNames().get(c);
-    sb.append(" ").append(name[0]);
-    if (! charsets.containsKey(name[0])) {
-      StringBuilder tb = new StringBuilder("\n").append(name[0]);
-      int paddingLength = padding.length() - name[0].length() - 2;
-      if (paddingLength < 1) {
-        tb.append("\n");
-        paddingLength = padding.length() - 2;
-      }
-      tb.append(padding.substring(0, paddingLength));
-      tb.append(RangeSet.of(c).stream().map(Range::toREx).collect(Collectors.joining("\n" + padding + "| ", "::= ", "")));
-      charsets.put(name[0], tb.toString());
+    sb.append(" ");
+    RangeSet rangeSet = RangeSet.of(c);
+    if (rangeSet.charCount() == 1 && Range.isAscii(rangeSet.iterator().next().getFirstCodePoint())) {
+      sb.append(rangeSet.iterator().next().toREx());
     }
-  }
-
-  @Override
-  public void visit(Literal l) {
-    String string = l.isHex()
-        ? "#x" + l.getValue().substring(1)
-        : l.getValue().contains("'")
-            ? "\"" + l.getValue() + "\""
-            : "'" + l.getValue() + "'";
-    sb.append(" ").append(string);
+    else {
+      String[] name = grammar.getAdditionalNames().get(c);
+      sb.append(name[0]);
+      if (! charsets.containsKey(name[0])) {
+        StringBuilder tb = new StringBuilder("\n").append(name[0]);
+        int paddingLength = padding.length() - name[0].length() - 2;
+        if (paddingLength < 1) {
+          tb.append("\n");
+          paddingLength = padding.length() - 2;
+        }
+        tb.append(padding.substring(0, paddingLength));
+        tb.append(rangeSet.stream().map(Range::toREx).collect(Collectors.joining("\n" + padding + "| ", "::= ", "")));
+        charsets.put(name[0], tb.toString());
+      }
+    }
   }
 
   @Override
   public void visit(Nonterminal n) {
     sb.append(" ").append(n.getName());
+  }
+
+  @Override
+  public void visit(Literal l) {
+    throw new IllegalStateException();
   }
 }

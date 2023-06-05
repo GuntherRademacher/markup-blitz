@@ -63,15 +63,18 @@ public class CombineCharsets extends Copy {
 
     Rule firstRule = g.getRules().values().iterator().next();
     done.add(firstRule.getName());
-    firstRule.accept(this);
+    visit(firstRule);
+
     while (! todo.isEmpty()) {
       String name = todo.poll();
       done.add(name);
-      g.getRules().get(name).accept(this);
+      visit(g.getRules().get(name));
     }
     PostProcess.process(copy);
+
     Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
     collectRanges(charsetToCharclasses);
+
     return ReplaceCharsets.process(copy, charsetToCharclasses);
   }
 
@@ -200,19 +203,72 @@ public class CombineCharsets extends Copy {
   }
 
   @Override
-  public void visit(Literal l) {
-    super.visit(l);
+  public void visit(Alt alt) {
+    alts.peek().addAlt(new Alt());
+    for (Term term : alt.getTerms()) {
+      if (term instanceof Literal) {
+        List<Charset> charsets = literalToCharsets((Literal) term);
+        alts.peek().last().getTerms().addAll(charsets);
+      }
+      else {
+        term.accept(this);
+      }
+    }
+  }
+
+  private List<Charset> literalToCharsets(Literal l) {
+    List<Charset> charsets = new ArrayList<>();
     if (l.isHex()) {
-      Range range = new Range(Integer.parseInt(l.getValue().substring(1), 16));
-      collect(RangeSet.of(range), l, l.getRule().getName());
+      Charset charset = new Charset(l.isDeleted(), false);
+      charset.addRange(l.getValue(), l.getValue());
+      collect(RangeSet.of(charset), charset, l.getRule().getName());
+      charsets.add(charset);
     }
     else {
       for (char c : l.getValue().toCharArray()) {
-        Literal origin = new Literal(l.isDeleted(), Character.toString(c), false);
-        origin.setRule(l.getRule());
-        collect(RangeSet.of(new Range(c)), origin, l.getRule().getName());
+        Charset charset = new Charset(l.isDeleted(), false);
+        String value = Character.toString(c);
+        charset.addRange(value, value);
+        collect(RangeSet.of(charset), charset, l.getRule().getName());
+        charsets.add(charset);
       }
     }
+    return charsets;
+  }
+
+  private Term literalToTerm(Literal l) {
+    List<Charset> charsets = literalToCharsets(l);
+    if (charsets.size() == 1)
+      return charsets.get(0);
+    Alts alts = new Alts();
+    charsets.stream().forEach(c -> alts.addAlt(new Alt().addCharset(c)));
+    return alts;
+  }
+
+  @Override
+  public void visit(Literal l) {
+    throw new IllegalStateException();
+  }
+
+  @Override
+  public void visit(Control c) {
+    if (c.getTerm() instanceof Literal) {
+      alts.peek().last().getTerms().add(literalToTerm((Literal) c.getTerm()));
+    }
+    else {
+      c.getTerm().accept(this);
+    }
+    if (c.getSeparator() instanceof Literal) {
+      alts.peek().last().getTerms().add(literalToTerm((Literal) c.getSeparator()));
+    }
+    else if (c.getSeparator() != null) {
+      c.getSeparator().accept(this);
+    }
+    Term separator = c.getSeparator() == null
+        ? null
+        : alts.peek().last().removeLast();
+    Term term = alts.peek().last().removeLast();
+    alts.peek().last().getTerms().add(new Control(c.getOccurrence(), term, separator));
   }
 
   private void collect(RangeSet set, Term origin, String name) {
@@ -348,18 +404,7 @@ public class CombineCharsets extends Copy {
 
       if (rangeSets.size() == 1) {
         RangeSet firstSet = rangeSets.iterator().next();
-        Range firstRange = firstSet.iterator().next();
-        if (firstSet.size() == 1 && firstRange.size() == 1) {
-          // single character, represent as Literal
-          int codePoint = firstRange.getFirstCodePoint();
-          Literal literal = Range.isAscii(codePoint)
-              ? new Literal(c.isDeleted(), Character.toString(codePoint), false)
-              : new Literal(c.isDeleted(), "#" + Integer.toHexString(codePoint), true);
-          alts.peek().last().getTerms().add(literal);
-        }
-        else {
-          alts.peek().last().getTerms().add(firstSet.toTerm(c.isDeleted()));
-        }
+        alts.peek().last().getTerms().add(firstSet.toTerm(c.isDeleted()));
       }
       else {
         Alts a = new Alts();

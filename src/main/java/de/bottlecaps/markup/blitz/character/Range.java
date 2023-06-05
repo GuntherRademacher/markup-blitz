@@ -60,7 +60,7 @@ public class Range implements Comparable<Range> {
       return ! isAscii(firstCodePoint)
           ? "#x" + Integer.toHexString(firstCodePoint)
           : firstCodePoint == '\''
-              ? "'"
+              ? "\"" + (char) firstCodePoint + "\""
               : "'" + (char) firstCodePoint + "'";
     if (isAscii(firstCodePoint) && isAscii(lastCodePoint))
       return "[" + (char) firstCodePoint
