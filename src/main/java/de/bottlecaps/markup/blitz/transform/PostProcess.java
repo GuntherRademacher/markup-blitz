@@ -73,7 +73,13 @@ public class PostProcess extends Visitor {
       }
     }
     a.getTerms().clear();
-    a.getTerms().addAll(flattenedTerms);
+    Term last = null;
+    for (Term term : flattenedTerms) {
+      if (last != null)
+        last.setNext(term);
+      last = term;
+      a.getTerms().add(term);
+    }
     visitPostOrder(a);
   }
 

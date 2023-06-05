@@ -6,6 +6,7 @@ public abstract class Node implements Cloneable {
   protected Grammar grammar;
   protected Rule rule;
   protected Node parent;
+  protected Node next;
 
   public abstract void accept(Visitor v);
 
@@ -31,6 +32,14 @@ public abstract class Node implements Cloneable {
 
   public Node getParent() {
     return parent;
+  }
+
+  public Node getNext() {
+    return next;
+  }
+
+  public void setNext(Node next) {
+    this.next = next;
   }
 
   @SuppressWarnings("unchecked")

@@ -321,6 +321,8 @@ public class TestBNF {
       Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
       Grammar bnf = BNF.process(grammar);
       assertEquals(expectedResult, bnf.toString());
+
+      CreateItems.process(bnf);
     }
 
     @Test
@@ -435,6 +437,8 @@ public class TestBNF {
       Grammar grammar = parse(jsonIxmlResourceContent, jsonIxmlResource);
       Grammar bnf = BNF.process(grammar);
       assertEquals(expectedResult, bnf.toString());
+
+      CreateItems.process(bnf);
     }
 
     @Test
