@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
-public class Grammar extends Node {
+public final class Grammar extends Node {
   private final Map<String, Rule> rules;
+  // metadata
+  private Map<Term, String[]> additionalNames;
 
   public Grammar() {
     this.rules = new LinkedHashMap<>();
@@ -15,6 +17,14 @@ public class Grammar extends Node {
 
   public Map<String, Rule> getRules() {
     return rules;
+  }
+
+  public Map<Term, String[]> getAdditionalNames() {
+    return additionalNames;
+  }
+
+  public void setAdditionalNames(Map<Term, String[]> additionalNames) {
+    this.additionalNames = additionalNames;
   }
 
   public void addRule(Rule rule) {

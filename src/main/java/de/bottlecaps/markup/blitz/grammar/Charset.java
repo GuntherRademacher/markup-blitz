@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
+  public static final Charset END = new Charset(true, false);
   private final boolean deleted;
   private final boolean exclusion;
   private final List<Member> members;
@@ -67,9 +68,10 @@ public class Charset extends Term {
   @Override
   public String toString() {
     String prefix = (deleted ? "-" : "")
-                  + (exclusion ? "~" : "")
-                  + "[";
-    return members.stream().map(Member::toString).collect(Collectors.joining("; ", prefix, "]"));
+                  + (exclusion ? "~" : "");
+    return prefix + (this.equals(END) && grammar.getAdditionalNames() != null
+        ? grammar.getAdditionalNames().get(END)[0]
+        : members.stream().map(Member::toString).collect(Collectors.joining("; ", "[", "]")));
   }
 
   @Override

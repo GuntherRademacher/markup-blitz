@@ -70,24 +70,13 @@ public class CombineCharsets extends Copy {
       g.getRules().get(name).accept(this);
     }
     PostProcess.process(copy);
-
     Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
-//  RangeCollector.process(copy, charsetToCharclasses);
     collectRanges(charsetToCharclasses);
-
-    System.out.println("-------- before replace:\n" + copy);
     return ReplaceCharsets.process(copy, charsetToCharclasses);
   }
 
   private void collectRanges(Map<Charset, Set<RangeSet>> charsetToCharclasses) {
-    System.out.println("========= " + allRangeSets.values().size() + " distinct range sets");
-    allRangeSets.values().forEach(v -> System.out.println("     " + v));
-
     allRanges = builder.build().split();
-
-    System.out.println("========= " + allRanges.size() + " distinct ranges:");
-    allRanges.forEach(v -> System.out.println("     " + v));
-
     rangeToUsingSets = new TreeMap<>();
     for (RangeSet rangeSet : allRangeSets.values()) {
       for (Range range : allRanges.split(rangeSet)) {
@@ -98,9 +87,6 @@ public class CombineCharsets extends Copy {
         });
       }
     }
-
-    System.out.println("========= " + rangeToUsingSets.size() + " ranges and using range sets:");
-    rangeToUsingSets.forEach((k, v) -> System.out.println("     " + k + " is used in:" + v));
 
     usingSetsToCharclasses = new HashMap<>();
     rangeToUsingSets.forEach((range, usingSets) -> {
@@ -113,12 +99,6 @@ public class CombineCharsets extends Copy {
       });
     });
 
-    System.out.println("========= " + usingSetsToCharclasses.size() + " charclasses:");
-    usingSetsToCharclasses.forEach((k, v) -> {
-      String originWithLeastChars = smallestUsingNonterminal(v.iterator().next());
-      System.out.println("     from " + originWithLeastChars + ": " + v);
-    });
-
     allRangeSets.forEach((term, set) -> {
       Set<RangeSet> charclasses = new TreeSet<>();
       for (Range range : allRanges.split(set))
@@ -126,16 +106,6 @@ public class CombineCharsets extends Copy {
       if (term instanceof Charset)
         charsetToCharclasses.put((Charset) term, charclasses);
     });
-
-    System.out.println("========= " + charsetToCharclasses.size() + " set to charclasses mappings:");
-    charsetToCharclasses.forEach((k, v) -> System.out.println("     " + k + " =>\n         " + v));
-
-    System.out.println("=========");
-
-    // TODO: create mapping each original (combined) charset to a choice over a set of charclasses.
-    // Then replace in the grammar. After that each Literal should be a single char and each
-    // Charset should represent a charclass. The only thing left to do is to separate out
-    // hex Literals and Charsets and non-singular Charsets into token rules.
   }
 
   public String smallestUsingNonterminal(Range range) {
@@ -172,8 +142,6 @@ public class CombineCharsets extends Copy {
   public void visit(Nonterminal n) {
     Charset charset = CharsetCollector.collect(n);
     if (charset != null) {
-      System.out.println(">>>>>> replacement for " + n);
-      System.out.println("               chars: " + charset);
       alts.peek().last().getTerms().add(charset);
       collect(RangeSet.of(charset).join(), charset, n.getName());
     }
@@ -209,14 +177,6 @@ public class CombineCharsets extends Copy {
       super.visit(a);
     }
     else {
-      System.out.println(">>>>>> replacements for " + a);
-      if (deletedChars.getMembers().size() > 0)
-        System.out.println("        deletedChars: " + deletedChars);
-      if (preservedChars.getMembers().size() > 0)
-        System.out.println("      preservedChars: " + preservedChars);
-      if (other.getAlts().size() > 0)
-        System.out.println("               other: " + other);
-
       Alts replacement = new Alts();
       if (hasDeletedChars) {
         replacement.addAlt(new Alt().addCharset(deletedChars));

@@ -2,7 +2,6 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -23,34 +22,36 @@ import de.bottlecaps.markup.blitz.grammar.Term;
 public class BNF extends Visitor {
   private Stack<Alts> alts = new Stack<>();
   private Grammar copy;
-  private Map<Term, String[]> additionalNames;
   private Queue<Rule> justAdded = new LinkedList<>();
   private Queue<Rule> charsets = new LinkedList<>();
   private Set<String> additionalRules = new HashSet<>();
   private Grammar grammar;
+  private boolean isolateCharsets;
 
-  private BNF(Grammar grammar, Map<Term, String[]> additionalNames) {
+  private BNF(Grammar grammar, boolean isolateCharsets) {
     this.grammar = grammar;
-    this.additionalNames = additionalNames;
+    this.isolateCharsets = isolateCharsets;
   }
 
   public static Grammar process(Grammar g) {
-    System.out.println("-------- before combine:\n" + g);
+    return process(g, false);
+  }
 
+  public static Grammar process(Grammar g, boolean isolateCharsets) {
     CombineCharsets cc = new CombineCharsets();
     Grammar grammar = cc.combine(g);
 
     GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar, r -> cc.smallestUsingNonterminal(r.iterator().next()));
     generateNames.visit(grammar);
 
-    System.out.println("-------- after combine:\n" + grammar);
-
-    System.out.println("-------- after bnf:");
-
-    BNF bnf = new BNF(grammar, generateNames.getAdditionalNames());
+    BNF bnf = new BNF(grammar, isolateCharsets);
     bnf.visit(grammar);
 
+    bnf.copy.setAdditionalNames(grammar.getAdditionalNames());
     PostProcess.process(bnf.copy);
+
+//    System.out.println("-------REx:\n" + ToREx.process(bnf.copy, generateNames.getAdditionalNames()));
+
     return bnf.copy;
   }
 
@@ -58,15 +59,25 @@ public class BNF extends Visitor {
   public void visit(Grammar g) {
     copy = new Grammar();
     super.visit(g);
+    if (isolateCharsets)
+      for (Rule rule; (rule = charsets.poll()) != null; )
+        copy.getRules().put(rule.getName(), rule);
   }
 
   @Override
   public void visit(Rule r) {
+    if (copy.getRules().isEmpty()) {
+      Alt alt = new Alt();
+      alt.addNonterminal(Mark.NONE, r.getName());
+      alt.addCharset(Charset.END);
+      Alts alts = new Alts();
+      alts.addAlt(alt);
+      Rule rule = new Rule(Mark.DELETED, grammar.getAdditionalNames().get(Term.START)[0], alts);
+      copy.addRule(rule);
+    }
     super.visit(r);
     copy.addRule(new Rule(r.getMark(), r.getName(), alts.pop()));
     for (Rule rule; (rule = justAdded.poll()) != null; )
-      copy.getRules().put(rule.getName(), rule);
-    for (Rule rule; (rule = charsets.poll()) != null; )
       copy.getRules().put(rule.getName(), rule);
   }
 
@@ -74,7 +85,7 @@ public class BNF extends Visitor {
   public void visit(Alts a) {
     alts.push(new Alts());
     super.visit(a);
-    String[] names = additionalNames.get(a);
+    String[] names = grammar.getAdditionalNames().get(a);
     if (names == null) {
       // add to enclosing term, unless rule level Alts
       if (alts.size() != 1) {
@@ -148,7 +159,7 @@ public class BNF extends Visitor {
         ? null
         : alts.peek().last().removeLast();
     Term term = alts.peek().last().removeLast();
-    String[] names = additionalNames.get(c);
+    String[] names = grammar.getAdditionalNames().get(c);
     String name = names[0];
     alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETED, name));
     if (! additionalRules.contains(name)) {
@@ -228,12 +239,11 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    String[] names = additionalNames.get(c);
-    if (names == null) {
+    if (! isolateCharsets || grammar.getAdditionalNames().get(c) == null) {
       alts.peek().last().getTerms().add(c.copy());
     }
     else {
-      String name = names[0];
+      String name = grammar.getAdditionalNames().get(c)[0];
       Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
       alts.peek().last().getTerms().add(nonterminal);
       if (! additionalRules.contains(name)) {

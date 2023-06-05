@@ -23,17 +23,14 @@ public class GenerateAdditionalNames extends Visitor {
   private Set<String> names;
   private final Map<Alts, String> nameByRhs;
   private String additionalNamePrefix;
-  private Map<Term, String[]> additionalNames;
+  private Grammar grammar;
   private Function<RangeSet, String> originOf;
 
   public GenerateAdditionalNames(Grammar grammar, Function<RangeSet, String> originOf) {
-    this.nameByRhs = new HashMap<>();
-    this.additionalNames = new HashMap<>();
+    this.grammar = grammar;
     this.originOf = originOf;
-  }
-
-  public Map<Term, String[]> getAdditionalNames() {
-    return additionalNames;
+    this.nameByRhs = new HashMap<>();
+    grammar.setAdditionalNames(new HashMap<>());
   }
 
   @Override
@@ -48,6 +45,10 @@ public class GenerateAdditionalNames extends Visitor {
         break;
       }
     }
+
+    addAdditionalNames(Charset.END, additionalNamePrefix + "end");
+    addAdditionalNames(null, additionalNamePrefix + "start");
+
     super.visit(g);
   }
 
@@ -59,7 +60,7 @@ public class GenerateAdditionalNames extends Visitor {
   }
 
   private void addAdditionalNames(Term t, String... names) {
-    additionalNames.put(t, names);
+    grammar.getAdditionalNames().put(t, names);
   }
 
   @Override

@@ -51,6 +51,26 @@ public class Range implements Comparable<Range> {
         + ")";
   }
 
+  public String toREx() {
+    if (size() > 1 && "[^-]".indexOf(firstCodePoint) >= 0)
+      return new Range(firstCodePoint).toREx() + " | " + new Range(firstCodePoint + 1, lastCodePoint).toREx();
+    if (size() > 1 && "[^-]".indexOf(lastCodePoint) >= 0)
+      return new Range(firstCodePoint, lastCodePoint - 1).toREx() + " | " + new Range(lastCodePoint).toREx();
+    if (size() == 1)
+      return ! isAscii(firstCodePoint)
+          ? "#x" + Integer.toHexString(firstCodePoint)
+          : firstCodePoint == '\''
+              ? "'"
+              : "'" + (char) firstCodePoint + "'";
+    if (isAscii(firstCodePoint) && isAscii(lastCodePoint))
+      return "[" + (char) firstCodePoint
+           + "-" + (char) lastCodePoint
+           + "]";
+    return "[#x" + Integer.toHexString(firstCodePoint)
+         + "-#x" + Integer.toHexString(lastCodePoint)
+         + "]";
+  }
+
   private String toJava(int codePoint) {
     if (codePoint == '\'')
       return "";

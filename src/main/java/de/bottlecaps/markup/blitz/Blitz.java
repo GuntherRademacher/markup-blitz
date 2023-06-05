@@ -34,8 +34,6 @@ public class Blitz {
     Grammar grammar = Ixml.parse(input, args[0]);
 
     grammar = BNF.process(grammar);
-
-    System.out.println(grammar);
   }
 
   private static void usage() {

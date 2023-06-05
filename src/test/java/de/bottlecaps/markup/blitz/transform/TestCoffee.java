@@ -37,10 +37,9 @@ public class TestCoffee {
     String originalResult = runCoffee(ixmlIxmlResourceContent, ixmlIxmlResourceContent);
 
     Grammar grammar = Ixml.parse(ixmlIxmlResourceContent, ixmlResource);
-    Grammar bnf = BNF.process(grammar);
+    Grammar bnf = BNF.process(grammar, true); // need to isolate charsets here, otherwise we risk an OOME
 
-    String equivalentResult = runCoffee(bnf.toString(), ixmlIxmlResourceContent);
-
+    String equivalentResult = runCoffee(skipFirstLine(bnf), ixmlIxmlResourceContent);
     assertEquals(originalResult, equivalentResult);
   }
 
@@ -48,12 +47,19 @@ public class TestCoffee {
   public void testJsonResource() throws Exception {
     String originalResult = runCoffee(jsonIxmlResourceContent, jsonResourceContent);
 
-    Grammar grammar = Ixml.parse(jsonIxmlResourceContent, jsonResource);
+    Grammar grammar = Ixml.parse(jsonIxmlResourceContent, jsonIxmlResource);
     Grammar bnf = BNF.process(grammar);
 
-    String equivalentResult = runCoffee(bnf.toString(), jsonResourceContent);
-
+    String equivalentResult = runCoffee(skipFirstLine(bnf), jsonResourceContent);
     assertEquals(originalResult, equivalentResult);
+  }
+
+  private String skipFirstLine(Grammar bnf) {
+    // skip first line, containing "_start: someNonterminal _end."
+    String string = bnf.toString();
+    int eol = string.indexOf('\n');
+    string = string.substring(eol+ 1);
+    return string;
   }
 
   private String runCoffee(String grammar, String input) throws Exception {
