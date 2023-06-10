@@ -8,6 +8,10 @@ public class TokenSet extends HashSet<Integer> {
   public TokenSet() {
   }
 
+  public TokenSet(TokenSet other) {
+    super(other);
+  }
+
   public static TokenSet of(Integer... tokens) {
     TokenSet tokenSet = new TokenSet();
     for (Integer token : tokens)

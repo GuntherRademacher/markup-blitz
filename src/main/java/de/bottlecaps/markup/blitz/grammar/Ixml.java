@@ -1,4 +1,4 @@
-// This file was generated on Sun May 28, 2023 10:53 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Wed Jun 7, 2023 08:22 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1711,16 +1711,11 @@ public class Ixml
                                                               private String lastCodePoint;
                                                               private String clazz;
                                                               private Charset charset;
-                                                              private Alt alt;
                                                               private Grammar grammar;
                                                               private Mark mark;
-                                                              private Rule rule;
                                                               private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                               private StringBuilder stringBuilder = new StringBuilder();
                                                               private StringBuilder nameBuilder = new StringBuilder();
-
-                                                              private Ixml() {
-                                                              }
 
                                                               public static Grammar parse(String content, String sourceId) {
                                                                 Ixml parser = new Ixml(content);
@@ -1736,5 +1731,5 @@ public class Ixml
                                                                 return parser.grammar;
                                                               }
                                                             }
-                                                            // line 1740 "Ixml.java"
+                                                            // line 1735 "Ixml.java"
 // End

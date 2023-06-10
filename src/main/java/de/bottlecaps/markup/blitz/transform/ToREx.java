@@ -26,6 +26,8 @@ public class ToREx extends Visitor {
   public static String process(Grammar g) {
     ToREx toREx = new ToREx();
     toREx.grammar = g;
+    toREx.visit(Charset.END);
+    toREx.sb.setLength(0);
     toREx.visit(g);
     if (! toREx.charsets.isEmpty()) {
       toREx.sb.append("\n\n<?TOKENS?>\n");
@@ -36,7 +38,8 @@ public class ToREx extends Visitor {
 
   @Override
   public void visit(Rule r) {
-    if (r != r.getGrammar().getRules().values().iterator().next())
+    Rule firstRule = r.getGrammar().getRules().values().iterator().next();
+    if (r != firstRule)
       sb.append("\n");
     String name = r.getName();
     sb.append(name);
@@ -48,6 +51,8 @@ public class ToREx extends Visitor {
     sb.append(padding.substring(0, paddingLength));
     sb.append("::=");
     super.visit(r);
+    if (r == firstRule)
+      sb.append(" ").append(grammar.getAdditionalNames().get(Charset.END)[0]);
   }
 
   @Override

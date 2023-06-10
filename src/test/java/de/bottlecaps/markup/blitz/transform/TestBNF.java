@@ -44,7 +44,7 @@ public class TestBNF {
     @Test
     public void testBnfOfIxmlResource() {
       String expectedResult =
-            "      -_start: ixml, -_end.\n"
+            "      -_start: ixml.\n"
             + "         ixml: s, -_ixml_option, -_ixml_list, s.\n"
             + " _ixml_option: ;\n"
             + "               prolog.\n"
@@ -328,7 +328,7 @@ public class TestBNF {
     @Test
     public void testBnfOfJsonResource() {
       String expectedResult =
-              "      -_start: json, -_end.\n"
+              "      -_start: json.\n"
             + "        -json: ws, -value, ws.\n"
             + "          -ws: ;\n"
             + "               -ws, -_ws_choice.\n"
@@ -451,6 +451,21 @@ public class TestBNF {
     public void testPropertiesOfIxmlBnf() {
       Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
       PropertiesChecker.process(BNF.process(grammar));
+    }
+
+    @Test
+    public void testDragonBookP262() {
+      String ebnf =
+            "S: C, C.\r\n"
+          + "C: 'c', C;\r\n"
+          + "   'd'.";
+      Grammar grammar = parse(ebnf, "ebnf");
+      System.out.println(grammar);
+      Grammar bnf = BNF.process(grammar);
+      System.out.println(bnf);
+//      assertEquals(expectedResult, bnf.toString());
+
+      CreateItems.process(bnf);
     }
 
     private static class PropertiesChecker extends Visitor {

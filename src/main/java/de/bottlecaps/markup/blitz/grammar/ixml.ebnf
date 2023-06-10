@@ -926,16 +926,11 @@ namefollower^token << '.' 'x'
                                                                 private String lastCodePoint;
                                                                 private String clazz;
                                                                 private Charset charset;
-                                                                private Alt alt;
                                                                 private Grammar grammar;
                                                                 private Mark mark;
-                                                                private Rule rule;
                                                                 private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                                 private StringBuilder stringBuilder = new StringBuilder();
                                                                 private StringBuilder nameBuilder = new StringBuilder();
-
-                                                                private Ixml() {
-                                                                }
 
                                                                 public static Grammar parse(String content, String sourceId) {
                                                                   Ixml parser = new Ixml(content);

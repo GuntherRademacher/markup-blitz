@@ -1,12 +1,16 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -15,15 +19,13 @@ import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
-import de.bottlecaps.markup.blitz.item.Item;
-import de.bottlecaps.markup.blitz.item.ReduceItem;
-import de.bottlecaps.markup.blitz.item.ShiftItem;
 import de.bottlecaps.markup.blitz.item.TokenSet;
 
 public class CreateItems extends Visitor {
   private Grammar grammar;
   private Map<Integer, RangeSet> rangeSet = new LinkedHashMap<>();
-  private Map<RangeSet, Integer> token = new LinkedHashMap<>();
+  private Map<String, Integer> nonterminal = new LinkedHashMap<>();
+  private Map<RangeSet, Integer> terminal = new LinkedHashMap<>();
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
 
   private CreateItems() {
@@ -33,16 +35,34 @@ public class CreateItems extends Visitor {
     CreateItems ci  = new CreateItems();
     ci.grammar = g;
     ci.new TokenCollector().visit(g);
-
     ci.collectFirst();
 
-    ci.first.forEach((k, v) -> {
-      if (k instanceof Rule) {
-        System.out.println(((Rule) k).getName() + ":");
-        for (Integer t : v)
-          System.out.println("        " + (t == null ? "<epsilon>" : ci.rangeSet.get(t)));
-      }
-    });
+//    Item firstItem = new ShiftItem(
+//        g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0),
+//        TokenSet.of(ci.token.get(RangeSet.of(Charset.END))));
+//
+//    System.out.println("firstItem: " + firstItem.toString(ci.rangeSet));
+//    for (Item nextItem = firstItem; ! (nextItem instanceof ReduceItem); ) {
+//      nextItem = nextItem instanceof ShiftItem
+//          ? ((ShiftItem) nextItem).shift()
+//          : null;
+//      System.out.println("nextItem: " + nextItem.toString(ci.rangeSet));
+//    }
+//
+//    for (Item item1 : firstItem.closure(ci::first)) {
+//      System.out.println("closureItem: " + item1.toString(ci.rangeSet));
+//      for (Item item2 : item1.closure(ci::first)) {
+//        System.out.println("closureItem: " + item2.toString(ci.rangeSet));
+//      }
+//    }
+
+//    ci.first.forEach((k, v) -> {
+//      if (k instanceof Rule) {
+//        System.out.println(((Rule) k).getName() + ":");
+//        for (Integer t : v)
+//          System.out.println("        " + (t == null ? "<epsilon>" : ci.rangeSet.get(t)));
+//      }
+//    });
 
 //    for (Rule r : g.getRules().values()) {
 //      for (Alt a : r.getAlts().getAlts()) {
@@ -60,53 +80,113 @@ public class CreateItems extends Visitor {
 //      }
 //    }
 
-    ItemSet itemSet = ci.new ItemSet();
+    State state = ci.new State();
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
-    Integer endToken = ci.token.get(RangeSet.of(Charset.END));
-    itemSet.add(new ShiftItem(startNode, TokenSet.of(endToken)));
+    Integer endToken = ci.terminal.get(RangeSet.of(Charset.END));
+    state.put(startNode, TokenSet.of(endToken));
 
-    ci.visit(g);
+    state.close();
+
+    System.out.println("state: \n" + state);
   }
 
-  @Override
-  public void visit(Alt a) {
-    // TODO Auto-generated method stub
-    super.visit(a);
-  }
+  private class State {
+    private Map<Node, TokenSet> kernel;
+    private Map<Node, TokenSet> closure;
+    private Map<Integer, State> terminalTransitions;
+    private Map<String, State> nonterminalTransitions;
 
-  private class ItemSet {
-    private LinkedHashSet<Item> kernel = new LinkedHashSet<>();
-    private LinkedHashSet<Item> closure;
-
-    private boolean closed = false;
+    public State() {
+      kernel = new IdentityHashMap<>();
+    }
 
     public void close() {
-      closure = new LinkedHashSet<>();
-      for (Item item : kernel) {
-        Node node = item.getNode();
+      closure = new IdentityHashMap<>();
+      Deque<Map.Entry<Node, TokenSet>> todo = kernel.entrySet().stream()
+          .filter(e -> e.getKey() instanceof Nonterminal)
+          .collect(Collectors.toCollection(LinkedList::new));
+      for (Map.Entry<Node, TokenSet> item; null != (item = todo.poll()); ) {
+        Node node = item.getKey();
         if (node instanceof Nonterminal) {
+          TokenSet lookahead = item.getValue();
+          Node next = node.getNext();
+          if (next != null)
+            lookahead = first(next, lookahead);
           for (Alt alt : node.getGrammar().getRules().get(((Nonterminal) node).getName()).getAlts().getAlts()) {
+            Node closureItemNode;
             if (alt.getTerms().isEmpty()) {
-              new ReduceItem(alt, item.getLookahead());
+              closureItemNode = alt;
             }
             else {
-              TokenSet lookahead = item.getLookahead();
-              Node next = node.getNext();
-              if (next != null)
-                lookahead = first(next, lookahead);
-              new ShiftItem(alt.getTerms().get(0), lookahead);
+              closureItemNode = alt.getTerms().get(0);
+            }
+            TokenSet closureLookahead = closure.get(closureItemNode);
+            if (closureLookahead != null) {
+              if (closureLookahead.addAll(lookahead)) {
+                // existing node, new lookahead
+                if (closureItemNode instanceof Nonterminal)
+                  todo.add(Map.entry(closureItemNode, lookahead));
+              }
+            }
+            else if (closureItemNode == alt) {
+              closure.put(alt, new TokenSet(lookahead));
+            }
+            else {
+              closure.put(closureItemNode, new TokenSet(lookahead));
+              // new node
+              if (closureItemNode instanceof Nonterminal)
+                todo.add(Map.entry(closureItemNode, new TokenSet(lookahead)));
             }
           }
         }
       }
     }
 
-    void add(Item item) {
-      kernel.add(item);
+    void put(Node node, TokenSet lookahead) {
+      kernel.put(node, lookahead);
+    }
+
+    @Override
+    public String toString() {
+      return Stream.concat(kernel.entrySet().stream(), closure.entrySet().stream())
+        .map(item -> toString(item))
+        .collect(Collectors.joining("\n"));
+    }
+
+    private String toString(Map.Entry<Node, TokenSet> item) {
+      StringBuilder sb = new StringBuilder();
+      Node node = item.getKey();
+      TokenSet lookahead = item.getValue();
+      sb.append("[").append(node.getRule().getMark()).append(node.getRule().getName()).append(":");
+      Alt alt = (Alt) (node instanceof Alt
+          ? node
+          : node.getParent());
+      for (Term term : alt.getTerms()) {
+        if (term == node)
+          sb.append(" ").append(".");
+        sb.append(" ").append(term);
+      }
+      if (alt == node)
+        sb.append(" ").append(".");
+      sb.append(" | {");
+      sb.append(lookahead.stream()
+        .map(token -> {
+          if (token == 0)
+            return "$";
+          if (rangeSet == null)
+            return Integer.toString(token);
+          int firstCodepoint = rangeSet.get(token).iterator().next().getFirstCodePoint();
+          return new Range(firstCodepoint).toString();
+        })
+        .collect(Collectors.joining(", ")));
+      sb.append("}]");
+      return sb.toString();
     }
   }
 
   private TokenSet first(Node node, TokenSet lookahead) {
+    if (node == null)
+      return lookahead;
     TokenSet tokens = first.get(node);
     if (! tokens.contains(null))
       return tokens;
@@ -118,9 +198,7 @@ public class CreateItems extends Visitor {
   }
 
   private void collectFirst() {
-    int pass = 0;
     for (boolean initial = true, changed = true; changed; initial = false) {
-      System.out.println("pass: " + pass++);
       changed = false;
       for (Rule r : grammar.getRules().values()) {
         for (Alt a : r.getAlts().getAlts()) {
@@ -137,7 +215,7 @@ public class CreateItems extends Visitor {
               if (t instanceof Charset) {
                 if (initial) {
                   changed = true;
-                  first.put(t, TokenSet.of(token.get(RangeSet.of((Charset) t))));
+                  first.put(t, TokenSet.of(terminal.get(RangeSet.of((Charset) t))));
                 }
               }
               else if (t instanceof Nonterminal) {
@@ -186,12 +264,17 @@ public class CreateItems extends Visitor {
   }
 
   private class TokenCollector extends Visitor {
+    public TokenCollector() {
+      terminal.clear();
+      terminal.put(RangeSet.of(Charset.END), terminal.size());
+    }
+
     @Override
     public void visit(Charset c) {
       RangeSet r = RangeSet.of(c);
-      if (! token.containsKey(r)) {
-        int code = token.size() + 1;
-        token.put(r, code);
+      if (! terminal.containsKey(r)) {
+        int code = terminal.size();
+        terminal.put(r, code);
         rangeSet.put(code, r);
       }
     }

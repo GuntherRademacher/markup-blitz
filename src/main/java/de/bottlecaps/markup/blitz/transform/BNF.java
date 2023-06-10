@@ -70,7 +70,7 @@ public class BNF extends Visitor {
       // augment grammar with rule: _start: someNonterminal _end.
       Alt alt = new Alt();
       alt.addNonterminal(Mark.NONE, r.getName());
-      alt.addCharset(Charset.END);
+//      alt.addCharset(Charset.END);
       Alts alts = new Alts();
       alts.addAlt(alt);
       Rule rule = new Rule(Mark.DELETED, grammar.getAdditionalNames().get(Term.START)[0], alts);
