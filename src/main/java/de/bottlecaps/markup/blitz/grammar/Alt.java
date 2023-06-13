@@ -30,7 +30,7 @@ public class Alt extends Node {
     terms.add(new Literal(deleted, value, false));
   }
 
-  public void addCodePoint(boolean deleted, String value) {
+  public void addCodepoint(boolean deleted, String value) {
     terms.add(new Literal(deleted, value, true));
   }
 

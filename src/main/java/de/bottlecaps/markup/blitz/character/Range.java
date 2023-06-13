@@ -1,95 +1,95 @@
 package de.bottlecaps.markup.blitz.character;
 
 public class Range implements Comparable<Range> {
-  private final int firstCodePoint;
-  private final int lastCodePoint;
+  private final int firstCodepoint;
+  private final int lastCodepoint;
 
-  public Range(int firstCodePoint, int lastCodePoint) {
-    this.firstCodePoint = firstCodePoint;
-    this.lastCodePoint = lastCodePoint;
-    if (firstCodePoint > lastCodePoint)
+  public Range(int firstCodepoint, int lastCodepoint) {
+    this.firstCodepoint = firstCodepoint;
+    this.lastCodepoint = lastCodepoint;
+    if (firstCodepoint > lastCodepoint)
       throw new IllegalArgumentException("invalid range: " + this); // TODO: error message
   }
 
-  public Range(int codePoint) {
-    this(codePoint, codePoint);
+  public Range(int codepoint) {
+    this(codepoint, codepoint);
   }
 
-  public int getFirstCodePoint() {
-    return firstCodePoint;
+  public int getFirstCodepoint() {
+    return firstCodepoint;
   }
 
-  public int getLastCodePoint() {
-    return lastCodePoint;
+  public int getLastCodepoint() {
+    return lastCodepoint;
   }
 
   public boolean overlaps(Range other) {
-    return firstCodePoint <= other.lastCodePoint
-        && lastCodePoint >= other.firstCodePoint;
+    return firstCodepoint <= other.lastCodepoint
+        && lastCodepoint >= other.firstCodepoint;
   }
 
   @Override
   public String toString() {
-    return firstCodePoint == lastCodePoint
-        ? toString(firstCodePoint)
-        : toString(firstCodePoint) + "-" + toString(lastCodePoint);
+    return firstCodepoint == lastCodepoint
+        ? toString(firstCodepoint)
+        : toString(firstCodepoint) + "-" + toString(lastCodepoint);
   }
 
-  private String toString(int codePoint) {
-    if (codePoint == '\'')
+  private String toString(int codepoint) {
+    if (codepoint == '\'')
       return "\"'\"";
-    else if (isAscii(codePoint))
-      return "'" + (char) codePoint + "'";
+    else if (isAscii(codepoint))
+      return "'" + (char) codepoint + "'";
     else
-      return "#" + Integer.toHexString(codePoint);
+      return "#" + Integer.toHexString(codepoint);
   }
 
   public String toJava() {
     return ".add("
-        + toJava(firstCodePoint)
-        + (firstCodePoint == lastCodePoint ? "" : (", " + toJava(lastCodePoint)))
+        + toJava(firstCodepoint)
+        + (firstCodepoint == lastCodepoint ? "" : (", " + toJava(lastCodepoint)))
         + ")";
   }
 
   public String toREx() {
-    if (size() > 1 && "[^-]".indexOf(firstCodePoint) >= 0)
-      return new Range(firstCodePoint).toREx() + " | " + new Range(firstCodePoint + 1, lastCodePoint).toREx();
-    if (size() > 1 && "[^-]".indexOf(lastCodePoint) >= 0)
-      return new Range(firstCodePoint, lastCodePoint - 1).toREx() + " | " + new Range(lastCodePoint).toREx();
+    if (size() > 1 && "[^-]".indexOf(firstCodepoint) >= 0)
+      return new Range(firstCodepoint).toREx() + " | " + new Range(firstCodepoint + 1, lastCodepoint).toREx();
+    if (size() > 1 && "[^-]".indexOf(lastCodepoint) >= 0)
+      return new Range(firstCodepoint, lastCodepoint - 1).toREx() + " | " + new Range(lastCodepoint).toREx();
     if (size() == 1)
-      return ! isAscii(firstCodePoint)
-          ? "#x" + Integer.toHexString(firstCodePoint)
-          : firstCodePoint == '\''
-              ? "\"" + (char) firstCodePoint + "\""
-              : "'" + (char) firstCodePoint + "'";
-    if (isAscii(firstCodePoint) && isAscii(lastCodePoint))
-      return "[" + (char) firstCodePoint
-           + "-" + (char) lastCodePoint
+      return ! isAscii(firstCodepoint)
+          ? "#x" + Integer.toHexString(firstCodepoint)
+          : firstCodepoint == '\''
+              ? "\"" + (char) firstCodepoint + "\""
+              : "'" + (char) firstCodepoint + "'";
+    if (isAscii(firstCodepoint) && isAscii(lastCodepoint))
+      return "[" + (char) firstCodepoint
+           + "-" + (char) lastCodepoint
            + "]";
-    return "[#x" + Integer.toHexString(firstCodePoint)
-         + "-#x" + Integer.toHexString(lastCodePoint)
+    return "[#x" + Integer.toHexString(firstCodepoint)
+         + "-#x" + Integer.toHexString(lastCodepoint)
          + "]";
   }
 
-  private String toJava(int codePoint) {
-    if (codePoint == '\'')
+  private String toJava(int codepoint) {
+    if (codepoint == '\'')
       return "";
-    else if (isAscii(codePoint))
-      return "'" + (char) codePoint + "'";
+    else if (isAscii(codepoint))
+      return "'" + (char) codepoint + "'";
     else
-      return "0x" + Integer.toHexString(codePoint);
+      return "0x" + Integer.toHexString(codepoint);
   }
 
-  public static boolean isAscii(int codePoint) {
-    return codePoint >= ' ' && codePoint <= '~';
+  public static boolean isAscii(int codepoint) {
+    return codepoint >= ' ' && codepoint <= '~';
   }
 
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + firstCodePoint;
-    result = prime * result + lastCodePoint;
+    result = prime * result + firstCodepoint;
+    result = prime * result + lastCodepoint;
     return result;
   }
 
@@ -100,23 +100,23 @@ public class Range implements Comparable<Range> {
     if (!(obj instanceof Range))
       return false;
     Range other = (Range) obj;
-    if (firstCodePoint != other.firstCodePoint)
+    if (firstCodepoint != other.firstCodepoint)
       return false;
-    if (lastCodePoint != other.lastCodePoint)
+    if (lastCodepoint != other.lastCodepoint)
       return false;
     return true;
   }
 
   @Override
   public int compareTo(Range other) {
-    if (firstCodePoint < other.firstCodePoint) return -1;
-    if (firstCodePoint > other.firstCodePoint) return  1;
-    if ( lastCodePoint < other. lastCodePoint) return -1;
-    if ( lastCodePoint > other. lastCodePoint) return  1;
+    if (firstCodepoint < other.firstCodepoint) return -1;
+    if (firstCodepoint > other.firstCodepoint) return  1;
+    if ( lastCodepoint < other. lastCodepoint) return -1;
+    if ( lastCodepoint > other. lastCodepoint) return  1;
                                                return  0;
   }
 
   public int size() {
-    return lastCodePoint - firstCodePoint + 1;
+    return lastCodepoint - firstCodepoint + 1;
   }
 }

@@ -82,7 +82,7 @@
         tmark::= '^'
                | '-'                                        <?java deleted = true;?>
       literal::= string                                     <?java alts.peek().last().addString(deleted, stringBuilder.toString());?>
-               | hex                                        <?java alts.peek().last().addCodePoint(deleted, codePoint);?>
+               | hex                                        <?java alts.peek().last().addCodepoint(deleted, codepoint);?>
        string::=                                            <?java stringBuilder.setLength(0);?>
                  ( '"' ( ( dchar | '"' '"' )                <?java stringBuilder.append(input.charAt(b0));?>
                                              )+ '"'
@@ -90,7 +90,7 @@
                                              )+ "'"
                  )
           hex::= '#'                                        <?java hexBegin = b0;?>
-                 hexdigit+                                  <?java codePoint = input.subSequence(hexBegin, e0).toString();?>
+                 hexdigit+                                  <?java codepoint = input.subSequence(hexBegin, e0).toString();?>
 
       charset::= inclusion
                | exclusion
@@ -100,21 +100,21 @@
                        set
           set::= '[' s  (member s ( ( ( ';' | '|' ) s) member s )* )? ']'
        member::= string                                     <?java charset.addLiteral(stringBuilder.toString(), false);?>
-               | hex                                        <?java charset.addLiteral(codePoint, true);?>
-               | range                                      <?java charset.addRange(firstCodePoint, lastCodePoint);?>
+               | hex                                        <?java charset.addLiteral(codepoint, true);?>
+               | range                                      <?java charset.addRange(firstCodepoint, lastCodepoint);?>
                | class                                      <?java charset.addClass(clazz);?>
         range::= from s '-' s to
-         from::= character                                  <?java firstCodePoint = codePoint;?>
-           to::= character                                  <?java lastCodePoint = codePoint;?>
-    character::= '"' ( dchar | '"' '"' )                    <?java codePoint = input.subSequence(b0, e0).toString();?>
+         from::= character                                  <?java firstCodepoint = codepoint;?>
+           to::= character                                  <?java lastCodepoint = codepoint;?>
+    character::= '"' ( dchar | '"' '"' )                    <?java codepoint = input.subSequence(b0, e0).toString();?>
                                          '"'
-               | "'" ( schar | "'" "'" )                    <?java codePoint = input.subSequence(b0, e0).toString();?>
+               | "'" ( schar | "'" "'" )                    <?java codepoint = input.subSequence(b0, e0).toString();?>
                                          "'"
                | hex
         class::= capital ( letter                           <?java clazz += input.charAt(b0);?>
                                   )?
     insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
-                                | hex                       <?java alts.peek().last().addHexInsertion(codePoint);?>
+                                | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
                                       ) s
       capital::= ( 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
                  | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
@@ -921,9 +921,9 @@ namefollower^token << '.' 'x'
                                                             <?java
                                                                 private int hexBegin;
                                                                 private boolean deleted;
-                                                                private String codePoint;
-                                                                private String firstCodePoint;
-                                                                private String lastCodePoint;
+                                                                private String codepoint;
+                                                                private String firstCodepoint;
+                                                                private String lastCodepoint;
                                                                 private String clazz;
                                                                 private Charset charset;
                                                                 private Grammar grammar;

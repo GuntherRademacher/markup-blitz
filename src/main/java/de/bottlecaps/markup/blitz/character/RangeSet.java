@@ -43,24 +43,24 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     Range range = rangeIt.hasNext() ? rangeIt.next() : null;
     Builder builder = new Builder();
     while (range != null) {
-      if (remove == null || range.getLastCodePoint() < remove.getFirstCodePoint()) {
+      if (remove == null || range.getLastCodepoint() < remove.getFirstCodepoint()) {
         // no overlap, range smaller
         builder.add(range);
         range = rangeIt.hasNext() ? rangeIt.next() : null;
       }
-      // range.getLastCodePoint() >= remove.getFirstCodePoint()
-      else if (range.getFirstCodePoint() > remove.getLastCodePoint()) {
+      // range.getLastCodepoint() >= remove.getFirstCodepoint()
+      else if (range.getFirstCodepoint() > remove.getLastCodepoint()) {
         // no overlap, remove smaller
         remove = removeIt.hasNext() ? removeIt.next() : null;
       }
       else {
-        if (range.getFirstCodePoint() < remove.getFirstCodePoint()) {
+        if (range.getFirstCodepoint() < remove.getFirstCodepoint()) {
           // overlap, left residual
-          builder.add(range.getFirstCodePoint(), remove.getFirstCodePoint() - 1);
+          builder.add(range.getFirstCodepoint(), remove.getFirstCodepoint() - 1);
         }
-        if (range.getLastCodePoint() > remove.getLastCodePoint()) {
+        if (range.getLastCodepoint() > remove.getLastCodepoint()) {
           // overlap, right residual
-          range = new Range(remove.getLastCodePoint() + 1, range.getLastCodePoint());
+          range = new Range(remove.getLastCodepoint() + 1, range.getLastCodepoint());
           remove = removeIt.hasNext() ? removeIt.next() : null;
         }
         else {
@@ -72,37 +72,37 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   }
 
   public RangeSet join() {
-    Integer firstCodePoint = null;
-    Integer lastCodePoint = null;
+    Integer firstCodepoint = null;
+    Integer lastCodepoint = null;
     Builder builder = new Builder();
     for (Range range : split(addedRanges)) {
-      if (firstCodePoint == null) {
-        firstCodePoint = range.getFirstCodePoint();
+      if (firstCodepoint == null) {
+        firstCodepoint = range.getFirstCodepoint();
       }
-      else if (lastCodePoint + 1 != range.getFirstCodePoint()) {
-        builder.add(new Range(firstCodePoint, lastCodePoint));
-        firstCodePoint = range.getFirstCodePoint();
+      else if (lastCodepoint + 1 != range.getFirstCodepoint()) {
+        builder.add(new Range(firstCodepoint, lastCodepoint));
+        firstCodepoint = range.getFirstCodepoint();
       }
-      lastCodePoint = range.getLastCodePoint();
+      lastCodepoint = range.getLastCodepoint();
     }
-    if (firstCodePoint != null)
-      builder.add(new Range(firstCodePoint, lastCodePoint));
+    if (firstCodepoint != null)
+      builder.add(new Range(firstCodepoint, lastCodepoint));
     return builder.build();
   }
 
   public RangeSet split(Set<Range> ranges) {
-    TreeSet<Integer> lastCodePoints = new TreeSet<>();
+    TreeSet<Integer> lastCodepoints = new TreeSet<>();
     addedRanges.forEach(r -> {
-      lastCodePoints.add(r.getFirstCodePoint() - 1);
-      lastCodePoints.add(r.getLastCodePoint());
+      lastCodepoints.add(r.getFirstCodepoint() - 1);
+      lastCodepoints.add(r.getLastCodepoint());
     });
     Builder builder = new Builder();
     for (Range range : ranges) {
-      for (int firstCodePoint = range.getFirstCodePoint(), lastCodePoint;
-          firstCodePoint <= range.getLastCodePoint();
-          firstCodePoint = lastCodePoint + 1) {
-        lastCodePoint = lastCodePoints.ceiling(firstCodePoint);
-        builder.add(new Range(firstCodePoint, lastCodePoint));
+      for (int firstCodepoint = range.getFirstCodepoint(), lastCodepoint;
+          firstCodepoint <= range.getLastCodepoint();
+          firstCodepoint = lastCodepoint + 1) {
+        lastCodepoint = lastCodepoints.ceiling(firstCodepoint);
+        builder.add(new Range(firstCodepoint, lastCodepoint));
       }
     }
     return builder.build();
@@ -156,12 +156,12 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   public static final class Builder {
     private RangeSet set = new RangeSet();
 
-    public Builder add(int codePoint) {
-      return add(codePoint, codePoint);
+    public Builder add(int codepoint) {
+      return add(codepoint, codepoint);
     }
 
-    public Builder add(int firstCodePoint, int lastCodePoint) {
-      return add(new Range(firstCodePoint, lastCodePoint));
+    public Builder add(int firstCodepoint, int lastCodepoint) {
+      return add(new Range(firstCodepoint, lastCodepoint));
     }
 
     public Builder add(Range range) {
@@ -236,8 +236,8 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
         StringMember m = (StringMember) member;
         String value = m.getValue();
         if (m.isHex()) {
-          int codePoint = Integer.parseInt(value.substring(1), 16);
-          builder.add(codePoint);
+          int codepoint = Integer.parseInt(value.substring(1), 16);
+          builder.add(codepoint);
         }
         else {
           for (char chr : value.toCharArray())
@@ -261,10 +261,10 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
 
   public Term toTerm(boolean isDeleted) {
 //    if (addedRanges.size() == 1 && addedRanges.iterator().next().size() == 1) {
-//      int codePoint = addedRanges.iterator().next().getFirstCodePoint();
-//      return Range.isAscii(codePoint)
-//          ? new Literal(isDeleted, Character.toString(codePoint), false)
-//          : new Literal(isDeleted, "#" + Integer.toHexString(codePoint), true);
+//      int codepoint = addedRanges.iterator().next().getFirstCodepoint();
+//      return Range.isAscii(codepoint)
+//          ? new Literal(isDeleted, Character.toString(codepoint), false)
+//          : new Literal(isDeleted, "#" + Integer.toHexString(codepoint), true);
 //    }
 //    else {
       Charset set = new Charset(isDeleted, false);

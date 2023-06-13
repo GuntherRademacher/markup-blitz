@@ -1,4 +1,4 @@
-// This file was generated on Wed Jun 7, 2023 08:22 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Tue Jun 13, 2023 22:50 (UTC+01) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -688,7 +688,7 @@ public class Ixml
       case 22:
         {
                                                             // line 85 "ixml.ebnf"
-                                                            alts.peek().last().addCodePoint(deleted, codePoint);
+                                                            alts.peek().last().addCodepoint(deleted, codepoint);
                                                             // line 693 "Ixml.java"
         }
         break;
@@ -716,7 +716,7 @@ public class Ixml
       case 26:
         {
                                                             // line 93 "ixml.ebnf"
-                                                            codePoint = input.subSequence(hexBegin, e0).toString();
+                                                            codepoint = input.subSequence(hexBegin, e0).toString();
                                                             // line 721 "Ixml.java"
         }
         break;
@@ -744,14 +744,14 @@ public class Ixml
       case 30:
         {
                                                             // line 103 "ixml.ebnf"
-                                                            charset.addLiteral(codePoint, true);
+                                                            charset.addLiteral(codepoint, true);
                                                             // line 749 "Ixml.java"
         }
         break;
       case 31:
         {
                                                             // line 104 "ixml.ebnf"
-                                                            charset.addRange(firstCodePoint, lastCodePoint);
+                                                            charset.addRange(firstCodepoint, lastCodepoint);
                                                             // line 756 "Ixml.java"
         }
         break;
@@ -765,21 +765,21 @@ public class Ixml
       case 33:
         {
                                                             // line 107 "ixml.ebnf"
-                                                            firstCodePoint = codePoint;
+                                                            firstCodepoint = codepoint;
                                                             // line 770 "Ixml.java"
         }
         break;
       case 34:
         {
                                                             // line 108 "ixml.ebnf"
-                                                            lastCodePoint = codePoint;
+                                                            lastCodepoint = codepoint;
                                                             // line 777 "Ixml.java"
         }
         break;
       case 35:
         {
                                                             // line 109 "ixml.ebnf"
-                                                            codePoint = input.subSequence(b0, e0).toString();
+                                                            codepoint = input.subSequence(b0, e0).toString();
                                                             // line 784 "Ixml.java"
         }
         break;
@@ -800,7 +800,7 @@ public class Ixml
       case 38:
         {
                                                             // line 117 "ixml.ebnf"
-                                                            alts.peek().last().addHexInsertion(codePoint);
+                                                            alts.peek().last().addHexInsertion(codepoint);
                                                             // line 805 "Ixml.java"
         }
         break;
@@ -1706,9 +1706,9 @@ public class Ixml
                                                             // line 922 "ixml.ebnf"
                                                             private int hexBegin;
                                                               private boolean deleted;
-                                                              private String codePoint;
-                                                              private String firstCodePoint;
-                                                              private String lastCodePoint;
+                                                              private String codepoint;
+                                                              private String firstCodepoint;
+                                                              private String lastCodepoint;
                                                               private String clazz;
                                                               private Charset charset;
                                                               private Grammar grammar;

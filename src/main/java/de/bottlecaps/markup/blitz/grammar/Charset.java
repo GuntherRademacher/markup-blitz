@@ -43,8 +43,8 @@ public class Charset extends Term {
     members.add(new StringMember(literal, isHex));
   }
 
-  public void addRange(String firstCodePoint, String lastCodePoint) {
-    members.add(new RangeMember(firstCodePoint, lastCodePoint));
+  public void addRange(String firstCodepoint, String lastCodepoint) {
+    members.add(new RangeMember(firstCodepoint, lastCodepoint));
   }
 
   @Override

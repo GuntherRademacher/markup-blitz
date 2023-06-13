@@ -280,7 +280,7 @@ public class CreateItems extends Visitor {
             return "$";
           if (rangeSet == null)
             return Integer.toString(token);
-          int firstCodepoint = rangeSet.get(token).iterator().next().getFirstCodePoint();
+          int firstCodepoint = rangeSet.get(token).iterator().next().getFirstCodepoint();
           return new Range(firstCodepoint).toString();
         })
         .collect(Collectors.joining(", ")));

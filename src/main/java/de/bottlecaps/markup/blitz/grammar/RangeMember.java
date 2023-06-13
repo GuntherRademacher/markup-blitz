@@ -11,14 +11,14 @@ public class RangeMember extends Member {
   }
 
   public RangeMember(String firstValue, String lastValue) {
-    this(new Range(codePoint(firstValue), codePoint(lastValue)));
+    this(new Range(codepoint(firstValue), codepoint(lastValue)));
   }
 
   public Range getRange() {
     return range;
   }
 
-  private static int codePoint(String value) {
+  private static int codepoint(String value) {
     return isHex(value) ? Integer.parseInt(value.substring(1), 16) : value.codePointAt(0);
   }
 
