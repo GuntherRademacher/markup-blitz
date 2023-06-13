@@ -5,9 +5,18 @@ import java.util.List;
 
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
+import de.bottlecaps.markup.blitz.grammar.Charset;
+import de.bottlecaps.markup.blitz.grammar.ClassMember;
+import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
+import de.bottlecaps.markup.blitz.grammar.Insertion;
+import de.bottlecaps.markup.blitz.grammar.Literal;
+import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Node;
+import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
+import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class PostProcess extends Visitor {
@@ -28,7 +37,9 @@ public class PostProcess extends Visitor {
   @Override
   public void visit(Rule r) {
     this.rule = r;
+    visitPreOrder(r);
     super.visit(r);
+    visitPostOrder(r);
   }
 
   @Override
@@ -84,17 +95,74 @@ public class PostProcess extends Visitor {
   }
 
   @Override
-  public void visitPreOrder(Node node) {
+  public void visit(Charset c) {
+    visitPreOrder(c);
+    for (Member member : c.getMembers())
+      member.accept(this);
+    visitPostOrder(c);
+  }
+
+  @Override
+  public void visit(ClassMember c) {
+    visitPreOrder(c);
+    visitPostOrder(c);
+  }
+
+  @Override
+  public void visit(Control c) {
+    visitPreOrder(c);
+    c.getTerm().accept(this);
+    if (c.getSeparator() != null)
+      c.getSeparator().accept(this);
+    visitPostOrder(c);
+  }
+
+  @Override
+  public void visit(Grammar g) {
+    visitPreOrder(g);
+    for (Rule rule: g.getRules().values())
+      rule.accept(this);
+    visitPostOrder(g);
+  }
+
+  @Override
+  public void visit(Insertion i) {
+    visitPreOrder(i);
+    visitPostOrder(i);
+  }
+
+  @Override
+  public void visit(Literal l) {
+    visitPreOrder(l);
+    visitPostOrder(l);
+  }
+
+  @Override
+  public void visit(Nonterminal n) {
+    visitPreOrder(n);
+    visitPostOrder(n);
+  }
+
+  @Override
+  public void visit(RangeMember r) {
+    visitPreOrder(r);
+    visitPostOrder(r);
+  }
+
+  @Override
+  public void visit(StringMember s) {
+    visitPreOrder(s);
+    visitPostOrder(s);
+  }
+
+  private void visitPreOrder(Node node) {
     node.setGrammar(grammar);
     node.setRule(rule);
     node.setParent(parent);
     parent = node;
-    super.visitPreOrder(node);
   }
 
-  @Override
-  public void visitPostOrder(Node node) {
-    super.visitPostOrder(node);
+  private void visitPostOrder(Node node) {
     parent = node.getParent();
   }
 }
