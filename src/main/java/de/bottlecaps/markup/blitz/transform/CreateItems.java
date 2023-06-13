@@ -1,7 +1,9 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -15,6 +17,7 @@ import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
+import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
@@ -24,9 +27,12 @@ import de.bottlecaps.markup.blitz.item.TokenSet;
 public class CreateItems extends Visitor {
   private Grammar grammar;
   private Map<Integer, RangeSet> rangeSet = new LinkedHashMap<>();
-  private Map<String, Integer> nonterminal = new LinkedHashMap<>();
-  private Map<RangeSet, Integer> terminal = new LinkedHashMap<>();
+  private Map<Integer, String> nonterminal = new LinkedHashMap<>();
+  private Map<String, Integer> nonterminalCode = new LinkedHashMap<>();
+  private Map<RangeSet, Integer> terminalCode = new LinkedHashMap<>();
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
+  private Map<State, State> states = new LinkedHashMap<>();
+  private Deque<State> statesTodo = new LinkedList<>();
 
   private CreateItems() {
   }
@@ -80,27 +86,44 @@ public class CreateItems extends Visitor {
 //      }
 //    }
 
-    State state = ci.new State();
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
-    Integer endToken = ci.terminal.get(RangeSet.of(Charset.END));
+    Integer endToken = ci.terminalCode.get(RangeSet.of(Charset.END));
+    State state = ci.new State();
     state.put(startNode, TokenSet.of(endToken));
+    ci.states.put(state, state);
+    ci.statesTodo.offer(state);
 
-    state.close();
+    while (! ci.statesTodo.isEmpty()) {
+      State s = ci.statesTodo.poll();
+      s.close();
+      s.transitions();
+    }
 
-    System.out.println("state: \n" + state);
+//    state.close();
+//
+//    System.out.println("state: \n" + state);
+//
+//    state.transitions();
+
+    System.out.println(ci.states.size() + " states");
+    for (State s : ci.states.keySet()) {
+      System.out.println("\nstate:\n" + s);
+    }
   }
 
   private class State {
     private Map<Node, TokenSet> kernel;
     private Map<Node, TokenSet> closure;
     private Map<Integer, State> terminalTransitions;
-    private Map<String, State> nonterminalTransitions;
+    private Map<Integer, State> nonterminalTransitions;
 
     public State() {
       kernel = new IdentityHashMap<>();
     }
 
     public void close() {
+      if (closure != null)
+        return;
       closure = new IdentityHashMap<>();
       Deque<Map.Entry<Node, TokenSet>> todo = kernel.entrySet().stream()
           .filter(e -> e.getKey() instanceof Nonterminal)
@@ -142,13 +165,95 @@ public class CreateItems extends Visitor {
       }
     }
 
+    public void transitions() {
+      terminalTransitions = new HashMap<>();
+      nonterminalTransitions = new HashMap<>();
+      Stream.concat(kernel.entrySet().stream(), closure.entrySet().stream())
+        .forEach(e -> {
+          Node node = e.getKey();
+          TokenSet lookahead = e.getValue();
+          if (! (node instanceof Alt) && ! (node instanceof Insertion)) {
+            Node next = node.getNext() != null
+                ? node.getNext()
+                : node.getParent();
+            Map<Integer, State> transitions;
+            Integer code;
+            if (node instanceof Nonterminal) {
+              code = nonterminalCode.get(((Nonterminal) node).getName());
+              transitions = nonterminalTransitions;
+            }
+            else if (node instanceof Charset) {
+              code = terminalCode.get(RangeSet.of((Charset) node));
+              transitions = terminalTransitions;
+            }
+            else {
+              throw new IllegalStateException("Unexpected type: " + node.getClass().getSimpleName());
+            }
+            transitions.compute(code, (k, v) -> {
+              if (v == null) {
+                v = new State();
+                v.put(next, new TokenSet(lookahead));
+              }
+              else {
+                TokenSet tokenSet = v.kernel.get(next);
+                if (tokenSet == null)
+                  v.put(next, new TokenSet(lookahead));
+                else
+                  tokenSet.addAll(lookahead);
+              }
+              return v;
+            });
+          }
+        });
+      for (Map<Integer, State> transitions : Arrays.asList(
+          nonterminalTransitions,
+          terminalTransitions
+      )) {
+        for (Map.Entry<Integer, State> e : transitions.entrySet()) {
+          State newState = e.getValue();
+          State oldState = states.putIfAbsent(newState, newState);
+          if (oldState == null) {
+            statesTodo.add(newState);
+          }
+          else {
+            Integer code = e.getKey();
+            transitions.put(code, oldState);
+            for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
+              if (oldState.kernel.get(k.getKey()).addAll(k.getValue())) {
+                if (oldState.closure != null)
+                  oldState.closure = null;
+                  oldState.nonterminalTransitions = null;
+                  oldState.terminalTransitions = null;
+                  statesTodo.add(oldState);
+              }
+            }
+          }
+        }
+      }
+    }
+
     void put(Node node, TokenSet lookahead) {
       kernel.put(node, lookahead);
     }
 
     @Override
+    public int hashCode() {
+      return kernel.keySet().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return kernel.keySet().equals(((State) other).kernel.keySet());
+    }
+
+    @Override
     public String toString() {
-      return Stream.concat(kernel.entrySet().stream(), closure.entrySet().stream())
+      return Stream.concat(
+          kernel.entrySet().stream(),
+          closure == null
+            ? Stream.empty()
+            : closure.entrySet().stream()
+        )
         .map(item -> toString(item))
         .collect(Collectors.joining("\n"));
     }
@@ -184,6 +289,10 @@ public class CreateItems extends Visitor {
     }
   }
 
+  private class States {
+
+  }
+
   private TokenSet first(Node node, TokenSet lookahead) {
     if (node == null)
       return lookahead;
@@ -215,7 +324,7 @@ public class CreateItems extends Visitor {
               if (t instanceof Charset) {
                 if (initial) {
                   changed = true;
-                  first.put(t, TokenSet.of(terminal.get(RangeSet.of((Charset) t))));
+                  first.put(t, TokenSet.of(terminalCode.get(RangeSet.of((Charset) t))));
                 }
               }
               else if (t instanceof Nonterminal) {
@@ -265,16 +374,26 @@ public class CreateItems extends Visitor {
 
   private class TokenCollector extends Visitor {
     public TokenCollector() {
-      terminal.clear();
-      terminal.put(RangeSet.of(Charset.END), terminal.size());
+      nonterminalCode.clear();
+      terminalCode.clear();
+      terminalCode.put(RangeSet.of(Charset.END), terminalCode.size());
+    }
+
+    @Override
+    public void visit(Nonterminal n) {
+      if (! nonterminalCode.containsKey(n.getName())) {
+        int code = nonterminalCode.size();
+        nonterminalCode.put(n.getName(), code);
+        nonterminal.put(code, n.getName());
+      }
     }
 
     @Override
     public void visit(Charset c) {
       RangeSet r = RangeSet.of(c);
-      if (! terminal.containsKey(r)) {
-        int code = terminal.size();
-        terminal.put(r, code);
+      if (! terminalCode.containsKey(r)) {
+        int code = terminalCode.size();
+        terminalCode.put(r, code);
         rangeSet.put(code, r);
       }
     }

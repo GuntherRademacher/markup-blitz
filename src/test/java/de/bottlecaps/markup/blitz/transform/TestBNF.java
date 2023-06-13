@@ -463,7 +463,6 @@ public class TestBNF {
       System.out.println(grammar);
       Grammar bnf = BNF.process(grammar);
       System.out.println(bnf);
-//      assertEquals(expectedResult, bnf.toString());
 
       CreateItems.process(bnf);
     }
