@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,10 +27,11 @@ import de.bottlecaps.markup.blitz.item.TokenSet;
 
 public class CreateItems extends Visitor {
   private Grammar grammar;
-  private Map<Integer, RangeSet> rangeSet = new LinkedHashMap<>();
+  private Map<Integer, RangeSet> rangeSetByTerminalCode = new LinkedHashMap<>();
   private Map<Integer, String> nonterminal = new LinkedHashMap<>();
   private Map<String, Integer> nonterminalCode = new LinkedHashMap<>();
   private Map<RangeSet, Integer> terminalCode = new LinkedHashMap<>();
+  private Map<Range, Integer> terminalCodeByRange = new TreeMap<>();
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
   private Map<State, State> states = new LinkedHashMap<>();
   private Deque<State> statesTodo = new LinkedList<>();
@@ -109,6 +111,29 @@ public class CreateItems extends Visitor {
     for (State s : ci.states.keySet()) {
       System.out.println("\nstate:\n" + s);
     }
+
+    System.out.println("\nTerminals: ");
+    ci.rangeSetByTerminalCode.forEach((k, v) -> {
+      System.out.println(k + ": " + v);
+    });
+
+    System.out.println("\nRanges: ");
+    ci.terminalCodeByRange.forEach((k, v) -> {
+      System.out.println(k + ": " + v);
+    });
+
+//    int powerOf2OfTileSize = 1;
+//    int tileSize = 1 << powerOf2OfTileSize;
+//    Integer[] target = new Integer[tileSize];
+//    TileIterator it = tileIterator(ci.terminalCodeByRange, powerOf2OfTileSize);
+//    int address = 0;
+//    for (int count; (count = it.next(target, 0)) != 0; ) {
+//      String tileString = Arrays.stream(target)
+//          .map(v -> v.toString())
+//          .collect(Collectors.joining(", ", "[", "]"));
+//      System.out.println(address + ": " + count + " * " + tileString);
+//      address += count * tileSize;
+//    }
   }
 
   private class State {
@@ -278,9 +303,9 @@ public class CreateItems extends Visitor {
         .map(token -> {
           if (token == 0)
             return "$";
-          if (rangeSet == null)
+          if (rangeSetByTerminalCode == null)
             return Integer.toString(token);
-          int firstCodepoint = rangeSet.get(token).iterator().next().getFirstCodepoint();
+          int firstCodepoint = rangeSetByTerminalCode.get(token).iterator().next().getFirstCodepoint();
           return new Range(firstCodepoint).toString();
         })
         .collect(Collectors.joining(", ")));
@@ -393,9 +418,12 @@ public class CreateItems extends Visitor {
       RangeSet r = RangeSet.of(c);
       if (! terminalCode.containsKey(r)) {
         int code = terminalCode.size();
+        rangeSetByTerminalCode.put(code, r);
         terminalCode.put(r, code);
-        rangeSet.put(code, r);
+        for (Range range : r)
+          terminalCodeByRange.put(range, code);
       }
     }
   }
+
 }
