@@ -9,14 +9,16 @@ import de.bottlecaps.markup.blitz.character.Range;
 
 public interface TileIterator {
   public int next(int[] target, int offset);
+  public int numberOfTiles();
+  public int tileSize();
 
   public static TileIterator of(TreeMap<Range, Integer> terminalCodeByRange, int log2OfTileSize) {
     return new TileIterator() {
       int defaultValue = 0;
       int tileSize = 1 << log2OfTileSize;
 
-  //    int maxCodepoint = rangeSet.addedRanges.descendingIterator().next().getLastCodepoint();
-  //    int numberOfTiles = maxCodepoint / tileSize + 1;
+      int numberOfTiles = terminalCodeByRange.descendingKeySet().iterator().next().getLastCodepoint()
+                        / tileSize + 1;
   //    int endOffset = numberOfTiles * tileSize;
   //
   //    int lastTile = MAX_VALID_CODEPOINT;
@@ -33,17 +35,14 @@ public interface TileIterator {
         nextRange();
       }
 
-      private void nextRange() {
-        if (! it.hasNext()) {
-          firstCp = -1;
-          lastCp = -1;
-          return;
-        }
-        Map.Entry<Range, Integer> entry = it.next();
-        tokenCode = entry.getValue();
-        currentRange = entry.getKey();
-        firstCp = currentRange.getFirstCodepoint();
-        lastCp = currentRange.getLastCodepoint();
+      @Override
+      public int numberOfTiles() {
+        return numberOfTiles;
+      }
+
+      @Override
+      public int tileSize() {
+        return tileSize;
       }
 
       @Override
@@ -80,6 +79,19 @@ public interface TileIterator {
             }
           }
         }
+      }
+
+      private void nextRange() {
+        if (! it.hasNext()) {
+          firstCp = -1;
+          lastCp = -1;
+          return;
+        }
+        Map.Entry<Range, Integer> entry = it.next();
+        tokenCode = entry.getValue();
+        currentRange = entry.getKey();
+        firstCp = currentRange.getFirstCodepoint();
+        lastCp = currentRange.getLastCodepoint();
       }
 
       private int many(int[] target, int offset, int n, int value) {

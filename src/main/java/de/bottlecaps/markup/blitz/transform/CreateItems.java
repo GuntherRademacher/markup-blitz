@@ -31,7 +31,7 @@ public class CreateItems extends Visitor {
   private Map<Integer, String> nonterminal = new LinkedHashMap<>();
   private Map<String, Integer> nonterminalCode = new LinkedHashMap<>();
   private Map<RangeSet, Integer> terminalCode = new LinkedHashMap<>();
-  private Map<Range, Integer> terminalCodeByRange = new TreeMap<>();
+  private TreeMap<Range, Integer> terminalCodeByRange = new TreeMap<>();
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
   private Map<State, State> states = new LinkedHashMap<>();
   private Deque<State> statesTodo = new LinkedList<>();
@@ -101,26 +101,32 @@ public class CreateItems extends Visitor {
       s.transitions();
     }
 
-//    state.close();
-//
-//    System.out.println("state: \n" + state);
-//
-//    state.transitions();
-
     System.out.println(ci.states.size() + " states");
     for (State s : ci.states.keySet()) {
       System.out.println("\nstate:\n" + s);
     }
 
-    System.out.println("\nTerminals: ");
-    ci.rangeSetByTerminalCode.forEach((k, v) -> {
-      System.out.println(k + ": " + v);
-    });
+    int lastCodepoint = ci.terminalCodeByRange.descendingKeySet().iterator().next().getLastCodepoint();
+    for (int log2 = 0; log2 <= 20; ++log2) {
+      int tileSize = 1 << log2;
+      int totalNumberOfTiles = (lastCodepoint + 1 + tileSize - 1) / tileSize;
+      TileIterator it = TileIterator.of(ci.terminalCodeByRange, log2);
+      int size = new CompressedMap(tileSize).process(it).length;
+      System.out.println("tileSize: " + tileSize
+          + ", totalNumberOfTiles: " + totalNumberOfTiles
+          + ", size: " + size);
 
-    System.out.println("\nRanges: ");
-    ci.terminalCodeByRange.forEach((k, v) -> {
-      System.out.println(k + ": " + v);
-    });
+    }
+
+//    System.out.println("\nTerminals: ");
+//    ci.rangeSetByTerminalCode.forEach((k, v) -> {
+//      System.out.println(k + ": " + v);
+//    });
+
+//    System.out.println("\nRanges: ");
+//    ci.terminalCodeByRange.forEach((k, v) -> {
+//      System.out.println(k + ": " + v);
+//    });
 
 //    int powerOf2OfTileSize = 1;
 //    int tileSize = 1 << powerOf2OfTileSize;
@@ -134,6 +140,8 @@ public class CreateItems extends Visitor {
 //      System.out.println(address + ": " + count + " * " + tileString);
 //      address += count * tileSize;
 //    }
+
+
   }
 
   private class State {
