@@ -340,15 +340,15 @@ public class TestBNF {
             + "               string;\n"
             + "               boolean;\n"
             + "               null.\n"
-            + "          map: -['{'], -_map_list_option, ws, -['}'].\n"
-            + "    _map_list: ws, member;\n"
-            + "               -_map_list, ws, -[','], ws, member.\n"
+            + "          map: -['{'], ws, -_map_list_option, -['}'].\n"
+            + "    _map_list: member, ws;\n"
+            + "               -_map_list, -[','], ws, member, ws.\n"
             + "_map_list_option:\n"
             + "               ;\n"
             + "               -_map_list.\n"
-            + "        array: -['['], -_array_list_option, ws, -[']'].\n"
-            + "  _array_list: ws, -value;\n"
-            + "               -_array_list, ws, -[','], ws, -value.\n"
+            + "        array: -['['], ws, -_array_list_option, -[']'].\n"
+            + "  _array_list: -value, ws;\n"
+            + "               -_array_list, -[','], ws, -value, ws.\n"
             + "_array_list_option:\n"
             + "               ;\n"
             + "               -_array_list.\n"
@@ -456,8 +456,8 @@ public class TestBNF {
     @Test
     public void testDragonBookP262() {
       String ebnf =
-            "S: C, C.\r\n"
-          + "C: 'c', C;\r\n"
+            "S: C, C.\n"
+          + "C: 'c', C;\n"
           + "   'd'.";
       Grammar grammar = parse(ebnf, "ebnf");
       System.out.println(grammar);

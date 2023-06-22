@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,49 +47,6 @@ public class CreateItems extends Visitor {
     ci.new TokenCollector().visit(g);
     ci.collectFirst();
 
-//    Item firstItem = new ShiftItem(
-//        g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0),
-//        TokenSet.of(ci.token.get(RangeSet.of(Charset.END))));
-//
-//    System.out.println("firstItem: " + firstItem.toString(ci.rangeSet));
-//    for (Item nextItem = firstItem; ! (nextItem instanceof ReduceItem); ) {
-//      nextItem = nextItem instanceof ShiftItem
-//          ? ((ShiftItem) nextItem).shift()
-//          : null;
-//      System.out.println("nextItem: " + nextItem.toString(ci.rangeSet));
-//    }
-//
-//    for (Item item1 : firstItem.closure(ci::first)) {
-//      System.out.println("closureItem: " + item1.toString(ci.rangeSet));
-//      for (Item item2 : item1.closure(ci::first)) {
-//        System.out.println("closureItem: " + item2.toString(ci.rangeSet));
-//      }
-//    }
-
-//    ci.first.forEach((k, v) -> {
-//      if (k instanceof Rule) {
-//        System.out.println(((Rule) k).getName() + ":");
-//        for (Integer t : v)
-//          System.out.println("        " + (t == null ? "<epsilon>" : ci.rangeSet.get(t)));
-//      }
-//    });
-
-//    for (Rule r : g.getRules().values()) {
-//      for (Alt a : r.getAlts().getAlts()) {
-//        for (Term t : a.getTerms()) {
-//          if (t instanceof Nonterminal) {
-//            new ShiftItem(t, new TokenSet(0));
-//          }
-//          else if (t instanceof Charset) {
-//            new ShiftItem(t, null);
-//          }
-//          else {
-//            throw new IllegalStateException();
-//          }
-//        }
-//      }
-//    }
-
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
     Integer endToken = ci.terminalCode.get(RangeSet.of(Charset.END));
     State state = ci.new State();
@@ -101,7 +60,8 @@ public class CreateItems extends Visitor {
       s.transitions();
     }
 
-    System.out.println(ci.states.size() + " states");
+    System.out.println(ci.states.size() + " states (not counting LR(0) reduce states");
+
     for (State s : ci.states.keySet()) {
       System.out.println("\nstate:\n" + s);
     }
@@ -118,30 +78,6 @@ public class CreateItems extends Visitor {
 
     }
 
-//    System.out.println("\nTerminals: ");
-//    ci.rangeSetByTerminalCode.forEach((k, v) -> {
-//      System.out.println(k + ": " + v);
-//    });
-
-//    System.out.println("\nRanges: ");
-//    ci.terminalCodeByRange.forEach((k, v) -> {
-//      System.out.println(k + ": " + v);
-//    });
-
-//    int powerOf2OfTileSize = 1;
-//    int tileSize = 1 << powerOf2OfTileSize;
-//    Integer[] target = new Integer[tileSize];
-//    TileIterator it = tileIterator(ci.terminalCodeByRange, powerOf2OfTileSize);
-//    int address = 0;
-//    for (int count; (count = it.next(target, 0)) != 0; ) {
-//      String tileString = Arrays.stream(target)
-//          .map(v -> v.toString())
-//          .collect(Collectors.joining(", ", "[", "]"));
-//      System.out.println(address + ": " + count + " * " + tileString);
-//      address += count * tileSize;
-//    }
-
-
   }
 
   private class State {
@@ -149,9 +85,17 @@ public class CreateItems extends Visitor {
     private Map<Node, TokenSet> closure;
     private Map<Integer, State> terminalTransitions;
     private Map<Integer, State> nonterminalTransitions;
+    private Map<Integer, List<Node>> reductions;
+    private Set<Integer> conflicts;
 
     public State() {
       kernel = new IdentityHashMap<>();
+    }
+
+    public boolean isLr0ReduceState() {
+      return kernel.size() == 1
+          && (  kernel.keySet().iterator().next() instanceof Alt
+             || kernel.keySet().iterator().next() instanceof Insertion);
     }
 
     public void close() {
@@ -201,11 +145,24 @@ public class CreateItems extends Visitor {
     public void transitions() {
       terminalTransitions = new HashMap<>();
       nonterminalTransitions = new HashMap<>();
-      Stream.concat(kernel.entrySet().stream(), closure.entrySet().stream())
+      reductions = new HashMap<>();
+      Stream.concat(
+          kernel.entrySet().stream(),
+          closure.entrySet().stream()
+        )
         .forEach(e -> {
           Node node = e.getKey();
           TokenSet lookahead = e.getValue();
-          if (! (node instanceof Alt) && ! (node instanceof Insertion)) {
+          if (node instanceof Alt || node instanceof Insertion) {
+            for (int code : lookahead)
+              reductions.compute(code, (k, v) -> {
+                if (v == null)
+                  v = new ArrayList<>();
+                v.add(node);
+                return v;
+              });
+          }
+          else {
             Node next = node.getNext() != null
                 ? node.getNext()
                 : node.getParent();
@@ -238,26 +195,36 @@ public class CreateItems extends Visitor {
             });
           }
         });
+
+      conflicts = new HashSet<>(terminalTransitions.keySet());
+      conflicts.retainAll(reductions.keySet());
+      reductions.forEach((k, v) -> {
+        if (v.size() > 1)
+          conflicts.add(k);
+      });
+
       for (Map<Integer, State> transitions : Arrays.asList(
           nonterminalTransitions,
           terminalTransitions
       )) {
         for (Map.Entry<Integer, State> e : transitions.entrySet()) {
           State newState = e.getValue();
-          State oldState = states.putIfAbsent(newState, newState);
-          if (oldState == null) {
-            statesTodo.add(newState);
-          }
-          else {
-            Integer code = e.getKey();
-            transitions.put(code, oldState);
-            for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
-              if (oldState.kernel.get(k.getKey()).addAll(k.getValue())) {
-                if (oldState.closure != null)
-                  oldState.closure = null;
-                  oldState.nonterminalTransitions = null;
-                  oldState.terminalTransitions = null;
-                  statesTodo.add(oldState);
+          if (! newState.isLr0ReduceState()) {
+            State oldState = states.putIfAbsent(newState, newState);
+            if (oldState == null) {
+              statesTodo.add(newState);
+            }
+            else {
+              Integer code = e.getKey();
+              transitions.put(code, oldState);
+              for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
+                if (oldState.kernel.get(k.getKey()).addAll(k.getValue())) {
+                  if (oldState.closure != null)
+                    oldState.closure = null;
+                    oldState.nonterminalTransitions = null;
+                    oldState.terminalTransitions = null;
+                    statesTodo.add(oldState);
+                }
               }
             }
           }
@@ -281,7 +248,7 @@ public class CreateItems extends Visitor {
 
     @Override
     public String toString() {
-      return Stream.concat(
+      String itemsString = Stream.concat(
           kernel.entrySet().stream(),
           closure == null
             ? Stream.empty()
@@ -289,6 +256,17 @@ public class CreateItems extends Visitor {
         )
         .map(item -> toString(item))
         .collect(Collectors.joining("\n"));
+      String conflictsString = conflicts.stream()
+        .map(t -> {
+          StringBuilder sb = new StringBuilder();
+          if (terminalTransitions.containsKey(t))
+            sb.append("\nshift-reduce conflict on " + toString(t));
+          if (reductions.get(t).size() > 1)
+            sb.append("\nreduce-reduce conflict on " + toString(t));
+          return sb.toString();
+        })
+        .collect(Collectors.joining());
+      return itemsString + conflictsString;
     }
 
     private String toString(Map.Entry<Node, TokenSet> item) {
@@ -309,21 +287,21 @@ public class CreateItems extends Visitor {
       sb.append(" | {");
       sb.append(lookahead.stream()
         .map(token -> {
-          if (token == 0)
-            return "$";
-          if (rangeSetByTerminalCode == null)
-            return Integer.toString(token);
-          int firstCodepoint = rangeSetByTerminalCode.get(token).iterator().next().getFirstCodepoint();
-          return new Range(firstCodepoint).toString();
+          return toString(token);
         })
         .collect(Collectors.joining(", ")));
       sb.append("}]");
       return sb.toString();
     }
-  }
 
-  private class States {
-
+    private String toString(Integer token) {
+      if (token == 0)
+        return "$";
+      if (rangeSetByTerminalCode == null)
+        return Integer.toString(token);
+      int firstCodepoint = rangeSetByTerminalCode.get(token).iterator().next().getFirstCodepoint();
+      return new Range(firstCodepoint).toString();
+    }
   }
 
   private TokenSet first(Node node, TokenSet lookahead) {

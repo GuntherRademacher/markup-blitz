@@ -8,10 +8,10 @@
       boolean: 'false';
                'true'.
          null: -'null'.
-          map: -'{', (ws, member)**(ws, -','), ws, -'}'.
+          map: -'{', ws, (member, ws)**(-',', ws), -'}'.
        member: key, ws, -':', ws, value.
           key: -string.
-        array: -'[', (ws, -value)**(ws, -','), ws, -']'.
+        array: -'[', ws, (-value, ws)**(-',', ws), -']'.
        number: '-'?, int, frac?, exp?.
     -digit1-9: ['1'-'9'].
            -e: ['eE'].
