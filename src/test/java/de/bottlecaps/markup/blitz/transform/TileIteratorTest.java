@@ -66,9 +66,12 @@ public class TileIteratorTest {
 
     int maxLog2 = log2(lastCodepoint) + 1;
     for (int log2 = 1; log2 <= maxLog2; ++log2) {
-      int tileSize = 1 << log2;
       TileIterator it = TileIterator.of(codeByRange, log2);
       int[] reconstructed = reconstruct(it, log2);
+      assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
+
+      it = TileIterator.of(originalData, log2);
+      reconstructed = reconstruct(it, log2);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
     }
   }
