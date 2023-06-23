@@ -1,8 +1,8 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class CompressedMap {
   public static final int END = 0xD800;
@@ -25,7 +25,7 @@ public class CompressedMap {
 
   public int[] process(TileIterator it) {
     numberOfTiles = Math.min(it.numberOfTiles(), (END + tileSize - 1) / tileSize);
-    Map<Tile, Integer> distinctTiles = new HashMap<>();
+    Map<Tile, Integer> distinctTiles = new TreeMap<>();
     int targetPointerOffset = 0;
     int targetTileOffset = numberOfTiles;
     tiles = new int[targetTileOffset + tileSize];
@@ -49,28 +49,16 @@ public class CompressedMap {
     return Arrays.copyOf(tiles, targetTileOffset);
   }
 
-  private class Tile {
+  private class Tile implements Comparable<Tile> {
     private int offset;
-    private int hashCode;
 
     public Tile(int offset) {
       this.offset = offset;
-      final int prime = 31;
-      int hashCode = 1;
-      for (int i = 0; i < tileSize; ++i)
-        hashCode = prime * hashCode + tiles[offset + i];;
     }
 
     @Override
-    public int hashCode() {
-      return hashCode;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      Tile other = (Tile) obj;
-      return Arrays.equals(tiles,       offset,       offset + tileSize,
-                           tiles, other.offset, other.offset + tileSize);
+    public int compareTo(Tile other) {
+      return Arrays.compare(tiles, offset, offset + tileSize, tiles, other.offset, other.offset + tileSize);
     }
   }
 }
