@@ -1,11 +1,14 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -28,6 +31,7 @@ public class CompressedMapTest {
   public void beforeEach() {
     random = new Random();
     long seed = random.nextLong();
+    seed = 1283396090540636249L;
     random.setSeed(seed);
     msgPrefix = "While testing with seed=" + seed + "L: ";
   }
@@ -71,60 +75,54 @@ public class CompressedMapTest {
   }
 
   private void test(int depth, int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {
-    boolean foundBest = false;
-    int bestLog2 = 0;
-    Integer bestLength = null;
+    CompressedMap map = new CompressedMap(iteratorSupplier, 8);
+    int[] data = map.tiles();
+    System.out.println("compressed from " + originalData.length + " to " + data.length + " (" + data.length * 100 / originalData.length + "%), tileSize " + map.tileSize());
 
-    for (int log2 = 0; log2 < 8; ++log2) {
+    verify(data, map.log2());
 
-      int tileSize = 1 << log2;
-      TileIterator it = iteratorSupplier.apply(log2);
+    int[] reconstructed = reconstruct(data, originalData.length, map.log2());
+    assertArrayEquals(
+        originalData,
+        Arrays.copyOf(reconstructed, originalData.length),
+        () -> msgPrefix);
+  }
 
-      CompressedMap map = new CompressedMap(tileSize);
-      int[] data = map.process(it);
-      for (int i = 0; i < depth - 1; ++i)
-        System.out.print("  ");
-      System.out.println("compressed from " + originalData.length + " to " + data.length + " (" + data.length * 100 / originalData.length + "%), tileSize " + map.tileSize());
+  private void verify(int[] data, int shift) {
+    int firstTileOffset = data[0];
+    int numberOfTiles = firstTileOffset;
+    assertTrue(numberOfTiles < data.length);
 
-      assertTrue(map.tileSize() == 1 << log2);
-      assertTrue(map.numberOfTiles() == (originalData.length + map.tileSize() - 1) / map.tileSize());
-      assertTrue(data.length >= map.numberOfTiles() + map.tileSize());
-
-      int uncompressedSize = map.numberOfTiles() * map.tileSize();
-      int[] reconstructed = reconstruct(data, uncompressedSize, log2);
-      assertArrayEquals(
-          originalData,
-          Arrays.copyOf(reconstructed, originalData.length),
-          () -> msgPrefix);
-
-      if (bestLength == null) {
-        bestLength = data.length;
-        bestLog2 = log2;
-      }
-      else if (! foundBest) {
-        if (data.length < bestLength) {
-          bestLength = data.length;
-          bestLog2 = log2;
+    Set<Tile> distinctTiles = new HashSet<>();
+    int lastTileOffset = firstTileOffset;
+    int tileSize = 0;
+    for (int i = 0; i < numberOfTiles; ++i) {
+      assertTrue(data[i] >= firstTileOffset);
+      if (lastTileOffset < data[i]) {
+        if (tileSize == 0) {
+          tileSize = data[i] - lastTileOffset;
+          assertTrue(distinctTiles.add(new Tile(Arrays.copyOfRange(data, firstTileOffset , firstTileOffset + tileSize))));
         }
         else {
-          foundBest = true;
+          assertEquals(tileSize, data[i] - lastTileOffset);
         }
-      }
-      else if (data.length < 0.9 * originalData.length){
-        assertTrue(data.length >= bestLength);
+        lastTileOffset = data[i];
+        assertTrue(lastTileOffset <= data.length - tileSize);
+        assertTrue(distinctTiles.add(new Tile(Arrays.copyOfRange(data, lastTileOffset , lastTileOffset + tileSize))));
       }
     }
+    if (tileSize == 0)
+      tileSize = data.length - firstTileOffset;
+    else
+      assertEquals(lastTileOffset + tileSize, data.length, msgPrefix);
 
-    if (bestLength < 0.75 * originalData.length) {
-      CompressedMap map = new CompressedMap(1 << bestLog2);
-      int[] data = map.process(iteratorSupplier.apply(bestLog2));
-      test(depth + 1, data, log2 -> TileIterator.of(data, log2));
-    }
-    else {
-      for (int i = 0; i < depth - 1; ++i)
-        System.out.print("  ");
-      System.out.println("use depth " + (depth - 1) + " for a compressed size of " + (originalData.length * 100 + (CompressedMap.END >> 1)) / CompressedMap.END + " %");
-    }
+    int log2 = -1;
+    for (int i = 0; (1 << i) < data.length; ++i)
+      if ((1 << i) == tileSize)
+        log2 = i;
+    assertTrue(log2 >= 0, "Unexpected tile size: " + tileSize);
+
+
   }
 
   private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange) {
@@ -150,6 +148,31 @@ public class CompressedMapTest {
       target[i] = data[data[i >> log2] + (i & mask)];
     }
     return target;
+  }
+
+  private class Tile {
+    private int[] value;
+    private int hashCode;
+
+    public Tile(int[] value) {
+      this.value = value;
+      final int prime = 31;
+      int hashCode = 1;
+      for (int i = 0; i < value.length; ++i)
+        hashCode = prime * hashCode + value[i];;
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      Tile other = (Tile) obj;
+      return Arrays.equals(      value, 0,       value.length,
+                           other.value, 0, other.value.length);
+    }
   }
 
 }

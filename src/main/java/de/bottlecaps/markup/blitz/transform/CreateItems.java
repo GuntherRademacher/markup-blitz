@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,8 +71,8 @@ public class CreateItems extends Visitor {
     for (int log2 = 0; log2 <= 20; ++log2) {
       int tileSize = 1 << log2;
       int totalNumberOfTiles = (lastCodepoint + 1 + tileSize - 1) / tileSize;
-      TileIterator it = TileIterator.of(ci.terminalCodeByRange, log2);
-      int size = new CompressedMap(tileSize).process(it).length;
+      Function<Integer, TileIterator> it = l -> TileIterator.of(ci.terminalCodeByRange, l);
+      int size = new CompressedMap(it, 3).tiles().length;
       System.out.println("tileSize: " + tileSize
           + ", totalNumberOfTiles: " + totalNumberOfTiles
           + ", size: " + size);
