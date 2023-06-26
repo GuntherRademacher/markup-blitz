@@ -12,10 +12,10 @@ public interface TileIterator {
   public int numberOfTiles();
   public int tileSize();
 
-  public static TileIterator of(TreeMap<Range, Integer> terminalCodeByRange, int log2OfTileSize) {
+  public static TileIterator of(TreeMap<Range, Integer> terminalCodeByRange, int tileIndexBits) {
     return new TileIterator() {
       int defaultValue = 0;
-      int tileSize = 1 << log2OfTileSize;
+      int tileSize = 1 << tileIndexBits;
       int numberOfTiles = (terminalCodeByRange.descendingKeySet().iterator().next().getLastCodepoint() + tileSize)
                         / tileSize;
 
@@ -100,10 +100,10 @@ public interface TileIterator {
     };
   }
 
-  public static TileIterator of(int[] array, int log2OfTileSize) {
+  public static TileIterator of(int[] array, int tileIndexBits) {
     return new TileIterator() {
       int defaultValue = 0;
-      int tileSize = 1 << log2OfTileSize;
+      int tileSize = 1 << tileIndexBits;
       int numberOfTiles = (array.length + tileSize - 1) / tileSize;
       int nextOffset = 0;
 

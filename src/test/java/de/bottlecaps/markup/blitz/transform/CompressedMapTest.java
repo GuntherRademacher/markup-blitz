@@ -71,7 +71,7 @@ public class CompressedMapTest {
 
   private void test(TreeMap<Range, Integer> codeByRange) {
     int[] originalData = setupOriginalData(codeByRange);
-    test(1, originalData, log2 -> TileIterator.of(codeByRange, log2));
+    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, tileIndexBits));
   }
 
   private void test(int depth, int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {
@@ -79,9 +79,9 @@ public class CompressedMapTest {
     int[] data = map.tiles();
     System.out.println("compressed from " + originalData.length + " to " + data.length + " (" + data.length * 100 / originalData.length + "%), tileSize " + map.tileSize());
 
-    verify(data, map.log2());
+    verify(data, map.tileIndexBits());
 
-    int[] reconstructed = reconstruct(data, originalData.length, map.log2());
+    int[] reconstructed = reconstruct(data, originalData.length, map.tileIndexBits());
     assertArrayEquals(
         originalData,
         Arrays.copyOf(reconstructed, originalData.length),
@@ -116,13 +116,11 @@ public class CompressedMapTest {
     else
       assertEquals(lastTileOffset + tileSize, data.length, msgPrefix);
 
-    int log2 = -1;
+    int tileIndexBits = -1;
     for (int i = 0; (1 << i) < data.length; ++i)
       if ((1 << i) == tileSize)
-        log2 = i;
-    assertTrue(log2 >= 0, "Unexpected tile size: " + tileSize);
-
-
+        tileIndexBits = i;
+    assertTrue(tileIndexBits >= 0, "Unexpected tile size: " + tileSize);
   }
 
   private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange) {
@@ -141,11 +139,11 @@ public class CompressedMapTest {
     return originalData;
   }
 
-  private int[] reconstruct(int[] data, int uncompressedSize, int log2) {
+  private int[] reconstruct(int[] data, int uncompressedSize, int tileIndexBits) {
     int[] target = new int[uncompressedSize];
-    int mask = (1 << log2) - 1;
+    int mask = (1 << tileIndexBits) - 1;
     for (int i = 0; i < target.length; ++i) {
-      target[i] = data[data[i >> log2] + (i & mask)];
+      target[i] = data[data[i >> tileIndexBits] + (i & mask)];
     }
     return target;
   }

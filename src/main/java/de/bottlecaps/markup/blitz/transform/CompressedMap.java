@@ -9,15 +9,15 @@ public class CompressedMap {
   public static final int END = 0xD800;
 
   private int[] tiles;
-  private int log2;
+  private int tileIndexBits;
   private int depth;
 
   public int tileSize() {
-    return 1 << log2;
+    return 1 << tileIndexBits;
   }
 
-  public int log2() {
-    return log2;
+  public int tileIndexBits() {
+    return tileIndexBits;
   }
 
   public int[] tiles() {
@@ -29,24 +29,24 @@ public class CompressedMap {
   }
 
   private CompressedMap(Function<Integer, TileIterator> iteratorSupplier, int maxDepth, int nesting) {
-    int bestLog2 = 0;
+    int bestTileIndexBits = 0;
     int[] bestTiles = null;
-    for (int log2 = 2;; ++log2) {
-      optimize(iteratorSupplier.apply(log2));
+    for (int tileIndexBits = 2;; ++tileIndexBits) {
+      optimize(iteratorSupplier.apply(tileIndexBits));
 
-//      System.out.println("  optimized to " + tiles.length + " (tileSize " + (1 << log2) + ")");
+//      System.out.println("  optimized to " + tiles.length + " (tileSize " + (1 << tileIndexBits) + ")");
 //      System.out.println("                  " + Arrays.toString(tiles));
 
       if (bestTiles == null || bestTiles.length > tiles.length) {
         bestTiles = tiles;
-        bestLog2 = log2;
+        bestTileIndexBits = tileIndexBits;
       }
       else {
         break;
       }
     }
     this.tiles = bestTiles;
-    this.log2 = bestLog2;
+    this.tileIndexBits = bestTileIndexBits;
 
 
     if (nesting + 1 > maxDepth) {
@@ -67,9 +67,12 @@ public class CompressedMap {
          sourceAddress += count * tileSize) {
       Integer id = distinctTiles.putIfAbsent(targetTileOffset,  targetTileOffset);
       if (id == null) {
+
+// no overlapping
 //        if (sourceAddress > 0)
 //          for (int i = targetTileOffset - tileSize + 1; i < targetTileOffset; ++i)
 //            distinctTiles.putIfAbsent(i, i);
+
         id = targetTileOffset;
         targetTileOffset += tileSize;
         if (targetTileOffset + tileSize > tiles.length)

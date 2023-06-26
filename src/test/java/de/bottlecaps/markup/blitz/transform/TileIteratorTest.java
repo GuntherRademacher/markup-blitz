@@ -64,14 +64,14 @@ public class TileIteratorTest {
         originalData[codepoint] = code;
     }
 
-    int maxLog2 = log2(lastCodepoint) + 1;
-    for (int log2 = 1; log2 <= maxLog2; ++log2) {
-      TileIterator it = TileIterator.of(codeByRange, log2);
-      int[] reconstructed = reconstruct(it, log2);
+    int maxTileIndexBits = log2(lastCodepoint) + 1;
+    for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
+      TileIterator it = TileIterator.of(codeByRange, tileIndexBits);
+      int[] reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
 
-      it = TileIterator.of(originalData, log2);
-      reconstructed = reconstruct(it, log2);
+      it = TileIterator.of(originalData, tileIndexBits);
+      reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
     }
   }

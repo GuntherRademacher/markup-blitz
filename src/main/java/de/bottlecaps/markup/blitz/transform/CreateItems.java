@@ -68,8 +68,8 @@ public class CreateItems extends Visitor {
     }
 
     int lastCodepoint = ci.terminalCodeByRange.descendingKeySet().iterator().next().getLastCodepoint();
-    for (int log2 = 0; log2 <= 20; ++log2) {
-      int tileSize = 1 << log2;
+    for (int tileIndexBits = 0; tileIndexBits <= 20; ++tileIndexBits) {
+      int tileSize = 1 << tileIndexBits;
       int totalNumberOfTiles = (lastCodepoint + 1 + tileSize - 1) / tileSize;
       Function<Integer, TileIterator> it = l -> TileIterator.of(ci.terminalCodeByRange, l);
       int size = new CompressedMap(it, 3).tiles().length;
