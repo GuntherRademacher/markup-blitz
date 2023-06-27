@@ -6,8 +6,6 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 public class CompressedMap {
-  public static final int END = 0xD800;
-
   private int[] tiles;
   private int tileIndexBits;
   private int depth;
@@ -57,13 +55,13 @@ public class CompressedMap {
   private void optimize(TileIterator it) {
     int targetIdOffset = 0;
     int tileSize = it.tileSize();
-    int numberOfTiles = Math.min(it.numberOfTiles(), (END + tileSize - 1) / tileSize);
+    int numberOfTiles = it.numberOfTiles();
     int targetTileOffset = numberOfTiles;
     tiles = new int[targetTileOffset + tileSize];
     Map<Integer, Integer> distinctTiles = new TreeMap<>(
         (lhs, rhs) -> Arrays.compare(tiles, lhs, lhs + tileSize, tiles, rhs, rhs + tileSize));
     for (int count, sourceAddress = 0;
-         sourceAddress < END && (count = it.next(tiles, targetTileOffset)) != 0;
+         (count = it.next(tiles, targetTileOffset)) != 0;
          sourceAddress += count * tileSize) {
       Integer id = distinctTiles.putIfAbsent(targetTileOffset,  targetTileOffset);
       if (id == null) {

@@ -71,7 +71,7 @@ public class CreateItems extends Visitor {
     for (int tileIndexBits = 0; tileIndexBits <= 20; ++tileIndexBits) {
       int tileSize = 1 << tileIndexBits;
       int totalNumberOfTiles = (lastCodepoint + 1 + tileSize - 1) / tileSize;
-      Function<Integer, TileIterator> it = l -> TileIterator.of(ci.terminalCodeByRange, l);
+      Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, bits, 0xD7FF);
       int size = new CompressedMap(it, 3).tiles().length;
       System.out.println("tileSize: " + tileSize
           + ", totalNumberOfTiles: " + totalNumberOfTiles

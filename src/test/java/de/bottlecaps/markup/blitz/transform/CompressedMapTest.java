@@ -70,8 +70,8 @@ public class CompressedMapTest {
   }
 
   private void test(TreeMap<Range, Integer> codeByRange) {
-    int[] originalData = setupOriginalData(codeByRange);
-    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, tileIndexBits));
+    int[] originalData = setupOriginalData(codeByRange, 0xD7FF);
+    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, tileIndexBits, 0xD7FF));
   }
 
   private void test(int depth, int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {
@@ -123,18 +123,14 @@ public class CompressedMapTest {
     assertTrue(tileIndexBits >= 0, "Unexpected tile size: " + tileSize);
   }
 
-  private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange) {
-    int lastCodepoint = codeByRange.descendingKeySet().iterator().next().getLastCodepoint();
+  private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange, int lastCodepoint) {
     int[] originalData = new int[lastCodepoint + 1];
     Arrays.fill(originalData, 0);
     for (Map.Entry<Range, Integer> e : codeByRange.entrySet()) {
       Range range = e.getKey();
       int code = e.getValue();
-      for (int codepoint = range.getFirstCodepoint(); codepoint <= range.getLastCodepoint(); ++codepoint) {
-        if (codepoint >= CompressedMap.END)
-          return Arrays.copyOf(originalData, CompressedMap.END);
+      for (int codepoint = range.getFirstCodepoint(); codepoint <= range.getLastCodepoint() && codepoint <= lastCodepoint; ++codepoint)
         originalData[codepoint] = code;
-      }
     }
     return originalData;
   }

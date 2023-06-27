@@ -1,9 +1,14 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -27,11 +32,66 @@ public class TileIteratorTest {
 
   @Test
   public void testTileIterator() {
-    TreeMap<Range, Integer> codeByRange = new TreeMap<>();
+    NavigableMap<Range, Integer> codeByRange = new TreeMap<>();
     codeByRange.put(new Range(1, 10), 1);
     codeByRange.put(new Range(21, 30), 2);
     codeByRange.put(new Range(31, 40), 3);
     test(codeByRange);
+  }
+
+  @Test
+  public void testEmptyMapInput() {
+    NavigableMap<Range, Integer> codeByRange = Collections.emptyNavigableMap();
+    for (int tileIndexBits = 1; tileIndexBits <= 3; ++ tileIndexBits)
+        for (int maxCodepoint = 0; maxCodepoint <= 8; ++maxCodepoint) {
+          TileIterator it = TileIterator.of(codeByRange, tileIndexBits, maxCodepoint);
+          int tileSize = 1 << tileIndexBits;
+          int count = it.next(new int[tileSize], 0);
+          assertEquals((maxCodepoint + tileSize) / tileSize, count);
+        }
+  }
+
+  @Test
+  public void testMapInput() {
+    int bits = 8;
+    for (int bitPattern = 0; bitPattern < 1 << bits; ++bitPattern) {
+      List<Range> bitRanges = transformIntegerToBitRanges(bitPattern);
+
+      int[] uncompressedData = new int[bits];
+      NavigableMap<Range, Integer> map = new TreeMap<>();
+      int rangeId = 0;
+      int value = 0;
+      for (Range range : bitRanges) {
+        ++rangeId;
+        map.put(range,  rangeId);
+        for (int bit = range.getFirstCodepoint(); bit <= range.getLastCodepoint(); ++bit) {
+          value += 1 << bit;
+          uncompressedData[bit] = rangeId;
+        }
+      }
+      assertEquals(bitPattern, value);
+
+      System.out.println(bitRanges + ", " + Arrays.toString(uncompressedData));
+
+      for (int tileIndexBits = 1; tileIndexBits <= log2(bits) + 1; ++ tileIndexBits) {
+        int tileSize = 1 << tileIndexBits;
+        for (int maxCodepoint = 0; maxCodepoint <= bits + 1; ++maxCodepoint) {
+          int numberOfTiles = maxCodepoint / tileSize + 1;
+          TileIterator it = TileIterator.of(map, tileIndexBits, maxCodepoint);
+          assertEquals(numberOfTiles, it.numberOfTiles());
+          assertEquals(tileSize, it.tileSize());
+          int[] reconstruction = reconstruct(it, tileIndexBits);
+
+          System.out.println(tileIndexBits +
+                       " " + maxCodepoint +
+                       " " + numberOfTiles +
+                       " " + tileSize +
+                       " " + Arrays.toString(reconstruction));
+          assertEquals(numberOfTiles * tileSize, reconstruction.length);
+          assertArrayEquals(Arrays.copyOf(uncompressedData, maxCodepoint), Arrays.copyOf(reconstruction, maxCodepoint));
+        }
+      }
+    }
   }
 
   @Test
@@ -47,13 +107,13 @@ public class TileIteratorTest {
 
   private void testRangeSet(RangeSet rangeSet) {
     int classes = rangeSet.size() << 1;
-    TreeMap<Range, Integer> codeByRange = new TreeMap<>();
+    NavigableMap<Range, Integer> codeByRange = new TreeMap<>();
     for (Range range : rangeSet)
       codeByRange.put(range, random.nextInt(classes));
     test(codeByRange);
   }
 
-  private void test(TreeMap<Range, Integer> codeByRange) {
+  private void test(NavigableMap<Range, Integer> codeByRange) {
     int lastCodepoint = codeByRange.descendingKeySet().iterator().next().getLastCodepoint();
     int[] originalData = new int[lastCodepoint + 1];
     Arrays.fill(originalData, 0);
@@ -66,7 +126,7 @@ public class TileIteratorTest {
 
     int maxTileIndexBits = log2(lastCodepoint) + 1;
     for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
-      TileIterator it = TileIterator.of(codeByRange, tileIndexBits);
+      TileIterator it = TileIterator.of(codeByRange, tileIndexBits, lastCodepoint);
       int[] reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
 
@@ -76,15 +136,15 @@ public class TileIteratorTest {
     }
   }
 
-  private int[] reconstruct(TileIterator it, int powerOf2) {
-    int tileSize = 1 << powerOf2;
+  private int[] reconstruct(TileIterator it, int tileIndexBits) {
+    int tileSize = 1 << tileIndexBits;
     int[] target = new int[tileSize];
     for (int offset = 0;;) {
       if (offset + tileSize > target.length)
         target = Arrays.copyOf(target, target.length << 1);
       int count = it.next(target, offset);
       if (count == 0)
-        return target;
+        return Arrays.copyOf(target, offset);
       offset += tileSize;
       for (int i = 1; i < count; ++i) {
         if (offset + tileSize > target.length)
@@ -116,4 +176,29 @@ public class TileIteratorTest {
     }
     return log + (v >>> 1);
   }
+
+  public static List<Range> transformIntegerToBitRanges(int num) {
+    List<Range> bitRanges = new ArrayList<>();
+    int start = -1;
+    int end = -1;
+    int bitPosition = 0;
+    while (num > 0) {
+      if ((num & 1) == 1) {
+        if (start == -1)
+          start = bitPosition;
+        end = bitPosition;
+      }
+      else if (start != -1) {
+        bitRanges.add(new Range(start, end));
+        start = -1;
+        end = -1;
+      }
+      num >>= 1;
+      ++bitPosition;
+    }
+    if (start != -1)
+      bitRanges.add(new Range(start, end));
+    return bitRanges;
+  }
+
 }
