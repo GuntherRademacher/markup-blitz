@@ -71,7 +71,7 @@ public class CompressedMapTest {
 
   private void test(TreeMap<Range, Integer> codeByRange) {
     int[] originalData = setupOriginalData(codeByRange, 0xD7FF);
-    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, tileIndexBits, 0xD7FF));
+    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, 0xD7FF, tileIndexBits, 0));
   }
 
   private void test(int depth, int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {

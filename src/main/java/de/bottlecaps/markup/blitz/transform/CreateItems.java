@@ -67,18 +67,9 @@ public class CreateItems extends Visitor {
       System.out.println("\nstate:\n" + s);
     }
 
-    int lastCodepoint = ci.terminalCodeByRange.descendingKeySet().iterator().next().getLastCodepoint();
-    for (int tileIndexBits = 0; tileIndexBits <= 20; ++tileIndexBits) {
-      int tileSize = 1 << tileIndexBits;
-      int totalNumberOfTiles = (lastCodepoint + 1 + tileSize - 1) / tileSize;
-      Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, bits, 0xD7FF);
-      int size = new CompressedMap(it, 3).tiles().length;
-      System.out.println("tileSize: " + tileSize
-          + ", totalNumberOfTiles: " + totalNumberOfTiles
-          + ", size: " + size);
-
-    }
-
+    Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, 0xD7FF, bits, 0);
+    int size = new CompressedMap(it, 3).tiles().length;
+      System.out.println("size of token code map: " + size);
   }
 
   private class State {

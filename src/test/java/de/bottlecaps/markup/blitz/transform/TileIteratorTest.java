@@ -44,10 +44,17 @@ public class TileIteratorTest {
     NavigableMap<Range, Integer> codeByRange = Collections.emptyNavigableMap();
     for (int tileIndexBits = 1; tileIndexBits <= 3; ++ tileIndexBits)
         for (int maxCodepoint = 0; maxCodepoint <= 8; ++maxCodepoint) {
-          TileIterator it = TileIterator.of(codeByRange, tileIndexBits, maxCodepoint);
+          int defaultValue = tileIndexBits * 100 + maxCodepoint;
+
+          TileIterator it = TileIterator.of(codeByRange, maxCodepoint, tileIndexBits, defaultValue);
+
           int tileSize = 1 << tileIndexBits;
-          int count = it.next(new int[tileSize], 0);
+          int[] tile = new int[tileSize];
+          int count = it.next(tile, 0);
           assertEquals((maxCodepoint + tileSize) / tileSize, count);
+          for (int i = 0; i < tile.length; ++i) {
+            assertEquals(defaultValue, tile[i]);
+          }
         }
   }
 
@@ -58,6 +65,9 @@ public class TileIteratorTest {
       List<Range> bitRanges = transformIntegerToBitRanges(bitPattern);
 
       int[] uncompressedData = new int[bits];
+      int defaultValue = 31 * bitPattern + 7;
+      Arrays.fill(uncompressedData, defaultValue);
+
       NavigableMap<Range, Integer> map = new TreeMap<>();
       int rangeId = 0;
       int value = 0;
@@ -71,24 +81,29 @@ public class TileIteratorTest {
       }
       assertEquals(bitPattern, value);
 
-      System.out.println(bitRanges + ", " + Arrays.toString(uncompressedData));
+//      System.out.println(bitRanges + ", " + Arrays.toString(uncompressedData));
 
       for (int tileIndexBits = 1; tileIndexBits <= log2(bits) + 1; ++ tileIndexBits) {
         int tileSize = 1 << tileIndexBits;
         for (int maxCodepoint = 0; maxCodepoint <= bits + 1; ++maxCodepoint) {
           int numberOfTiles = maxCodepoint / tileSize + 1;
-          TileIterator it = TileIterator.of(map, tileIndexBits, maxCodepoint);
+
+          TileIterator it = TileIterator.of(map, maxCodepoint, tileIndexBits, defaultValue);
           assertEquals(numberOfTiles, it.numberOfTiles());
           assertEquals(tileSize, it.tileSize());
           int[] reconstruction = reconstruct(it, tileIndexBits);
 
-          System.out.println(tileIndexBits +
-                       " " + maxCodepoint +
-                       " " + numberOfTiles +
-                       " " + tileSize +
-                       " " + Arrays.toString(reconstruction));
+//          System.out.println(tileIndexBits +
+//                       " " + maxCodepoint +
+//                       " " + numberOfTiles +
+//                       " " + tileSize +
+//                       " " + Arrays.toString(reconstruction));
+
           assertEquals(numberOfTiles * tileSize, reconstruction.length);
-          assertArrayEquals(Arrays.copyOf(uncompressedData, maxCodepoint), Arrays.copyOf(reconstruction, maxCodepoint));
+          int[] expectedResult = Arrays.copyOf(uncompressedData, maxCodepoint);
+          if (expectedResult.length > uncompressedData.length)
+            Arrays.fill(expectedResult, uncompressedData.length, expectedResult.length, defaultValue);
+          assertArrayEquals(expectedResult, Arrays.copyOf(reconstruction, maxCodepoint));
         }
       }
     }
@@ -126,11 +141,11 @@ public class TileIteratorTest {
 
     int maxTileIndexBits = log2(lastCodepoint) + 1;
     for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
-      TileIterator it = TileIterator.of(codeByRange, tileIndexBits, lastCodepoint);
+      TileIterator it = TileIterator.of(codeByRange, lastCodepoint, tileIndexBits, 0);
       int[] reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
 
-      it = TileIterator.of(originalData, tileIndexBits);
+      it = tileIteratorOf(originalData, tileIndexBits, 0);
       reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
     }
@@ -201,4 +216,50 @@ public class TileIteratorTest {
     return bitRanges;
   }
 
+  public static TileIterator tileIteratorOf(int[] array, int tileIndexBits, int defaultValue) {
+    return new TileIterator() {
+      int tileSize = 1 << tileIndexBits;
+      int numberOfTiles = (array.length + tileSize - 1) / tileSize;
+      int nextOffset = 0;
+
+      @Override
+      public int next(int[] target, int targetOffset) {
+        int remainingSize = array.length - nextOffset;
+        if (remainingSize <= 0)
+          return 0;
+        if (remainingSize < tileSize) {
+          System.arraycopy(array, nextOffset, target, targetOffset, remainingSize);
+          Arrays.fill(target, targetOffset + remainingSize, targetOffset + tileSize, defaultValue);
+          nextOffset += remainingSize;
+          return 1;
+        }
+        System.arraycopy(array, nextOffset, target, targetOffset, tileSize);
+        int count = 1;
+        nextOffset += tileSize;
+        while (array.length - nextOffset >= tileSize
+            && 0 == Arrays.compare(
+              target, targetOffset, targetOffset + tileSize,
+              array, nextOffset, nextOffset + tileSize)) {
+          ++count;
+          nextOffset += tileSize;
+        }
+        return count;
+      }
+
+      @Override
+      public int numberOfTiles() {
+        return numberOfTiles;
+      }
+
+      @Override
+      public int tileSize() {
+        return tileSize;
+      }
+
+      @Override
+      public int defaultValue() {
+        return defaultValue;
+      }
+    };
+  }
 }
