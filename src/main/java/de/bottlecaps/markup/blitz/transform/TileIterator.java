@@ -13,30 +13,30 @@ public interface TileIterator {
   public int tileSize();
   public int defaultValue();
 
-  public static TileIterator of(NavigableMap<Range, Integer> terminalCodeByRange, int maxCodepoint, int tileIndexBits, int defaultValue) {
+  public static TileIterator of(NavigableMap<Range, Integer> terminalCodeByRange, int end, int tileIndexBits, int defaultValue) {
     return new TileIterator() {
       int tileSize = 1 << tileIndexBits;
       int numberOfTiles;
 
       Iterator<Map.Entry<Range, Integer>> it;
-      int currentCp;
+      int currentValue;
 
       Range currentRange;
-      int firstCp;
-      int lastCp;
+      int firstValue;
+      int lastValue;
       int tokenCode;
 
       {
         if (terminalCodeByRange.isEmpty()) {
-          firstCp = -1;
-          lastCp = -1;
+          firstValue = -1;
+          lastValue = -1;
         }
         else {
           it = terminalCodeByRange.entrySet().iterator();
           nextRange();
         }
-        numberOfTiles = (maxCodepoint + tileSize) / tileSize;
-        currentCp = 0;
+        numberOfTiles = (end - 1 + tileSize) / tileSize;
+        currentValue = 0;
       }
 
       @Override
@@ -56,34 +56,34 @@ public interface TileIterator {
 
       @Override
       public int next(int[] tiles, int offset) {
-        if (currentCp < firstCp - tileSize)
-          return many(tiles, offset, firstCp - currentCp, defaultValue);
-        if (currentCp >= firstCp && currentCp <= lastCp - tileSize) {
-          int count = many(tiles, offset, lastCp - currentCp + 1, tokenCode);
-          if (currentCp > lastCp)
+        if (currentValue < firstValue - tileSize)
+          return many(tiles, offset, firstValue - currentValue, defaultValue);
+        if (currentValue >= firstValue && currentValue <= lastValue - tileSize) {
+          int count = many(tiles, offset, lastValue - currentValue + 1, tokenCode);
+          if (currentValue > lastValue)
             nextRange();
           return count;
         }
         for (int size = 0;; nextRange()) {
-          if (firstCp < 0) {
+          if (firstValue < 0) {
             if (size != 0) {
               Arrays.fill(tiles, offset + size, offset + tileSize, defaultValue);
-              currentCp += tileSize - size;
+              currentValue += tileSize - size;
               return 1;
             }
-            return many(tiles, offset, numberOfTiles * tileSize - currentCp, defaultValue);
+            return many(tiles, offset, numberOfTiles * tileSize - currentValue, defaultValue);
           }
-          while (currentCp < firstCp) {
-            ++currentCp;
+          while (currentValue < firstValue) {
+            ++currentValue;
             tiles[offset + size++] = defaultValue;
             if (size == tileSize)
               return 1;
           }
-          while (currentCp <= lastCp) {
-            ++currentCp;
+          while (currentValue <= lastValue) {
+            ++currentValue;
             tiles[offset + size++] = tokenCode;
             if (size == tileSize) {
-              if (currentCp > lastCp)
+              if (currentValue > lastValue)
                 nextRange();
               return 1;
             }
@@ -93,22 +93,22 @@ public interface TileIterator {
 
       private void nextRange() {
         if (! it.hasNext()) {
-          firstCp = -1;
-          lastCp = -1;
+          firstValue = -1;
+          lastValue = -1;
         }
         else {
           Map.Entry<Range, Integer> entry = it.next();
           currentRange = entry.getKey();
-          firstCp = currentRange.getFirstCodepoint();
-          if (firstCp > maxCodepoint) {
-            firstCp = -1;
-            lastCp = -1;
+          firstValue = currentRange.getFirstCodepoint();
+          if (firstValue >= end) {
+            firstValue = -1;
+            lastValue = -1;
           }
           else {
             tokenCode = entry.getValue();
-            lastCp = currentRange.getLastCodepoint();
-            if (lastCp > maxCodepoint)
-              lastCp = maxCodepoint;
+            lastValue = currentRange.getLastCodepoint();
+            if (lastValue >= end)
+              lastValue = end - 1;
           }
         }
       }
@@ -116,21 +116,21 @@ public interface TileIterator {
       private int many(int[] target, int offset, int n, int value) {
         Arrays.fill(target, offset, offset + tileSize, value);
         int nt = n / tileSize;
-        currentCp += nt * tileSize;
+        currentValue += nt * tileSize;
         return nt;
       }
     };
   }
 
-  public static TileIterator of(int[] array, int maxCodepoint, int tileIndexBits, int defaultValue) {
+  public static TileIterator of(int[] array, int end, int tileIndexBits, int defaultValue) {
     return new TileIterator() {
       int tileSize = 1 << tileIndexBits;
-      int numberOfTiles = maxCodepoint / tileSize + 1;
+      int numberOfTiles = (end - 1 + tileSize) / tileSize;
       int nextOffset = 0;
 
       @Override
       public int next(int[] target, int targetOffset) {
-        int remainingSize = maxCodepoint + 1 - nextOffset;
+        int remainingSize = end - nextOffset;
         if (remainingSize <= 0)
           return 0;
         if (remainingSize < tileSize) {
@@ -142,7 +142,7 @@ public interface TileIterator {
         System.arraycopy(array, nextOffset, target, targetOffset, tileSize);
         int count = 1;
         nextOffset += tileSize;
-        while (maxCodepoint + 1 - nextOffset >= tileSize
+        while (end - nextOffset >= tileSize
             && 0 == Arrays.compare(
               target, targetOffset, targetOffset + tileSize,
               array, nextOffset, nextOffset + tileSize)) {

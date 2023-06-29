@@ -7,8 +7,10 @@ import java.util.function.Function;
 
 public class CompressedMap {
   private int[] tiles;
+  int numberOfTiles;
   private int tileIndexBits;
   private int depth;
+  private int maxDepth;
 
   public int tileSize() {
     return 1 << tileIndexBits;
@@ -27,6 +29,8 @@ public class CompressedMap {
   }
 
   private CompressedMap(Function<Integer, TileIterator> iteratorSupplier, int maxDepth, int nesting) {
+    this.maxDepth = maxDepth;
+
     int bestTileIndexBits = 0;
     int[] bestTiles = null;
     for (int tileIndexBits = 2;; ++tileIndexBits) {
@@ -54,7 +58,7 @@ public class CompressedMap {
   private void optimize(TileIterator it) {
     int targetIdOffset = 0;
     int tileSize = it.tileSize();
-    int numberOfTiles = it.numberOfTiles();
+    numberOfTiles = it.numberOfTiles();
     int targetTileOffset = numberOfTiles;
     tiles = new int[targetTileOffset + tileSize];
     Map<Integer, Integer> distinctTiles = new TreeMap<>(
@@ -78,6 +82,25 @@ public class CompressedMap {
       for (int i = 0; i < count && targetIdOffset < numberOfTiles; ++i)
         tiles[targetIdOffset++] = id;
     }
+
+    if (maxDepth > 1) {
+      Function<Integer, TileIterator> indexIterator = bits -> TileIterator.of(tiles, numberOfTiles, bits, 0);
+      CompressedMap nestedMap = new CompressedMap(indexIterator, maxDepth - 1);
+      if (nestedMap.tiles().length <= numberOfTiles >> 1) {
+        System.out.println("successfully compressed index from " + numberOfTiles + " to " + nestedMap.tiles().length);
+        int[] nestedTiles = nestedMap.tiles();
+        int[] combinedTiles = new int[nestedTiles.length + distinctTiles.size() * tileSize];
+        System.arraycopy(nestedMap.tiles(), 0, combinedTiles, 0, nestedTiles[0]);
+        int displacement = nestedTiles[0] - numberOfTiles;
+        for (int i = nestedMap.numberOfTiles; i < nestedMap.tiles().length; ++i)
+          combinedTiles[i] = nestedMap.tiles()[i] + displacement;
+        System.arraycopy(nestedMap.tiles(), 0, combinedTiles, 0, nestedMap.tiles().length);
+        System.arraycopy(tiles, numberOfTiles, combinedTiles, nestedMap.tiles().length, distinctTiles.size() * tileSize);
+        tiles = combinedTiles;
+        return;
+      }
+    }
+
     tiles = Arrays.copyOf(tiles, targetTileOffset);
     assert tiles.length == numberOfTiles + distinctTiles.size() * tileSize;
   }

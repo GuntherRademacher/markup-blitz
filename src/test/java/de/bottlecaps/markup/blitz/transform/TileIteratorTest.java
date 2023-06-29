@@ -46,7 +46,7 @@ public class TileIteratorTest {
         for (int maxCodepoint = 0; maxCodepoint <= 8; ++maxCodepoint) {
           int defaultValue = tileIndexBits * 100 + maxCodepoint;
 
-          TileIterator it = TileIterator.of(codeByRange, maxCodepoint, tileIndexBits, defaultValue);
+          TileIterator it = TileIterator.of(codeByRange, maxCodepoint + 1, tileIndexBits, defaultValue);
 
           int tileSize = 1 << tileIndexBits;
           int[] tile = new int[tileSize];
@@ -88,7 +88,7 @@ public class TileIteratorTest {
         for (int maxCodepoint = 0; maxCodepoint <= bits + 1; ++maxCodepoint) {
           int numberOfTiles = maxCodepoint / tileSize + 1;
 
-          TileIterator it = TileIterator.of(map, maxCodepoint, tileIndexBits, defaultValue);
+          TileIterator it = TileIterator.of(map, maxCodepoint + 1, tileIndexBits, defaultValue);
           assertEquals(numberOfTiles, it.numberOfTiles());
           assertEquals(tileSize, it.tileSize());
           int[] reconstruction = reconstruct(it, tileIndexBits);
@@ -141,11 +141,11 @@ public class TileIteratorTest {
 
     int maxTileIndexBits = log2(lastCodepoint) + 1;
     for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
-      TileIterator it = TileIterator.of(codeByRange, lastCodepoint, tileIndexBits, 0);
+      TileIterator it = TileIterator.of(codeByRange, lastCodepoint + 1, tileIndexBits, 0);
       int[] reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
 
-      it = TileIterator.of(originalData, originalData.length - 1, tileIndexBits, 0);
+      it = TileIterator.of(originalData, originalData.length, tileIndexBits, 0);
       reconstructed = reconstruct(it, tileIndexBits);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
     }

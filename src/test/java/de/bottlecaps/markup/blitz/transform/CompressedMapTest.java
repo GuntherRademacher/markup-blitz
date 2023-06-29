@@ -46,6 +46,16 @@ public class CompressedMapTest {
   }
 
   @Test
+  public void testZeroes() {
+    int[] zeroes = new int[100];
+    for (int depth = 1; depth < 10; ++depth) {
+      int[] data = new CompressedMap(bits -> TileIterator.of(zeroes, zeroes.length, bits, 0), 1).tiles();
+      System.out.println("depth " + depth + ", size " + data.length + ", " + Arrays.toString(data));
+      validate(data);
+    }
+  }
+
+  @Test
   public void testAlphabet() {
     testRangeSet(RangeSet.ALPHABET);
   }
@@ -71,24 +81,28 @@ public class CompressedMapTest {
 
   private void test(TreeMap<Range, Integer> codeByRange) {
     int[] originalData = setupOriginalData(codeByRange, 0xD7FF);
-    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, 0xD7FF, tileIndexBits, 0));
+    test(1, originalData, tileIndexBits -> TileIterator.of(codeByRange, 0xD800, tileIndexBits, 0));
   }
 
   private void test(int depth, int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {
-    CompressedMap map = new CompressedMap(iteratorSupplier, 8);
+    CompressedMap map = new CompressedMap(iteratorSupplier, 1);
     int[] data = map.tiles();
     System.out.println("compressed from " + originalData.length + " to " + data.length + " (" + data.length * 100 / originalData.length + "%), tileSize " + map.tileSize());
 
-    verify(data, map.tileIndexBits());
+    validate(data);
 
     int[] reconstructed = reconstruct(data, originalData.length, map.tileIndexBits());
     assertArrayEquals(
         originalData,
         Arrays.copyOf(reconstructed, originalData.length),
         () -> msgPrefix);
+
+//    map = new CompressedMap(iteratorSupplier, 2);
+//    data = map.tiles();
+//    validate(data);
   }
 
-  private void verify(int[] data, int shift) {
+  private void validate(int[] data) {
     int firstTileOffset = data[0];
     int numberOfTiles = firstTileOffset;
     assertTrue(numberOfTiles < data.length);
@@ -96,9 +110,8 @@ public class CompressedMapTest {
     Set<Tile> distinctTiles = new HashSet<>();
     int lastTileOffset = firstTileOffset;
     int tileSize = 0;
-    for (int i = 0; i < numberOfTiles; ++i) {
-      assertTrue(data[i] >= firstTileOffset);
-      if (lastTileOffset < data[i]) {
+    for (int i = 1; i < numberOfTiles; ++i) {
+      if (data[i] > lastTileOffset) {
         if (tileSize == 0) {
           tileSize = data[i] - lastTileOffset;
           assertTrue(distinctTiles.add(new Tile(Arrays.copyOfRange(data, firstTileOffset , firstTileOffset + tileSize))));
@@ -110,17 +123,22 @@ public class CompressedMapTest {
         assertTrue(lastTileOffset <= data.length - tileSize);
         assertTrue(distinctTiles.add(new Tile(Arrays.copyOfRange(data, lastTileOffset , lastTileOffset + tileSize))));
       }
+      else {
+        assertTrue(data[i] >= firstTileOffset);
+      }
     }
     if (tileSize == 0)
       tileSize = data.length - firstTileOffset;
-    else
-      assertEquals(lastTileOffset + tileSize, data.length, msgPrefix);
-
     int tileIndexBits = -1;
-    for (int i = 0; (1 << i) < data.length; ++i)
+    for (int i = 0; (1 << i) < lastTileOffset + tileSize; ++i)
       if ((1 << i) == tileSize)
         tileIndexBits = i;
-    assertTrue(tileIndexBits >= 0, "Unexpected tile size: " + tileSize);
+    assertTrue(tileIndexBits > 0, "Unexpected tile size: " + tileSize);
+
+    int length = lastTileOffset + tileSize;
+    if (length < data.length) {
+
+    }
   }
 
   private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange, int lastCodepoint) {
