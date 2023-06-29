@@ -121,4 +121,52 @@ public interface TileIterator {
       }
     };
   }
+
+  public static TileIterator of(int[] array, int maxCodepoint, int tileIndexBits, int defaultValue) {
+    return new TileIterator() {
+      int tileSize = 1 << tileIndexBits;
+      int numberOfTiles = maxCodepoint / tileSize + 1;
+      int nextOffset = 0;
+
+      @Override
+      public int next(int[] target, int targetOffset) {
+        int remainingSize = maxCodepoint + 1 - nextOffset;
+        if (remainingSize <= 0)
+          return 0;
+        if (remainingSize < tileSize) {
+          System.arraycopy(array, nextOffset, target, targetOffset, remainingSize);
+          Arrays.fill(target, targetOffset + remainingSize, targetOffset + tileSize, defaultValue);
+          nextOffset += remainingSize;
+          return 1;
+        }
+        System.arraycopy(array, nextOffset, target, targetOffset, tileSize);
+        int count = 1;
+        nextOffset += tileSize;
+        while (maxCodepoint + 1 - nextOffset >= tileSize
+            && 0 == Arrays.compare(
+              target, targetOffset, targetOffset + tileSize,
+              array, nextOffset, nextOffset + tileSize)) {
+          ++count;
+          nextOffset += tileSize;
+        }
+        return count;
+      }
+
+      @Override
+      public int numberOfTiles() {
+        return numberOfTiles;
+      }
+
+      @Override
+      public int tileSize() {
+        return tileSize;
+      }
+
+      @Override
+      public int defaultValue() {
+        return defaultValue;
+      }
+    };
+  }
+
 }

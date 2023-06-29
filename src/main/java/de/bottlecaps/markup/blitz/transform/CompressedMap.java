@@ -46,7 +46,6 @@ public class CompressedMap {
     this.tiles = bestTiles;
     this.tileIndexBits = bestTileIndexBits;
 
-
     if (nesting + 1 > maxDepth) {
 
     }
