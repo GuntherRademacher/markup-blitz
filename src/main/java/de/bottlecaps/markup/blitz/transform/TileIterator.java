@@ -11,6 +11,7 @@ public interface TileIterator {
   public int next(int[] tiles, int offset);
   public int numberOfTiles();
   public int tileSize();
+  public int tileIndexBits();
   public int defaultValue();
 
   public static TileIterator of(NavigableMap<Range, Integer> terminalCodeByRange, int end, int tileIndexBits, int defaultValue) {
@@ -47,6 +48,11 @@ public interface TileIterator {
       @Override
       public int tileSize() {
         return tileSize;
+      }
+
+      @Override
+      public int tileIndexBits() {
+        return tileIndexBits;
       }
 
       @Override
@@ -160,6 +166,11 @@ public interface TileIterator {
       @Override
       public int tileSize() {
         return tileSize;
+      }
+
+      @Override
+      public int tileIndexBits() {
+        return tileIndexBits;
       }
 
       @Override
