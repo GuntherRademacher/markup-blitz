@@ -31,7 +31,6 @@ public class CompressedMapTest {
   public void beforeEach() {
     random = new Random();
     long seed = random.nextLong();
-    seed = 1283396090540636249L;
     random.setSeed(seed);
     msgPrefix = "While testing with seed=" + seed + "L: ";
   }
@@ -43,18 +42,6 @@ public class CompressedMapTest {
     codeByRange.put(new Range(21, 30), 2);
     codeByRange.put(new Range(31, 40), 3);
     test(codeByRange);
-  }
-
-  @Test
-  public void testRepro() {
-    int[] originalData = {128, 132, 136, 140, 140, 144, 148, 152, 156, 156, 160, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140};
-    CompressedMap map = new CompressedMap(bits -> TileIterator.of(originalData, originalData.length, bits, 0), 2);
-    validate(map.tiles());
-    int[] reconstructed = reconstruct(map.tiles(), originalData.length, map.shift());
-    System.out.println(Arrays.toString(map.shift()));
-    System.out.println(Arrays.toString(map.tiles()));
-
-    assertArrayEquals(originalData, reconstructed);
   }
 
   @Test
@@ -100,7 +87,7 @@ public class CompressedMapTest {
     int end = 0xD800;
 
 //    //TODO: remove
-//    int end = 512;
+//    int end = 509;
 
     int defaultValue = 0;
 
@@ -131,11 +118,11 @@ public class CompressedMapTest {
       }
 
     if (multipleValues) {
-      for (int i = 2; i <= 2; ++i) {
-        map = new CompressedMap(iteratorSupplier, i);
+      for (int maxDepth = 2; maxDepth <= 6; ++maxDepth) {
+        map = new CompressedMap(iteratorSupplier, maxDepth);
         data = map.tiles();
+        System.out.println("maxDepth " + maxDepth + ", depth " + map.shift().length + ", size " + data.length + ", shift " + Arrays.toString(map.shift()));
         validate(data);
-        System.out.println("maxDepth " + i + ", depth " + map.shift().length + ", size " + data.length);
         reconstructed = reconstruct(data, originalData.length, map.shift());
         assertArrayEquals(originalData, reconstructed);
       }
@@ -190,12 +177,12 @@ public class CompressedMapTest {
     assertEquals(length - firstTileOffset, distinctTiles.size() * tileSize);
   }
 
-  private static class CompressedMapDecriptor {
+  private static class CompressedMapDescriptor {
     int tileIndexBits;
     int length;
     int uncompressedSize;
 
-    public CompressedMapDecriptor(int tileIndexBits, int length, int uncompressedSize) {
+    public CompressedMapDescriptor(int tileIndexBits, int length, int uncompressedSize) {
       this.tileIndexBits = tileIndexBits;
       this.length = length;
       this.uncompressedSize = uncompressedSize;
