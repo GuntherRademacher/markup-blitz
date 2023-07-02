@@ -6,11 +6,11 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 public class CompressedMap {
-  private int[] tiles;
+  private int[] data;
   private int[] shift;
 
-  public int[] tiles() {
-    return tiles;
+  public int[] data() {
+    return data;
   }
 
   public int[] shift() {
@@ -24,51 +24,41 @@ public class CompressedMap {
   private CompressedMap(Function<Integer, TileIterator> iteratorSupplier, int maxDepth, boolean isNested) {
     int[] bestShift = null;
     int[] bestTiles = null;
-
     for (int tileIndexBits = 2;; ++tileIndexBits) {
-      optimize(iteratorSupplier.apply(tileIndexBits), maxDepth, isNested);
-
-//      System.out.println("  optimized to " + tiles.length + " (tileSize " + (1 << tileIndexBits) + ")");
-//      System.out.println("                  " + Arrays.toString(tiles));
-
-      if (bestTiles == null || bestTiles.length > tiles.length) {
-        bestTiles = tiles;
-        bestShift = shift;
-      }
-      else {
+      create(iteratorSupplier.apply(tileIndexBits), maxDepth, isNested);
+      if (bestTiles != null && bestTiles.length <= data.length)
         break;
-      }
+      bestTiles = data;
+      bestShift = shift;
     }
-    this.tiles = bestTiles;
+    this.data = bestTiles;
     this.shift = bestShift;
   }
 
-  private void optimize(TileIterator it, int maxDepth, boolean isNested) {
+  private void create(TileIterator it, int maxDepth, boolean isNested) {
     int tileSize = it.tileSize();
     int numberOfTiles = it.numberOfTiles();
     int end = numberOfTiles;
     int idOffset = 0;
-    tiles = new int[end + tileSize];
+    data = new int[(end + tileSize) + 1];
 
     Map<Integer, Integer> distinctTiles = new TreeMap<>(
-        (lhs, rhs) -> Arrays.compare(tiles, lhs, lhs + tileSize, tiles, rhs, rhs + tileSize));
+        (lhs, rhs) -> Arrays.compare(data, lhs, lhs + tileSize, data, rhs, rhs + tileSize));
 
-    for (int count; (count = it.next(tiles, end)) != 0; ) {
+    for (int count; (count = it.next(data, end)) != 0; ) {
       Integer id = distinctTiles.putIfAbsent(end,  end);
       if (id == null) {
-
-// no overlapping
-//        if (targetTileOffset > numberOfTiles)
+// no tile overlapping - advantage would be marginal
+//        if (end > numberOfTiles)
 //          for (int i = end - tileSize + 1; i < end; ++i)
 //            distinctTiles.putIfAbsent(i, i);
-
         id = end;
         end += tileSize;
-        if (end + tileSize > tiles.length)
-          tiles = Arrays.copyOf(tiles, tiles.length << 1);
+        if (end + tileSize > data.length)
+          data = Arrays.copyOf(data, data.length << 1);
       }
-      for (int i = 0; i < count && idOffset < numberOfTiles; ++i)
-        tiles[idOffset++] = id;
+      for (int i = 0; i < count; ++i) //  && idOffset < numberOfTiles; ++i)
+        data[idOffset++] = id;
     }
 
     distinctTiles = null;
@@ -76,60 +66,89 @@ public class CompressedMap {
     shift = new int[] {it.tileIndexBits()};
 
     if (maxDepth > 1) {
-      Function<Integer, TileIterator> indexIterator = bits -> TileIterator.of(tiles, numberOfTiles, bits, 0);
+      Function<Integer, TileIterator> indexIterator = bits -> TileIterator.of(data, numberOfTiles, bits, 0);
       CompressedMap nestedMap = new CompressedMap(indexIterator, maxDepth - 1, true);
-      if (nestedMap.tiles().length <= numberOfTiles >> 1) {
+      if (nestedMap.data().length <= numberOfTiles >> 1) {
         shift = Arrays.copyOf(shift, nestedMap.shift().length + 1);
         System.arraycopy(nestedMap.shift(), 0, shift, 1, nestedMap.shift().length);
-        System.arraycopy(nestedMap.tiles(), 0, tiles, 0, nestedMap.tiles().length);
-        System.arraycopy(tiles, numberOfTiles, tiles, nestedMap.tiles().length, distinctTileSize);
-        end = nestedMap.tiles().length + distinctTileSize;
+        System.arraycopy(nestedMap.data(), 0, data, 0, nestedMap.data().length);
+        System.arraycopy(data, numberOfTiles, data, nestedMap.data().length, distinctTileSize);
+        end = nestedMap.data().length + distinctTileSize;
       }
     }
 
     if (isNested) {
       int displacement = end - it.end();
       for (int i = end - distinctTileSize; i < end; ++i)
-        tiles[i] += displacement;
+        data[i] += displacement;
     }
 
-    tiles = Arrays.copyOf(tiles, end);
+    data = Arrays.copyOf(data, end);
   }
 
-  public static int get1(int[] map, int i0, int shift0) {
-    int mask = (1 << shift0) - 1;
-    return map[(i0 & mask)
-         + map[i0 >> shift0]];
-  }
-
-  public static int get2(int[] map, int i0, int shift0, int shift1) {
-    int i1 = i0 >> shift0;
-    return map[(i0 & (1 << shift0) - 1)
-         + map[(i1 & (1 << shift1) - 1)
-         + map[i1 >> shift1]]];
-  }
-
-  public static int get3(int[] map, int i0, int shift0, int shift1, int shift2) {
-    int i1 = i0 >> shift0;
-    int i2 = i1 >> shift2;
-    return map[(i0 & (1 << shift0) - 1)
-         + map[(i1 & (1 << shift1) - 1)
-         + map[(i2 & (1 << shift2) - 1) + map[i2 >> shift2]]]];
-  }
-
-  public static int get(int[] map, int i0, int... shift) {
-    final int length = shift.length;
-    int[] mask = new int[length];
-    int[] index = new int[length];
-    mask[0] = (1 << shift[0]) - 1;
-    index[0] = i0;
-    for (int i = 1; i < length; ++i) {
-      mask[i] = (1 << shift[i]) - 1;
-      index[i] = index[i - 1] >> shift[i - 1];
+  public int get(int i0) {
+    switch (shift.length) {
+    case 1: {
+        return data[(i0 & (1 << shift[0]) - 1) + data[i0 >> shift[0]]];
+      }
+    case 2: {
+        int i1 = i0 >> shift[0];
+        return data[(i0 & (1 << shift[0]) - 1)
+             + data[(i1 & (1 << shift[1]) - 1) + data[i1 >> shift[1]]]];
+      }
+    case 3: {
+        int i1 = i0 >> shift[0];
+        int i2 = i1 >> shift[1];
+        return data[(i0 & (1 << shift[0]) - 1)
+             + data[(i1 & (1 << shift[1]) - 1)
+             + data[(i2 & (1 << shift[2]) - 1) + data[i2 >> shift[2]]]]];
+      }
+    case 4: {
+        int i1 = i0 >> shift[0];
+        int i2 = i1 >> shift[1];
+        int i3 = i2 >> shift[2];
+        return data[(i0 & (1 << shift[0]) - 1)
+             + data[(i1 & (1 << shift[1]) - 1)
+             + data[(i2 & (1 << shift[2]) - 1)
+             + data[(i3 & (1 << shift[3]) - 1) + data[i3 >> shift[3]]]]]];
+      }
+    case 5: {
+        int i1 = i0 >> shift[0];
+        int i2 = i1 >> shift[1];
+        int i3 = i2 >> shift[2];
+        int i4 = i3 >> shift[3];
+        return data[(i0 & (1 << shift[0]) - 1)
+             + data[(i1 & (1 << shift[1]) - 1)
+             + data[(i2 & (1 << shift[2]) - 1)
+             + data[(i3 & (1 << shift[3]) - 1)
+             + data[(i4 & (1 << shift[4]) - 1) + data[i4 >> shift[4]]]]]]];
+      }
+    case 6: {
+        int i1 = i0 >> shift[0];
+        int i2 = i1 >> shift[1];
+        int i3 = i2 >> shift[2];
+        int i4 = i3 >> shift[3];
+        int i5 = i4 >> shift[4];
+        return data[(i0 & (1 << shift[0]) - 1)
+             + data[(i1 & (1 << shift[1]) - 1)
+             + data[(i2 & (1 << shift[2]) - 1)
+             + data[(i3 & (1 << shift[3]) - 1)
+             + data[(i4 & (1 << shift[4]) - 1)
+             + data[(i5 & (1 << shift[5]) - 1) + data[i5 >> shift[5]]]]]]]];
+      }
+    default: {
+        final int length = shift.length;
+        int[] index = new int[length];
+        index[0] = i0;
+        for (int i = 1; i < length; ++i) {
+          index[i] = index[i - 1] >> shift[i - 1];
+        }
+        int value = data[index[length - 1] >> shift[length - 1]];
+        for (int i = length - 1; i >= 0; --i)
+          value = data[value + (index[i] & (1 << shift[i]) - 1)];
+        return value;
+      }
     }
-    int value = map[index[length - 1] >> shift[length - 1]];
-    for (int i = length - 1; i >= 0; --i)
-      value = map[(index[i] & mask[i]) + value];
-    return value;
   }
+
 }

@@ -68,8 +68,12 @@ public class CreateItems extends Visitor {
     }
 
     Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
-    int size = new CompressedMap(it, 3).tiles().length;
-    System.out.println("size of token code map: " + size);
+    CompressedMap tokenCodeMap = new CompressedMap(it, 1);
+    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
+    tokenCodeMap = new CompressedMap(it, 2);
+    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
+    tokenCodeMap = new CompressedMap(it, 3);
+    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
   }
 
   private class State {

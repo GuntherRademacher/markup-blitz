@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
@@ -36,7 +37,7 @@ public class CompressedMapTest {
   }
 
   @Test
-  public void testCompressedMap() {
+  public void testSimpledMap() {
     TreeMap<Range, Integer> codeByRange = new TreeMap<>();
     codeByRange.put(new Range(1, 10), 1);
     codeByRange.put(new Range(21, 30), 2);
@@ -46,12 +47,7 @@ public class CompressedMapTest {
 
   @Test
   public void testZeroes() {
-    int[] zeroes = new int[100];
-    CompressedMap map = new CompressedMap(bits -> TileIterator.of(zeroes, zeroes.length, bits, 0), 1);
-    int[] data = map.tiles();
-    assertTrue(map.shift()[0] >= 1 && map.shift()[0] <= 6);
-    int[] reconstruction = reconstruct(data, 100, map.shift());
-    assertArrayEquals(zeroes, reconstruction);
+    testRangeSet(RangeSet.builder().build());
   }
 
   @Test
@@ -85,46 +81,43 @@ public class CompressedMapTest {
 
   private void test(TreeMap<Range, Integer> codeByRange) {
     int end = 0xD800;
-
-//    //TODO: remove
-//    int end = 509;
-
-    int defaultValue = 0;
-
-    int[] originalData = setupOriginalData(codeByRange, end);
+    int defaultValue = random.nextInt(end);
+    int[] originalData = setupOriginalData(codeByRange, end, defaultValue);
     test(originalData, bits -> TileIterator.of(codeByRange, end, bits, defaultValue));
   }
 
   private void test(int[] originalData, Function<Integer, TileIterator> iteratorSupplier) {
-    CompressedMap map = new CompressedMap(iteratorSupplier, 1);
-    int[] data = map.tiles();
+    int[] randomValues = new int[1000000];
+    for (int i = 0; i < randomValues.length; ++i)
+      randomValues[i] = random.nextInt(originalData.length);
 
-    validate(data);
+    Map<Integer, Integer> hashMap = new HashMap<>();
+    int defaultValue = iteratorSupplier.apply(2).defaultValue();
+    for (int i = 0; i < originalData.length; ++i)
+      if (originalData[i] != defaultValue)
+        hashMap.put(i, originalData[i]);
 
-    int[] reconstructed = reconstruct(data, originalData.length, map.shift()[0]);
-    assertArrayEquals(
-        originalData,
-        Arrays.copyOf(reconstructed, originalData.length),
-        () -> msgPrefix);
-
-    System.out.println("maxDepth " + 1 + ", depth " + map.shift().length + ", size " + data.length);
-
-    boolean multipleValues = false;
-    int value = originalData[0];
-    for (int i = 1; i < originalData.length; ++i)
-      if (originalData[i] != value) {
-        multipleValues = true;
-        break;
-      }
-
-    if (multipleValues) {
-      for (int maxDepth = 2; maxDepth <= 6; ++maxDepth) {
-        map = new CompressedMap(iteratorSupplier, maxDepth);
-        data = map.tiles();
-        System.out.println("maxDepth " + maxDepth + ", depth " + map.shift().length + ", size " + data.length + ", shift " + Arrays.toString(map.shift()));
+    for (int maxDepth = 1; maxDepth <= 8; ++maxDepth) {
+      CompressedMap map = new CompressedMap(iteratorSupplier, maxDepth);
+      int[] data = map.data();
+      if (map.shift().length == maxDepth) {
         validate(data);
-        reconstructed = reconstruct(data, originalData.length, map.shift());
-        assertArrayEquals(originalData, reconstructed);
+        int[] reconstructed = reconstruct(map, originalData.length);
+        assertArrayEquals(originalData, reconstructed, msgPrefix);
+
+        int expectedSum = 0;
+        for (int v : randomValues) {
+          Integer code = hashMap.get(v);
+          if (code != null)
+            expectedSum += code;
+          else
+            expectedSum += defaultValue;
+        }
+
+        int sum = 0;
+        for (int v : randomValues)
+          sum += map.get(v);
+        assertEquals(expectedSum, sum, msgPrefix);
       }
     }
   }
@@ -132,7 +125,6 @@ public class CompressedMapTest {
   private void validate(int[] data) {
     int firstTileOffset = data[0];
     int numberOfTiles = firstTileOffset;
-//    assertTrue(numberOfTiles < maxLength);
 
     Set<Tile> distinctTiles = new HashSet<>();
     int lastTileOffset = firstTileOffset;
@@ -144,20 +136,20 @@ public class CompressedMapTest {
           int[] tile = new int[tileSize];
           for (int i = 0; i < tileSize; ++i)
             tile[i] = data[firstTileOffset + i];
-          assertTrue(distinctTiles.add(new Tile(tile)));
+          assertTrue(distinctTiles.add(new Tile(tile)), msgPrefix);
         }
         else {
-          assertEquals(tileSize, data[t] - lastTileOffset);
+          assertEquals(tileSize, data[t] - lastTileOffset, msgPrefix);
         }
         lastTileOffset = data[t];
-        assertTrue(lastTileOffset <= data.length - tileSize);
+        assertTrue(lastTileOffset <= data.length - tileSize, msgPrefix);
         int[] tile = new int[tileSize];
         for (int i = 0; i < tileSize; ++i)
           tile[i] = data[lastTileOffset + i];
-        assertTrue(distinctTiles.add(new Tile(tile)));
+        assertTrue(distinctTiles.add(new Tile(tile)), msgPrefix);
       }
       else {
-        assertTrue(data[t] >= firstTileOffset);
+        assertTrue(data[t] >= firstTileOffset, msgPrefix);
       }
     }
     if (tileSize == 0) {
@@ -165,33 +157,13 @@ public class CompressedMapTest {
       int[] tile = new int[tileSize];
       for (int i = 0; i < tileSize; ++i)
         tile[i] = data[firstTileOffset + i];
-      assertTrue(distinctTiles.add(new Tile(tile)));
+      assertTrue(distinctTiles.add(new Tile(tile)), msgPrefix);
     }
-    int tileIndexBits = -1;
-    for (int i = 0; (1 << i) < lastTileOffset + tileSize; ++i)
-      if ((1 << i) == tileSize)
-        tileIndexBits = i;
-    assertTrue(tileIndexBits > 0, "Unexpected tile size: " + tileSize);
-
-    int length = lastTileOffset + tileSize;
-    assertEquals(length - firstTileOffset, distinctTiles.size() * tileSize);
   }
 
-  private static class CompressedMapDescriptor {
-    int tileIndexBits;
-    int length;
-    int uncompressedSize;
-
-    public CompressedMapDescriptor(int tileIndexBits, int length, int uncompressedSize) {
-      this.tileIndexBits = tileIndexBits;
-      this.length = length;
-      this.uncompressedSize = uncompressedSize;
-    }
-
-  }
-  private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange, int end) {
+  private int[] setupOriginalData(TreeMap<Range, Integer> codeByRange, int end, int defaultValue) {
     int[] originalData = new int[end];
-    Arrays.fill(originalData, 0);
+    Arrays.fill(originalData, defaultValue);
     for (Map.Entry<Range, Integer> e : codeByRange.entrySet()) {
       Range range = e.getKey();
       int code = e.getValue();
@@ -203,10 +175,10 @@ public class CompressedMapTest {
     return originalData;
   }
 
-  private int[] reconstruct(int[] data, int uncompressedSize, int...shift) {
+  private int[] reconstruct(CompressedMap map, int uncompressedSize) {
     int[] target = new int[uncompressedSize];
     for (int i = 0; i < target.length; ++i) {
-      target[i] = CompressedMap.get(data, i, shift);
+      target[i] = map.get(i);
     }
     return target;
   }
