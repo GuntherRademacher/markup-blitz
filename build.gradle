@@ -7,20 +7,20 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.nineml:coffeefilter:2.1.0'
-    testImplementation 'org.nineml:coffeegrinder:2.1.0'
+    testImplementation 'org.nineml:coffeefilter:3.0.0a'
+    testImplementation 'org.nineml:coffeegrinder:3.0.0a'
 }
 
 testing {	
     suites {
         test {
-            useJUnitJupiter('5.9.1')
+            useJUnitJupiter('5.9.3')
         }
     }
 }
 
 test {
-    maxHeapSize = "1536m"
+    maxHeapSize = "2048m"
 }
 
 tasks.withType(JavaCompile) {
