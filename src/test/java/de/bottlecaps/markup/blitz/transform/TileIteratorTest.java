@@ -91,7 +91,7 @@ public class TileIteratorTest {
           TileIterator it = TileIterator.of(map, maxCodepoint + 1, tileIndexBits, defaultValue);
           assertEquals(numberOfTiles, it.numberOfTiles());
           assertEquals(tileSize, it.tileSize());
-          int[] reconstruction = reconstruct(it, tileIndexBits);
+          int[] reconstruction = reconstruct(it);
 
 //          System.out.println(tileIndexBits +
 //                       " " + maxCodepoint +
@@ -104,6 +104,8 @@ public class TileIteratorTest {
           if (expectedResult.length > uncompressedData.length)
             Arrays.fill(expectedResult, uncompressedData.length, expectedResult.length, defaultValue);
           assertArrayEquals(expectedResult, Arrays.copyOf(reconstruction, maxCodepoint));
+
+          test2D(expectedResult, tileIndexBits, defaultValue);
         }
       }
     }
@@ -131,27 +133,30 @@ public class TileIteratorTest {
   private void test(NavigableMap<Range, Integer> codeByRange) {
     int lastCodepoint = codeByRange.descendingKeySet().iterator().next().getLastCodepoint();
     int[] originalData = new int[lastCodepoint + 1];
-    Arrays.fill(originalData, 0);
+    int defaultValue = random.nextInt(1);
+    Arrays.fill(originalData, defaultValue);
     for (Map.Entry<Range, Integer> e : codeByRange.entrySet()) {
       Range range = e.getKey();
       int code = e.getValue();
       for (int codepoint = range.getFirstCodepoint(); codepoint <= range.getLastCodepoint(); ++codepoint)
         originalData[codepoint] = code;
     }
-
     int maxTileIndexBits = log2(lastCodepoint) + 1;
     for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
-      TileIterator it = TileIterator.of(codeByRange, lastCodepoint + 1, tileIndexBits, 0);
-      int[] reconstructed = reconstruct(it, tileIndexBits);
+      TileIterator it = TileIterator.of(codeByRange, lastCodepoint + 1, tileIndexBits, defaultValue);
+      int[] reconstructed = reconstruct(it);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
 
-      it = TileIterator.of(originalData, originalData.length, tileIndexBits, 0);
-      reconstructed = reconstruct(it, tileIndexBits);
+      it = TileIterator.of(originalData, originalData.length, tileIndexBits, defaultValue);
+      reconstructed = reconstruct(it);
       assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
+
+      test2D(originalData, tileIndexBits, defaultValue);
     }
   }
 
-  private int[] reconstruct(TileIterator it, int tileIndexBits) {
+  private int[] reconstruct(TileIterator it) {
+    int tileIndexBits = it.tileIndexBits();
     int tileSize = 1 << tileIndexBits;
     int[] target = new int[tileSize];
     for (int offset = 0;;) {
@@ -192,6 +197,16 @@ public class TileIteratorTest {
     return log + (v >>> 1);
   }
 
+  private static List<Integer> primeFactors(int n) {
+    List<Integer> primeFactors = new ArrayList<>();
+    for (int i = 2; i <= n; i++)
+      while (n % i == 0) {
+        primeFactors.add(i);
+        n /= i;
+      }
+    return primeFactors;
+  }
+
   public static List<Range> transformIntegerToBitRanges(int num) {
     List<Range> bitRanges = new ArrayList<>();
     int start = -1;
@@ -216,4 +231,24 @@ public class TileIteratorTest {
     return bitRanges;
   }
 
+  private void test2D(int[] data, int bits, int defaultValue) {
+    int endX = 1;
+    int endY = 1;
+    final var primeFactors = primeFactors(data.length);
+    Collections.shuffle(primeFactors, random);
+    for (int i = 0; i < primeFactors.size(); ++i)
+      if (random.nextBoolean())
+        endX *= primeFactors.get(i);
+      else
+        endY *= primeFactors.get(i);
+    Map2D map = new Map2D(endX, endY);
+    for (int i = 0; i < data.length; ++i)
+      if (data[i] != defaultValue) {
+        int x = i / endY;
+        int y = i - endY * x;
+        map.put(new Map2D.Index(x, y), data[i]);
+      }
+    int[] reconstructed = reconstruct(TileIterator.of(map, bits, defaultValue));
+    assertArrayEquals(data, Arrays.copyOf(reconstructed, data.length));
+  }
 }

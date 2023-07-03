@@ -3,9 +3,11 @@ package de.bottlecaps.markup.blitz.transform;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 
 import de.bottlecaps.markup.blitz.character.Range;
+import de.bottlecaps.markup.blitz.transform.Map2D.Index;
 
 public interface TileIterator {
   public int next(int[] tiles, int offset);
@@ -15,30 +17,22 @@ public interface TileIterator {
   public int defaultValue();
   public int end();
 
-  public static TileIterator of(NavigableMap<Range, Integer> terminalCodeByRange, int end, int tileIndexBits, int defaultValue) {
+  public static TileIterator of(NavigableMap<Range, Integer> codeByRange, int end, int tileIndexBits, int defaultValue) {
     return new TileIterator() {
       int tileSize = 1 << tileIndexBits;
-      int numberOfTiles;
+      int numberOfTiles = (end - 1 + tileSize) / tileSize;
+      int currentIndex = 0;
 
       Iterator<Map.Entry<Range, Integer>> it;
-      int currentValue;
-
       Range currentRange;
-      int firstValue;
-      int lastValue;
-      int tokenCode;
-
+      int firstIndex = -1;
+      int lastIndex = -1;
+      int value;
       {
-        if (terminalCodeByRange.isEmpty()) {
-          firstValue = -1;
-          lastValue = -1;
-        }
-        else {
-          it = terminalCodeByRange.entrySet().iterator();
+        if (! codeByRange.isEmpty()) {
+          it = codeByRange.entrySet().iterator();
           nextRange();
         }
-        numberOfTiles = (end - 1 + tileSize) / tileSize;
-        currentValue = 0;
       }
 
       @Override
@@ -67,35 +61,35 @@ public interface TileIterator {
       }
 
       @Override
-      public int next(int[] tiles, int offset) {
-        if (currentValue < firstValue - tileSize)
-          return many(tiles, offset, firstValue - currentValue, defaultValue);
-        if (currentValue >= firstValue && currentValue <= lastValue - tileSize) {
-          int count = many(tiles, offset, lastValue - currentValue + 1, tokenCode);
-          if (currentValue > lastValue)
+      public int next(int[] target, int offset) {
+        if (currentIndex < firstIndex - tileSize)
+          return many(target, offset, firstIndex - currentIndex, defaultValue);
+        if (currentIndex >= firstIndex && currentIndex <= lastIndex - tileSize) {
+          int count = many(target, offset, lastIndex - currentIndex + 1, value);
+          if (currentIndex > lastIndex)
             nextRange();
           return count;
         }
         for (int size = 0;; nextRange()) {
-          if (firstValue < 0) {
+          if (firstIndex < 0) {
             if (size != 0) {
-              Arrays.fill(tiles, offset + size, offset + tileSize, defaultValue);
-              currentValue += tileSize - size;
+              Arrays.fill(target, offset + size, offset + tileSize, defaultValue);
+              currentIndex += tileSize - size;
               return 1;
             }
-            return many(tiles, offset, numberOfTiles * tileSize - currentValue, defaultValue);
+            return many(target, offset, numberOfTiles * tileSize - currentIndex, defaultValue);
           }
-          while (currentValue < firstValue) {
-            ++currentValue;
-            tiles[offset + size++] = defaultValue;
-            if (size == tileSize)
+          while (currentIndex < firstIndex) {
+            ++currentIndex;
+            target[offset + size] = defaultValue;
+            if (++size == tileSize)
               return 1;
           }
-          while (currentValue <= lastValue) {
-            ++currentValue;
-            tiles[offset + size++] = tokenCode;
-            if (size == tileSize) {
-              if (currentValue > lastValue)
+          while (currentIndex <= lastIndex) {
+            ++currentIndex;
+            target[offset + size] = value;
+            if (++size == tileSize) {
+              if (currentIndex > lastIndex)
                 nextRange();
               return 1;
             }
@@ -105,22 +99,22 @@ public interface TileIterator {
 
       private void nextRange() {
         if (! it.hasNext()) {
-          firstValue = -1;
-          lastValue = -1;
+          firstIndex = -1;
+          lastIndex = -1;
         }
         else {
           Map.Entry<Range, Integer> entry = it.next();
           currentRange = entry.getKey();
-          firstValue = currentRange.getFirstCodepoint();
-          if (firstValue >= end) {
-            firstValue = -1;
-            lastValue = -1;
+          firstIndex = currentRange.getFirstCodepoint();
+          if (firstIndex >= end) {
+            firstIndex = -1;
+            lastIndex = -1;
           }
           else {
-            tokenCode = entry.getValue();
-            lastValue = currentRange.getLastCodepoint();
-            if (lastValue >= end)
-              lastValue = end - 1;
+            value = entry.getValue();
+            lastIndex = currentRange.getLastCodepoint();
+            if (lastIndex >= end)
+              lastIndex = end - 1;
           }
         }
       }
@@ -128,7 +122,7 @@ public interface TileIterator {
       private int many(int[] target, int offset, int n, int value) {
         Arrays.fill(target, offset, offset + tileSize, value);
         int nt = n / tileSize;
-        currentValue += nt * tileSize;
+        currentIndex += nt * tileSize;
         return nt;
       }
     };
@@ -139,6 +133,31 @@ public interface TileIterator {
       int tileSize = 1 << tileIndexBits;
       int numberOfTiles = (end - 1 + tileSize) / tileSize;
       int nextOffset = 0;
+
+      @Override
+      public int numberOfTiles() {
+        return numberOfTiles;
+      }
+
+      @Override
+      public int tileSize() {
+        return tileSize;
+      }
+
+      @Override
+      public int tileIndexBits() {
+        return tileIndexBits;
+      }
+
+      @Override
+      public int defaultValue() {
+        return defaultValue;
+      }
+
+      @Override
+      public int end() {
+        return end;
+      }
 
       @Override
       public int next(int[] target, int targetOffset) {
@@ -163,6 +182,25 @@ public interface TileIterator {
         }
         return count;
       }
+    };
+  }
+
+  public static TileIterator of(Map2D map, int tileIndexBits, int defaultValue) {
+    return new TileIterator() {
+      int tileSize = 1 << tileIndexBits;
+      int end = map.getEndX() * map.getEndY();
+      int numberOfTiles = (end - 1 + tileSize) / tileSize;
+      int currentIndex = 0;
+
+      Iterator<Entry<Index, Integer>> it;
+      int index = -1;
+      int value;
+      {
+        if (! map.isEmpty()) {
+          it = map.entrySet().iterator();
+          nextEntry();
+        }
+      }
 
       @Override
       public int numberOfTiles() {
@@ -188,7 +226,54 @@ public interface TileIterator {
       public int end() {
         return end;
       }
+
+      @Override
+      public int next(int[] target, int offset) {
+        if (currentIndex < index - tileSize)
+          return many(target, offset, index - currentIndex);
+        for (int size = 0;; nextEntry()) {
+          if (index < 0) {
+            if (size != 0) {
+              Arrays.fill(target, offset + size, offset + tileSize, defaultValue);
+              currentIndex += tileSize - size;
+              return 1;
+            }
+            return many(target, offset, numberOfTiles * tileSize - currentIndex);
+          }
+          while (currentIndex < index) {
+            ++currentIndex;
+            target[offset + size] = defaultValue;
+            if (++size == tileSize)
+              return 1;
+          }
+          if (currentIndex == index) {
+            ++currentIndex;
+            target[offset + size] = value;
+            if (++size == tileSize) {
+              nextEntry();
+              return 1;
+            }
+          }
+        }
+      }
+
+      private void nextEntry() {
+        if (! it.hasNext()) {
+          index = -1;
+        }
+        else {
+          Map.Entry<Index, Integer> entry = it.next();
+          index = entry.getKey().getX() * map.getEndY() + entry.getKey().getY();
+          value = entry.getValue();
+        }
+      }
+
+      private int many(int[] target, int offset, int n) {
+        Arrays.fill(target, offset, offset + tileSize, defaultValue);
+        int nt = n / tileSize;
+        currentIndex += nt * tileSize;
+        return nt;
+      }
     };
   }
-
 }
