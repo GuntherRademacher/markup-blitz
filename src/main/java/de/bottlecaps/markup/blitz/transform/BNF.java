@@ -14,7 +14,6 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
-import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
@@ -67,17 +66,19 @@ public class BNF extends Visitor {
   @Override
   public void visit(Rule r) {
     if (copy.getRules().isEmpty()) {
-      // augment grammar with rule: _start: someNonterminal _end.
+      // augment grammar with rule: _start: someNonterminal.
       Alt alt = new Alt();
-      alt.addNonterminal(Mark.NONE, r.getName());
-//      alt.addCharset(Charset.END);
+      final var mark = r.getMark() == Mark.NONE
+          ? Mark.ELEMENT
+          : r.getMark();
+      alt.addNonterminal(mark, r.getName());
       Alts alts = new Alts();
       alts.addAlt(alt);
       Rule rule = new Rule(Mark.DELETED, grammar.getAdditionalNames().get(Term.START)[0], alts);
       copy.addRule(rule);
     }
     super.visit(r);
-    copy.addRule(new Rule(r.getMark(), r.getName(), alts.pop()));
+    copy.addRule(new Rule(Mark.NONE, r.getName(), alts.pop()));
     for (Rule rule; (rule = justAdded.poll()) != null; )
       copy.getRules().put(rule.getName(), rule);
   }
@@ -100,19 +101,11 @@ public class BNF extends Visitor {
       Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
       alts.peek().last().getTerms().add(nonterminal);
       if (! additionalRules.contains(name)) {
-        Mark mark = mark(name, a, Mark.NONE);
-        Rule additionalRule = new Rule(mark, name, pop);
+        Rule additionalRule = new Rule(Mark.NONE, name, pop);
         additionalRules.add(additionalRule.getName());
         justAdded.offer(additionalRule);
       }
     }
-  }
-
-  private Mark mark(String name, Node context, Mark defaultMark) {
-    Rule rule = grammar.getRules().get(name);
-    return rule == null
-        ? defaultMark
-        : rule.getMark();
   }
 
   @Override
@@ -123,7 +116,7 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Nonterminal n) {
-    alts.peek().last().getTerms().add(n.copy());
+    alts.peek().last().getTerms().add(new Nonterminal(n.getEffectiveMark(), n.getName()));
   }
 
   @Override
@@ -160,7 +153,7 @@ public class BNF extends Visitor {
           alt2.getTerms().add(term.copy());
           alts.addAlt(alt1);
           alts.addAlt(alt2);
-          additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+          additionalRule = new Rule(Mark.NONE, name, alts);
           additionalRules.add(additionalRule.getName());
           justAdded.offer(additionalRule);
         }
@@ -174,7 +167,7 @@ public class BNF extends Visitor {
             alt2.getTerms().add(term.copy());
             alts.addAlt(alt1);
             alts.addAlt(alt2);
-            additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+            additionalRule = new Rule(Mark.NONE, name, alts);
             additionalRules.add(additionalRule.getName());
             justAdded.offer(additionalRule);
           }
@@ -189,7 +182,7 @@ public class BNF extends Visitor {
               alt2.getTerms().add(term.copy());
               alts.addAlt(alt1);
               alts.addAlt(alt2);
-              additionalRule = new Rule(mark(listName, c, Mark.NONE), listName, alts);
+              additionalRule = new Rule(Mark.NONE, listName, alts);
               additionalRules.add(additionalRule.getName());
               justAdded.offer(additionalRule);
             } {
@@ -198,7 +191,7 @@ public class BNF extends Visitor {
               alt2.addNonterminal(Mark.DELETED, listName);
               alts.addAlt(new Alt());
               alts.addAlt(alt2);
-              additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+              additionalRule = new Rule(Mark.NONE, name, alts);
               additionalRules.add(additionalRule.getName());
               justAdded.offer(additionalRule);
             }
@@ -210,7 +203,7 @@ public class BNF extends Visitor {
           alts.addAlt(new Alt());
           alts.addAlt(new Alt());
           alts.last().getTerms().add(term);
-          additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+          additionalRule = new Rule(Mark.NONE, name, alts);
           additionalRules.add(additionalRule.getName());
           justAdded.offer(additionalRule);
         }
@@ -235,7 +228,7 @@ public class BNF extends Visitor {
         Alt alt = new Alt();
         alt.addCharset(c);
         alts.addAlt(alt);
-        Rule additionalRule = new Rule(mark(name, c, Mark.NONE), name, alts);
+        Rule additionalRule = new Rule(Mark.NONE, name, alts);
         additionalRules.add(additionalRule.getName());
         charsets.offer(additionalRule);
       }
