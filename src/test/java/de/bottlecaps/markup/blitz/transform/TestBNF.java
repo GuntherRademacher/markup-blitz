@@ -480,7 +480,7 @@ public class TestBNF {
       @Override
       public void visit(Rule r) {
         if (r == r.getGrammar().getRules().values().iterator().next()) {
-          assertEquals(Mark.DELETED, r.getMark());
+          assertEquals(Mark.DELETE, r.getMark());
           assertEquals(r.getGrammar().getAdditionalNames().get(Term.START)[0], r.getName());
         }
         else {

@@ -1,9 +1,9 @@
 package de.bottlecaps.markup.blitz.grammar;
 
 public enum Mark {
-  ELEMENT("^"),
+  NODE("^"),
   ATTRIBUTE("@"),
-  DELETED("-"),
+  DELETE("-"),
   NONE("");
 
   private String string;

@@ -24,7 +24,7 @@ public class Nonterminal extends Term {
       return mark;
     Rule definition = grammar.getRules().get(name);
     return definition.getMark() == Mark.NONE
-        ? Mark.ELEMENT
+        ? Mark.NODE
         : definition.getMark();
   }
 

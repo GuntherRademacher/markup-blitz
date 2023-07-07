@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -22,22 +23,31 @@ import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
+import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 import de.bottlecaps.markup.blitz.item.TokenSet;
+import de.bottlecaps.markup.blitz.parser.Action;
+import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 
-public class CreateItems extends Visitor {
+public class CreateItems {
   private Grammar grammar;
-  private Map<Integer, RangeSet> rangeSetByTerminalCode = new LinkedHashMap<>();
-  private Map<Integer, String> nonterminal = new LinkedHashMap<>();
-  private Map<String, Integer> nonterminalCode = new LinkedHashMap<>();
-  private Map<RangeSet, Integer> terminalCode = new LinkedHashMap<>();
-  private TreeMap<Range, Integer> terminalCodeByRange = new TreeMap<>();
+
+  private Map<String, Integer> nonterminalCode;
+  private String[] nonterminal;
+
+  private Map<RangeSet, Integer> terminalCode;
+  private RangeSet[] terminal;
+  private NavigableMap<Range, Integer> terminalCodeByRange;
+
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
   private Map<State, State> states = new LinkedHashMap<>();
   private Deque<State> statesTodo = new LinkedList<>();
+
+  private int[][] forks;
+  private ReduceArgument[] reduceArguments;
 
   private CreateItems() {
   }
@@ -45,13 +55,16 @@ public class CreateItems extends Visitor {
   public static void process(Grammar g) {
     CreateItems ci  = new CreateItems();
     ci.grammar = g;
-    ci.new TokenCollector().visit(g);
+    ci.new SymbolCodeAssigner().visit(g);
+
+    ci.reduceArguments = ci.reduceArguments();
     ci.collectFirst();
 
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
     Integer endToken = ci.terminalCode.get(RangeSet.of(Charset.END));
     State state = ci.new State();
     state.put(startNode, TokenSet.of(endToken));
+    state.id = 0;
     ci.states.put(state, state);
     ci.statesTodo.offer(state);
 
@@ -61,11 +74,12 @@ public class CreateItems extends Visitor {
       s.transitions();
     }
 
-    System.out.println(ci.states.size() + " states (not counting LR(0) reduce states");
+    // report status
 
-    for (State s : ci.states.keySet()) {
-      System.out.println("\nstate:\n" + s);
-    }
+    System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
+
+    for (State s : ci.states.keySet())
+      System.out.println("\nstate " + s.id + ":\n" + s);
 
     Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
     CompressedMap tokenCodeMap = new CompressedMap(it, 1);
@@ -76,12 +90,42 @@ public class CreateItems extends Visitor {
     System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
   }
 
+  private String toString(ReduceArgument reduceArgument) {
+    final int nonterminalId = reduceArgument.getNonterminalId();
+    Mark[] marks = reduceArgument.getMarks();
+    String insertion = reduceArgument.getInsertion();
+    return "pop " + marks.length
+        + ", id " + nonterminalId
+        + ", nonterminal " + nonterminal[nonterminalId]
+        + (marks.length == 0 ? "" : ", marks " + Arrays.stream(marks).map(Mark::toString).collect(Collectors.joining()))
+        + (insertion == null ? "" : ", insert " + escapeNonAscii(insertion));
+  }
+
+  public static String escapeNonAscii(String input) {
+    StringBuilder sb = new StringBuilder("\"");
+    for (char c : input.toCharArray()) {
+      if (' ' <= c && c <= '~' && c != '"')
+        sb.append(c);
+      else
+        sb.append("\\u").append(String.format("%04x", (int) c));
+    }
+    sb.append("\"");
+    return sb.toString();
+  }
+
   private class State {
+    private int id;
+    /** Kernel items, position and lookahead. */
     private Map<Node, TokenSet> kernel;
+    /** Closure items, position and lookahead. */
     private Map<Node, TokenSet> closure;
+    /** Terminal transitions, token code and target state */
     private Map<Integer, State> terminalTransitions;
+    /** Nonterminal transitions, token code and target state */
     private Map<Integer, State> nonterminalTransitions;
-    private Map<Integer, List<Node>> reductions;
+    /** Reductions, token code and reduced alternative. */
+    private Map<Integer, List<Alt>> reductions;
+    /** Conflict token codes. */
     private Set<Integer> conflicts;
 
     public State() {
@@ -150,11 +194,14 @@ public class CreateItems extends Visitor {
           Node node = e.getKey();
           TokenSet lookahead = e.getValue();
           if (node instanceof Alt || node instanceof Insertion) {
+            Alt alt = node instanceof Alt
+                    ? (Alt) node
+                    : (Alt) node.getParent();
             for (int code : lookahead)
               reductions.compute(code, (k, v) -> {
                 if (v == null)
                   v = new ArrayList<>();
-                v.add(node);
+                v.add(alt);
                 return v;
               });
           }
@@ -208,6 +255,7 @@ public class CreateItems extends Visitor {
           if (! newState.isLr0ReduceState()) {
             State oldState = states.putIfAbsent(newState, newState);
             if (oldState == null) {
+              newState.id = states.size() - 1;
               statesTodo.add(newState);
             }
             else {
@@ -265,6 +313,30 @@ public class CreateItems extends Visitor {
       return itemsString + conflictsString;
     }
 
+    private Action action(Node node, TokenSet lookahead) {
+      if (node instanceof Alt)
+        return new Action(Action.Type.REDUCE, ((Alt) node).getReductionId());
+      if (node instanceof Insertion)
+        return new Action(Action.Type.REDUCE, ((Alt) node.getParent()).getReductionId());
+      Alt alt = (Alt) (node.getParent());
+      State toState;
+      if (node instanceof Nonterminal) {
+        int code = nonterminalCode.get(((Nonterminal) node).getName());
+        toState = nonterminalTransitions.get(code);
+      }
+      else if (node instanceof Charset) {
+        //TODO: get rid of transformation to RangeSet
+        int code = terminalCode.get(RangeSet.of((Charset) node));
+        toState = terminalTransitions.get(code);
+      }
+      else {
+        throw new IllegalStateException("Unexpected type: " + node.getClass().getSimpleName());
+      }
+      if (toState.isLr0ReduceState())
+        return new Action(Action.Type.SHIFT_REDUCE, alt.getReductionId());
+      return new Action(Action.Type.SHIFT, toState.id);
+    }
+
     private String toString(Map.Entry<Node, TokenSet> item) {
       StringBuilder sb = new StringBuilder();
       Node node = item.getKey();
@@ -286,16 +358,22 @@ public class CreateItems extends Visitor {
           return toString(token);
         })
         .collect(Collectors.joining(", ")));
-      sb.append("}]");
+      sb.append("}] ");
+      final Action action = action(node, lookahead);
+      sb.append(action);
+      if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
+        sb.append(" (")
+          .append(CreateItems.this.toString(reduceArguments[action.getArgument()]))
+          .append(")");
       return sb.toString();
     }
 
     private String toString(Integer token) {
       if (token == 0)
         return "$";
-      if (rangeSetByTerminalCode == null)
+      if (terminal == null)
         return Integer.toString(token);
-      int firstCodepoint = rangeSetByTerminalCode.get(token).iterator().next().getFirstCodepoint();
+      int firstCodepoint = terminal[token].iterator().next().getFirstCodepoint();
       return new Range(firstCodepoint).toString();
     }
   }
@@ -379,11 +457,49 @@ public class CreateItems extends Visitor {
     }
   }
 
-  private class TokenCollector extends Visitor {
-    public TokenCollector() {
-      nonterminalCode.clear();
-      terminalCode.clear();
+  private ReduceArgument[] reduceArguments() {
+    Map<ReduceArgument, Integer> reductionId = new LinkedHashMap<>();
+    for (Rule rule : grammar.getRules().values()) {
+      int code = nonterminalCode.get(rule.getName());
+      for (Alt alt : rule.getAlts().getAlts()) {
+        List<Mark> marks = new ArrayList<>();
+        String insertion = "";
+        for (Term term : alt.getTerms()) {
+          if (term instanceof Insertion)
+            insertion += (((Insertion) term).getValue());
+          else if (term instanceof Nonterminal)
+            marks.add(((Nonterminal) term).getMark());
+          else if (! (term instanceof Charset))
+            throw new IllegalStateException();
+          else if (((Charset) term).isDeleted())
+            marks.add(Mark.DELETE);
+          else
+            marks.add(Mark.NODE);
+        }
+        ReduceArgument reduction = new ReduceArgument(
+            marks.toArray(Mark[]::new),
+            insertion.isEmpty() ? null : insertion,
+            code);
+        int id = reductionId.size();
+        Integer previousId = reductionId.putIfAbsent(reduction, id);
+        alt.setReductionId(previousId == null ? id : previousId);
+      }
+    }
+    return reductionId.keySet().toArray(ReduceArgument[]::new);
+  }
+
+  private class SymbolCodeAssigner extends Visitor {
+    @Override
+    public void visit(Grammar g) {
+      nonterminalCode = new LinkedHashMap<>();
+      terminalCode = new LinkedHashMap<>();
+      terminalCodeByRange = new TreeMap<>();
+
+      nonterminalCode.put(g.getRules().keySet().iterator().next(), nonterminalCode.size());
       terminalCode.put(RangeSet.of(Charset.END), terminalCode.size());
+      super.visit(g);
+      nonterminal = nonterminalCode.keySet().toArray(String[]::new);
+      terminal = terminalCode.keySet().toArray(RangeSet[]::new);
     }
 
     @Override
@@ -391,16 +507,15 @@ public class CreateItems extends Visitor {
       if (! nonterminalCode.containsKey(n.getName())) {
         int code = nonterminalCode.size();
         nonterminalCode.put(n.getName(), code);
-        nonterminal.put(code, n.getName());
       }
     }
 
     @Override
     public void visit(Charset c) {
+      // TODO: avoid transformation to RangeSet
       RangeSet r = RangeSet.of(c);
       if (! terminalCode.containsKey(r)) {
         int code = terminalCode.size();
-        rangeSetByTerminalCode.put(code, r);
         terminalCode.put(r, code);
         for (Range range : r)
           terminalCodeByRange.put(range, code);

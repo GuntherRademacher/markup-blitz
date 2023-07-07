@@ -69,12 +69,12 @@ public class BNF extends Visitor {
       // augment grammar with rule: _start: someNonterminal.
       Alt alt = new Alt();
       final var mark = r.getMark() == Mark.NONE
-          ? Mark.ELEMENT
+          ? Mark.NODE
           : r.getMark();
       alt.addNonterminal(mark, r.getName());
       Alts alts = new Alts();
       alts.addAlt(alt);
-      Rule rule = new Rule(Mark.DELETED, grammar.getAdditionalNames().get(Term.START)[0], alts);
+      Rule rule = new Rule(Mark.DELETE, grammar.getAdditionalNames().get(Term.START)[0], alts);
       copy.addRule(rule);
     }
     super.visit(r);
@@ -98,7 +98,7 @@ public class BNF extends Visitor {
     else {
       String name = names[0];
       Alts pop = alts.pop();
-      Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
+      Nonterminal nonterminal = new Nonterminal(Mark.DELETE, name);
       alts.peek().last().getTerms().add(nonterminal);
       if (! additionalRules.contains(name)) {
         Rule additionalRule = new Rule(Mark.NONE, name, pop);
@@ -138,7 +138,7 @@ public class BNF extends Visitor {
     Term term = alts.peek().last().removeLast();
     String[] names = grammar.getAdditionalNames().get(c);
     String name = names[0];
-    alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETED, name));
+    alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETE, name));
     if (! additionalRules.contains(name)) {
       Rule additionalRule;
       switch (c.getOccurrence()) {
@@ -147,7 +147,7 @@ public class BNF extends Visitor {
           Alt alt1 = new Alt();
           alt1.getTerms().add(term.copy());
           Alt alt2 = new Alt();
-          alt2.addNonterminal(Mark.DELETED, name);
+          alt2.addNonterminal(Mark.DELETE, name);
           if (separator != null)
             alt2.getTerms().add(separator.copy());
           alt2.getTerms().add(term.copy());
@@ -163,7 +163,7 @@ public class BNF extends Visitor {
             Alts alts = new Alts();
             Alt alt1 = new Alt();
             Alt alt2 = new Alt();
-            alt2.addNonterminal(Mark.DELETED, name);
+            alt2.addNonterminal(Mark.DELETE, name);
             alt2.getTerms().add(term.copy());
             alts.addAlt(alt1);
             alts.addAlt(alt2);
@@ -177,7 +177,7 @@ public class BNF extends Visitor {
               Alt alt1 = new Alt();
               alt1.getTerms().add(term.copy());
               Alt alt2 = new Alt();
-              alt2.addNonterminal(Mark.DELETED, listName);
+              alt2.addNonterminal(Mark.DELETE, listName);
               alt2.getTerms().add(separator.copy());
               alt2.getTerms().add(term.copy());
               alts.addAlt(alt1);
@@ -188,7 +188,7 @@ public class BNF extends Visitor {
             } {
               Alts alts = new Alts();
               Alt alt2 = new Alt();
-              alt2.addNonterminal(Mark.DELETED, listName);
+              alt2.addNonterminal(Mark.DELETE, listName);
               alts.addAlt(new Alt());
               alts.addAlt(alt2);
               additionalRule = new Rule(Mark.NONE, name, alts);
@@ -221,7 +221,7 @@ public class BNF extends Visitor {
     }
     else {
       String name = grammar.getAdditionalNames().get(c)[0];
-      Nonterminal nonterminal = new Nonterminal(Mark.DELETED, name);
+      Nonterminal nonterminal = new Nonterminal(Mark.DELETE, name);
       alts.peek().last().getTerms().add(nonterminal);
       if (! additionalRules.contains(name)) {
         Alts alts = new Alts();

@@ -554,14 +554,14 @@ public class Ixml
       case 4:
         {
                                                             // line 17 "ixml.ebnf"
-                                                            mark = Mark.ELEMENT;
+                                                            mark = Mark.NODE;
                                                             // line 559 "Ixml.java"
         }
         break;
       case 5:
         {
                                                             // line 18 "ixml.ebnf"
-                                                            mark = Mark.DELETED;
+                                                            mark = Mark.DELETE;
                                                             // line 566 "Ixml.java"
         }
         break;

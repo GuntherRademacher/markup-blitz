@@ -8,6 +8,8 @@ import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Alt extends Node {
   private final List<Term> terms;
+  // metadata
+  private int reductionId;
 
   public Alt() {
     terms = new ArrayList<>();
@@ -15,6 +17,14 @@ public class Alt extends Node {
 
   public List<Term> getTerms() {
     return terms;
+  }
+
+  public void setReductionId(int reductionId) {
+    this.reductionId = reductionId;
+  }
+
+  public int getReductionId() {
+    return reductionId;
   }
 
   public Term removeLast() {

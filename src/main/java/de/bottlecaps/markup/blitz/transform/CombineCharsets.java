@@ -369,7 +369,7 @@ public class CombineCharsets extends Copy {
     @Override
     public void visit(Nonterminal n) {
       if (members != null) {
-        if (n.getEffectiveMark() != Mark.DELETED) {
+        if (n.getEffectiveMark() != Mark.DELETE) {
           members = null;
         }
         else {
