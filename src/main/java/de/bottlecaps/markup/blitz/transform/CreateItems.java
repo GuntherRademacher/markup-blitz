@@ -2,6 +2,7 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ public class CreateItems {
   private Map<State, State> states = new LinkedHashMap<>();
   private Deque<State> statesTodo = new LinkedList<>();
 
+  private Map<int[], Integer> forkId;
   private int[][] forks;
   private ReduceArgument[] reduceArguments;
 
@@ -55,18 +57,25 @@ public class CreateItems {
   public static void process(Grammar g) {
     CreateItems ci  = new CreateItems();
     ci.grammar = g;
-    ci.new SymbolCodeAssigner().visit(g);
 
+    ci.new SymbolCodeAssigner().visit(g);
     ci.reduceArguments = ci.reduceArguments();
     ci.collectFirst();
 
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
     Integer endToken = ci.terminalCode.get(RangeSet.of(Charset.END));
-    State state = ci.new State();
-    state.put(startNode, TokenSet.of(endToken));
-    state.id = 0;
-    ci.states.put(state, state);
-    ci.statesTodo.offer(state);
+    State initialState = ci.new State();
+    initialState.put(startNode, TokenSet.of(endToken));
+    initialState.id = 0;
+    ci.states.put(initialState, initialState);
+    ci.statesTodo.offer(initialState);
+
+    ci.forkId = new TreeMap<>(new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        return Arrays.compare(o1, o2);
+      }
+    });
 
     while (! ci.statesTodo.isEmpty()) {
       State s = ci.statesTodo.poll();
@@ -74,12 +83,30 @@ public class CreateItems {
       s.transitions();
     }
 
+    ci.forks = new int[ci.forkId.size()][];
+    ci.forkId.forEach((k, v) -> ci.forks[v] = k);
+
     // report status
 
     System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
+    System.out.println(ci.reduceArguments.length + " reduce arguments");
+    System.out.println(ci.forks.length + " forks");
 
-    for (State s : ci.states.keySet())
-      System.out.println("\nstate " + s.id + ":\n" + s);
+    for (int i = 0; i < ci.forks.length; ++i) {
+      System.out.println("\nfork " + i + ":");
+      for (int code : ci.forks[i]) {
+        Action action = Action.of(code);
+        System.out.print(action);
+        if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
+          System.out.print(" (");
+          System.out.print(ci.toString(ci.reduceArguments[action.getArgument()]));
+          System.out.print(")");
+        }
+        System.out.println();
+      }
+    }
+    for (State state : ci.states.keySet())
+      System.out.println("\nstate " + state.id + ":\n" + state);
 
     Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
     CompressedMap tokenCodeMap = new CompressedMap(it, 1);
@@ -125,8 +152,8 @@ public class CreateItems {
     private Map<Integer, State> nonterminalTransitions;
     /** Reductions, token code and reduced alternative. */
     private Map<Integer, List<Alt>> reductions;
-    /** Conflict token codes. */
-    private Set<Integer> conflicts;
+    /** Conflicts, token codes and fork id. */
+    private Map<Integer, Integer> conflicts;
 
     public State() {
       kernel = new IdentityHashMap<>();
@@ -186,6 +213,9 @@ public class CreateItems {
       terminalTransitions = new HashMap<>();
       nonterminalTransitions = new HashMap<>();
       reductions = new HashMap<>();
+
+      // calculate follow-up states
+
       Stream.concat(
           kernel.entrySet().stream(),
           closure.entrySet().stream()
@@ -239,12 +269,7 @@ public class CreateItems {
           }
         });
 
-      conflicts = new HashSet<>(terminalTransitions.keySet());
-      conflicts.retainAll(reductions.keySet());
-      reductions.forEach((k, v) -> {
-        if (v.size() > 1)
-          conflicts.add(k);
-      });
+      // resolve follow-up states
 
       for (Map<Integer, State> transitions : Arrays.asList(
           nonterminalTransitions,
@@ -253,26 +278,53 @@ public class CreateItems {
         for (Map.Entry<Integer, State> e : transitions.entrySet()) {
           State newState = e.getValue();
           if (! newState.isLr0ReduceState()) {
-            State oldState = states.putIfAbsent(newState, newState);
-            if (oldState == null) {
+            State state = states.putIfAbsent(newState, newState);
+            if (state == null) {
               newState.id = states.size() - 1;
               statesTodo.add(newState);
             }
             else {
               Integer code = e.getKey();
-              transitions.put(code, oldState);
+              transitions.put(code, state);
               for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
-                if (oldState.kernel.get(k.getKey()).addAll(k.getValue())) {
-                  if (oldState.closure != null)
-                    oldState.closure = null;
-                    oldState.nonterminalTransitions = null;
-                    oldState.terminalTransitions = null;
-                    statesTodo.add(oldState);
+                if (state.kernel.get(k.getKey()).addAll(k.getValue())) {
+                  if (state.closure != null)
+                    state.closure = null;
+                    state.nonterminalTransitions = null;
+                    state.terminalTransitions = null;
+                    statesTodo.add(state);
                 }
               }
             }
           }
         }
+      }
+
+      conflicts = new LinkedHashMap<>();
+      Set<Integer> conflictTokens = new HashSet<>(terminalTransitions.keySet());
+      conflictTokens.retainAll(reductions.keySet());
+      reductions.forEach((k, v) -> {
+        if (v.size() > 1)
+          conflictTokens.add(k);
+      });
+      for (int conflictToken : conflictTokens) {
+        List<Integer> forkList = new ArrayList<>();
+        State state = terminalTransitions.get(conflictToken);
+        if (terminalTransitions.containsKey(conflictToken)) {
+          if (state.isLr0ReduceState()) {
+            int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
+            forkList.add(Action.code(Action.Type.SHIFT_REDUCE, argument));
+          }
+          else {
+            forkList.add(Action.code(Action.Type.SHIFT, state.id));
+          }
+        }
+        for (Alt alt : reductions.get(conflictToken))
+          forkList.add(Action.code(Action.Type.REDUCE, alt.getReductionId()));
+        int[] fork = forkList.stream().mapToInt(Integer::intValue).toArray();
+        Integer newId = forkId.size();
+        Integer id = forkId.putIfAbsent(fork, forkId.size());
+        conflicts.put(conflictToken, id == null ? newId : id);
       }
     }
 
@@ -300,20 +352,25 @@ public class CreateItems {
         )
         .map(item -> toString(item))
         .collect(Collectors.joining("\n"));
-      String conflictsString = conflicts.stream()
-        .map(t -> {
-          StringBuilder sb = new StringBuilder();
+      String conflictsString = conflicts.entrySet().stream()
+        .map(e -> {
+          int t = e.getKey();
+          StringBuilder sb = new StringBuilder("\n");
           if (terminalTransitions.containsKey(t))
-            sb.append("\nshift-reduce conflict on " + toString(t));
-          if (reductions.get(t).size() > 1)
-            sb.append("\nreduce-reduce conflict on " + toString(t));
+            sb.append("shift");
+          else
+            sb.append("reduce");
+          sb.append("-reduce conflict on ");
+          sb.append(toString(t));
+          sb.append(" fork ");
+          sb.append(e.getValue());
           return sb.toString();
         })
         .collect(Collectors.joining());
       return itemsString + conflictsString;
     }
 
-    private Action action(Node node, TokenSet lookahead) {
+    private Action action(Node node) {
       if (node instanceof Alt)
         return new Action(Action.Type.REDUCE, ((Alt) node).getReductionId());
       if (node instanceof Insertion)
@@ -359,7 +416,7 @@ public class CreateItems {
         })
         .collect(Collectors.joining(", ")));
       sb.append("}] ");
-      final Action action = action(node, lookahead);
+      final Action action = action(node);
       sb.append(action);
       if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
         sb.append(" (")
@@ -480,9 +537,9 @@ public class CreateItems {
             marks.toArray(Mark[]::new),
             insertion.isEmpty() ? null : insertion,
             code);
-        int id = reductionId.size();
-        Integer previousId = reductionId.putIfAbsent(reduction, id);
-        alt.setReductionId(previousId == null ? id : previousId);
+        int newId = reductionId.size();
+        Integer id = reductionId.putIfAbsent(reduction, newId);
+        alt.setReductionId(id == null ? newId : id);
       }
     }
     return reductionId.keySet().toArray(ReduceArgument[]::new);

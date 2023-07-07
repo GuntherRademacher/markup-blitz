@@ -7,9 +7,7 @@ public class Action {
     REDUCE,
     FORK;
 
-    public int code(int arg) {
-      return arg << 2 + ordinal();
-    }
+    public static int BITS = 2;
 
     @Override
     public String toString() {
@@ -40,11 +38,15 @@ public class Action {
   }
 
   public int code() {
-    return type.code(argument);
+    return code(type, argument);
   }
 
   public static int code(Type type, int argument) {
-    return type.code(argument);
+    return (argument << Type.BITS) + type.ordinal();
+  }
+
+  public static Action of(int code) {
+    return new Action(Type.values()[code & ((1 << Type.BITS) - 1)], code >> Type.BITS);
   }
 
   @Override
