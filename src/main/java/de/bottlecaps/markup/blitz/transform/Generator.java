@@ -33,7 +33,7 @@ import de.bottlecaps.markup.blitz.item.TokenSet;
 import de.bottlecaps.markup.blitz.parser.Action;
 import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 
-public class CreateItems {
+public class Generator {
   private Grammar grammar;
 
   private Map<String, Integer> nonterminalCode;
@@ -51,11 +51,14 @@ public class CreateItems {
   private int[][] forks;
   private ReduceArgument[] reduceArguments;
 
-  private CreateItems() {
+  private Map2D terminalTransitionData;
+  private Map2D nonterminalTransitionData;
+
+  private Generator() {
   }
 
   public static void process(Grammar g) {
-    CreateItems ci  = new CreateItems();
+    Generator ci  = new Generator();
     ci.grammar = g;
 
     ci.new SymbolCodeAssigner().visit(g);
@@ -86,6 +89,8 @@ public class CreateItems {
     ci.forks = new int[ci.forkId.size()][];
     ci.forkId.forEach((k, v) -> ci.forks[v] = k);
 
+    ci.parserData();
+
     // report status
 
     System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
@@ -108,13 +113,32 @@ public class CreateItems {
     for (State state : ci.states.keySet())
       System.out.println("\nstate " + state.id + ":\n" + state);
 
-    Function<Integer, TileIterator> it = bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
-    CompressedMap tokenCodeMap = new CompressedMap(it, 1);
+    Function<Integer, TileIterator> tokenMapIterator =
+        bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
+    CompressedMap tokenCodeMap = new CompressedMap(tokenMapIterator, 1);
     System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
-    tokenCodeMap = new CompressedMap(it, 2);
+    tokenCodeMap = new CompressedMap(tokenMapIterator, 2);
     System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
-    tokenCodeMap = new CompressedMap(it, 3);
+    tokenCodeMap = new CompressedMap(tokenMapIterator, 3);
     System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
+
+    Function<Integer, TileIterator> terminalTransitionIterator =
+        bits -> TileIterator.of(ci.terminalTransitionData, bits, 0);
+    CompressedMap terminalTransitions = new CompressedMap(terminalTransitionIterator, 1);
+    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+    terminalTransitions = new CompressedMap(terminalTransitionIterator, 2);
+    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+    terminalTransitions = new CompressedMap(terminalTransitionIterator, 3);
+    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+
+    Function<Integer, TileIterator> nonterminalTransitionIterator =
+        bits -> TileIterator.of(ci.nonterminalTransitionData, bits, 0);
+    CompressedMap nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 1);
+    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+    nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 2);
+    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+    nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
+    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
   }
 
   private String toString(ReduceArgument reduceArgument) {
@@ -332,6 +356,38 @@ public class CreateItems {
       kernel.put(node, lookahead);
     }
 
+    void parserData() {
+      conflicts.forEach((terminalId, forkId) -> {
+        final int code = Action.code(Action.Type.FORK, forkId);
+        terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+      });
+      terminalTransitions.forEach((terminalId, state) -> {
+        if (! conflicts.containsKey(terminalId)) {
+          if (state.isLr0ReduceState()) {
+            int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
+            final int code = Action.code(Action.Type.SHIFT_REDUCE, argument);
+            terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+          }
+          else {
+            final int code = Action.code(Action.Type.SHIFT, state.id);
+            terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+          }
+        }
+      });
+      nonterminalTransitions.forEach((nonterminalId, state) -> {
+        final int code = Action.code(Action.Type.SHIFT, state.id);
+        nonterminalTransitionData.put(new Map2D.Index(id , nonterminalId), code);
+      });
+      reductions.forEach((terminalId, alt) -> {
+        if (! conflicts.containsKey(terminalId)) {
+          if (alt.size() != 1)
+            throw new IllegalStateException();
+          final int code = Action.code(Action.Type.REDUCE, alt.get(0).getReductionId());
+          terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+        }
+      });
+    }
+
     @Override
     public int hashCode() {
       return kernel.keySet().hashCode();
@@ -391,7 +447,8 @@ public class CreateItems {
       }
       if (toState.isLr0ReduceState())
         return new Action(Action.Type.SHIFT_REDUCE, alt.getReductionId());
-      return new Action(Action.Type.SHIFT, toState.id);
+      else
+        return new Action(Action.Type.SHIFT, toState.id);
     }
 
     private String toString(Map.Entry<Node, TokenSet> item) {
@@ -420,7 +477,7 @@ public class CreateItems {
       sb.append(action);
       if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
         sb.append(" (")
-          .append(CreateItems.this.toString(reduceArguments[action.getArgument()]))
+          .append(Generator.this.toString(reduceArguments[action.getArgument()]))
           .append(")");
       return sb.toString();
     }
@@ -512,6 +569,12 @@ public class CreateItems {
         first.put(r, tokens);
       }
     }
+  }
+
+  private void parserData() {
+    terminalTransitionData = new Map2D(states.size(), terminal.length);
+    nonterminalTransitionData = new Map2D(states.size(), nonterminal.length);
+    states.keySet().forEach(State::parserData);
   }
 
   private ReduceArgument[] reduceArguments() {

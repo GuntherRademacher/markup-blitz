@@ -325,7 +325,7 @@ public class TestBNF {
       Grammar bnf = BNF.process(grammar);
       assertEquals(expectedResult, bnf.toString());
 
-      CreateItems.process(bnf);
+      Generator.process(bnf);
     }
 
     @Test
@@ -441,7 +441,7 @@ public class TestBNF {
       Grammar bnf = BNF.process(grammar);
       assertEquals(expectedResult, bnf.toString());
 
-      CreateItems.process(bnf);
+      Generator.process(bnf);
     }
 
     @Test
@@ -467,7 +467,7 @@ public class TestBNF {
       Grammar bnf = BNF.process(grammar);
       System.out.println(bnf);
 
-      CreateItems.process(bnf);
+      Generator.process(bnf);
     }
 
     private static class PropertiesChecker extends Visitor {
