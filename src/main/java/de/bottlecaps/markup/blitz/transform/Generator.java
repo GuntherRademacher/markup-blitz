@@ -7,12 +7,15 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -113,14 +116,19 @@ public class Generator {
     for (State state : ci.states.keySet())
       System.out.println("\nstate " + state.id + ":\n" + state);
 
+    final var bmpMapEnd = 0xD800;
     Function<Integer, TileIterator> tokenMapIterator =
-        bits -> TileIterator.of(ci.terminalCodeByRange, 0xD800, bits, 0);
-    CompressedMap tokenCodeMap = new CompressedMap(tokenMapIterator, 1);
-    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
-    tokenCodeMap = new CompressedMap(tokenMapIterator, 2);
-    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
-    tokenCodeMap = new CompressedMap(tokenMapIterator, 3);
-    System.out.println("size of token code map: " + tokenCodeMap.data().length + ", shift: " + Arrays.toString(tokenCodeMap.shift()));
+        bits -> TileIterator.of(ci.terminalCodeByRange, bmpMapEnd, bits, 0);
+    CompressedMap bmpMap = new CompressedMap(tokenMapIterator, 1);
+
+    int[] asciiMap = ci.asciiMap(bmpMap);
+    int[] smpMap = ci.supplementaryMap(bmpMapEnd);
+
+    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
+    bmpMap = new CompressedMap(tokenMapIterator, 2);
+    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
+    bmpMap = new CompressedMap(tokenMapIterator, 3);
+    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
 
     Function<Integer, TileIterator> terminalTransitionIterator =
         bits -> TileIterator.of(ci.terminalTransitionData, bits, 0);
@@ -139,6 +147,38 @@ public class Generator {
     System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
     nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
     System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+
+    System.out.println(Arrays.toString(asciiMap));
+
+//  new Parser(tokenCodeMap, terminalTransitions, nonterminalTransitions, forks, reduceArguments)
+  }
+
+  private int[] asciiMap(CompressedMap bmpMap) {
+    int[] asciiMap = new int[128];
+    for (int i = 0; i < asciiMap.length; ++i)
+      asciiMap[i] = bmpMap.get(i);
+    return asciiMap;
+  }
+
+  private int[] supplementaryMap(final int firstValue) {
+    Range firstKey = terminalCodeByRange.floorKey(new Range(firstValue));
+    if (firstValue > firstKey.getLastCodepoint()) {
+      firstKey = terminalCodeByRange.higherKey(firstKey);
+      if (firstKey == null)
+        return new int[0];
+    }
+    SortedMap<Range, Integer> tailMap = terminalCodeByRange.tailMap(firstKey);
+    final var count = tailMap.size();
+    int[] rangeMap = new int[3 * count];
+    int i = 0;
+    for (Iterator<Entry<Range, Integer>> iterator = tailMap.entrySet().iterator(); iterator.hasNext();  ++i) {
+      Entry<Range, Integer> entry = iterator.next();
+      Range range = entry.getKey();
+      rangeMap[i] = Math.max(firstValue, range.getFirstCodepoint());
+      rangeMap[count + i] = range.getLastCodepoint();
+      rangeMap[count + count + i] = entry.getValue();
+    }
+    return rangeMap;
   }
 
   private String toString(ReduceArgument reduceArgument) {
@@ -356,6 +396,8 @@ public class Generator {
       kernel.put(node, lookahead);
     }
 
+    // TODO: accept handling must be generated into forks as well!!!!!
+
     void parserData() {
       conflicts.forEach((terminalId, forkId) -> {
         final int code = Action.code(Action.Type.FORK, forkId);
@@ -363,26 +405,39 @@ public class Generator {
       });
       terminalTransitions.forEach((terminalId, state) -> {
         if (! conflicts.containsKey(terminalId)) {
+          final int code;
           if (state.isLr0ReduceState()) {
-            int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
-            final int code = Action.code(Action.Type.SHIFT_REDUCE, argument);
-            terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+            Node node = state.kernel.keySet().iterator().next();
+            Alt alt = node instanceof Alt
+                    ? (Alt) node
+                    : (Alt) node.getParent();
+            code = Action.code(Action.Type.SHIFT_REDUCE, alt.getReductionId());
           }
           else {
-            final int code = Action.code(Action.Type.SHIFT, state.id);
-            terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+            code = Action.code(Action.Type.SHIFT, state.id);
           }
+          terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
         }
       });
       nonterminalTransitions.forEach((nonterminalId, state) -> {
-        final int code = Action.code(Action.Type.SHIFT, state.id);
+        final int code;
+        if (nonterminalId == 1) {
+          code = Action.code(Action.Type.ACCEPT, state.id);
+        }
+        else if (state.isLr0ReduceState()) {
+          int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
+          code = Action.code(Action.Type.SHIFT_REDUCE, argument);
+        }
+        else {
+          code = Action.code(Action.Type.SHIFT, state.id);
+        }
         nonterminalTransitionData.put(new Map2D.Index(id , nonterminalId), code);
       });
-      reductions.forEach((terminalId, alt) -> {
+      reductions.forEach((terminalId, alts) -> {
         if (! conflicts.containsKey(terminalId)) {
-          if (alt.size() != 1)
+          if (alts.size() != 1)
             throw new IllegalStateException();
-          final int code = Action.code(Action.Type.REDUCE, alt.get(0).getReductionId());
+          final int code = Action.code(Action.Type.REDUCE, alts.get(0).getReductionId());
           terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
         }
       });
@@ -445,7 +500,9 @@ public class Generator {
       else {
         throw new IllegalStateException("Unexpected type: " + node.getClass().getSimpleName());
       }
-      if (toState.isLr0ReduceState())
+      if (node.getRule() == grammar.getRules().values().iterator().next())
+        return new Action(Action.Type.ACCEPT, 0);
+      else if (toState.isLr0ReduceState())
         return new Action(Action.Type.SHIFT_REDUCE, alt.getReductionId());
       else
         return new Action(Action.Type.SHIFT, toState.id);

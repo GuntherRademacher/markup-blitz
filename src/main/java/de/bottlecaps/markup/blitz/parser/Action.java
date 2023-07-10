@@ -3,11 +3,12 @@ package de.bottlecaps.markup.blitz.parser;
 public class Action {
   public static enum Type {
     SHIFT,
-    SHIFT_REDUCE,
     REDUCE,
+    SHIFT_REDUCE,
+    ACCEPT,
     FORK;
 
-    public static int BITS = 2;
+    public static int BITS = 3;
 
     @Override
     public String toString() {
@@ -51,6 +52,6 @@ public class Action {
 
   @Override
   public String toString() {
-    return type.toString() + " " + argument;
+    return type.toString() + " " + (type == Type.ACCEPT ? "" : argument);
   }
 }
