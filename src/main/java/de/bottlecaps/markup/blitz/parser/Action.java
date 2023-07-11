@@ -2,13 +2,14 @@ package de.bottlecaps.markup.blitz.parser;
 
 public class Action {
   public static enum Type {
+    ERROR,
     SHIFT,
-    REDUCE,
     SHIFT_REDUCE,
-    ACCEPT,
-    FORK;
+    REDUCE,
+    FORK,
+    ACCEPT;
 
-    public static int BITS = 3;
+    public static final int BITS = 3;
 
     @Override
     public String toString() {
@@ -20,7 +21,8 @@ public class Action {
   private final Type type;
   /** The action code, interpreted depending on the action:<ul>
    * <li> - for SHIFT: the target state</li>
-   * <li> - for SHIFT_REDUCE and REDUCE: the reduction id</li>
+   * <li> - for REDUCE and SHIFT_REDUCE: the reduction id</li>
+   * <li> - for ACCEPT: 0 (not needed)</li>
    * <li> - for FORK: the fork id</li></ul> */
   private final int argument;
 

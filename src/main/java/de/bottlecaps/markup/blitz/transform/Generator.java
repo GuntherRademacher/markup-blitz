@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.transform;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -34,6 +35,7 @@ import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 import de.bottlecaps.markup.blitz.item.TokenSet;
 import de.bottlecaps.markup.blitz.parser.Action;
+import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 
 public class Generator {
@@ -150,7 +152,21 @@ public class Generator {
 
     System.out.println(Arrays.toString(asciiMap));
 
-//  new Parser(tokenCodeMap, terminalTransitions, nonterminalTransitions, forks, reduceArguments)
+    Parser parser = new Parser(asciiMap, bmpMap, smpMap,
+        terminalTransitions, ci.terminalTransitionData.getEndY(),
+        nonterminalTransitions, ci.nonterminalTransitionData.getEndY(),
+        ci.reduceArguments,
+        ci.nonterminal,
+        ci.terminal);
+    try {
+      parser.parse("{\"a\":42}");
+    }
+    catch (Parser.ParseException e) {
+      throw new RuntimeException(parser.getErrorMessage(e));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
@@ -432,6 +448,7 @@ public class Generator {
           code = Action.code(Action.Type.SHIFT, state.id);
         }
         nonterminalTransitionData.put(new Map2D.Index(id , nonterminalId), code);
+        System.out.println("put " + id + " " + nonterminalId + " " + code + " " + nonterminalTransitionData.getEndY());
       });
       reductions.forEach((terminalId, alts) -> {
         if (! conflicts.containsKey(terminalId)) {
@@ -544,8 +561,7 @@ public class Generator {
         return "$";
       if (terminal == null)
         return Integer.toString(token);
-      int firstCodepoint = terminal[token].iterator().next().getFirstCodepoint();
-      return new Range(firstCodepoint).toString();
+      return terminal[token].shortName();
     }
   }
 
