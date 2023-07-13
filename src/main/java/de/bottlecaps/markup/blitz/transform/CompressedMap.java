@@ -1,6 +1,7 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -42,8 +43,9 @@ public class CompressedMap {
     int idOffset = 0;
     data = new int[(end + tileSize) + 1];
 
-    Map<Integer, Integer> distinctTiles = new TreeMap<>(
-        (lhs, rhs) -> Arrays.compare(data, lhs, lhs + tileSize, data, rhs, rhs + tileSize));
+    Comparator<Integer> indexComparator = (lhs, rhs) ->
+      Arrays.compare(data, lhs, lhs + tileSize, data, rhs, rhs + tileSize);
+    Map<Integer, Integer> distinctTiles = new TreeMap<>(indexComparator);
 
     for (int count; (count = it.next(data, end)) != 0; ) {
       Integer id = distinctTiles.putIfAbsent(end,  end);

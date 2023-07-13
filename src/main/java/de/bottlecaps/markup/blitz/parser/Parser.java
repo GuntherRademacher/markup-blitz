@@ -1,15 +1,14 @@
-// This file was generated on Sun Jul 9, 2023 22:57 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
-// REx command line: -glalr 1 -java -tree -name de.bottlecaps.markup.blitz.parser.Parser ..\..\..\..\..\..\..\..\..\rex-parser-benchmark\src\main\rex\json-scannerless-bnf.ebnf -trace
-
 package de.bottlecaps.markup.blitz.parser;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Stack;
 
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
@@ -72,60 +71,6 @@ public class Parser
     public void whitespace(int begin, int end);
   }
 
-  public static class TopDownTreeBuilder implements EventHandler
-  {
-    private String input = null;
-    private Nonterminal[] stack = new Nonterminal[64];
-    private int top = -1;
-
-    @Override
-    public void reset(String input)
-    {
-      this.input = input;
-      top = -1;
-    }
-
-    @Override
-    public void startNonterminal(String name, int begin)
-    {
-      Nonterminal nonterminal = new Nonterminal(name, begin, begin, new Symbol[0]);
-      if (top >= 0) addChild(nonterminal);
-      if (++top >= stack.length) stack = Arrays.copyOf(stack, stack.length << 1);
-      stack[top] = nonterminal;
-    }
-
-    @Override
-    public void endNonterminal(String name, int end)
-    {
-      stack[top].end = end;
-      if (top > 0) --top;
-    }
-
-    @Override
-    public void terminal(int begin, int end)
-    {
-      addChild(new Terminal(begin, end));
-    }
-
-    @Override
-    public void whitespace(int begin, int end)
-    {
-    }
-
-    private void addChild(Symbol s)
-    {
-      Nonterminal current = stack[top];
-      current.children = Arrays.copyOf(current.children, current.children.length + 1);
-      current.children[current.children.length - 1] = s;
-    }
-
-    public void serialize(EventHandler e)
-    {
-      e.reset(input);
-      stack[0].send(e);
-    }
-  }
-
   public static abstract class Symbol
   {
     public int begin;
@@ -157,12 +102,14 @@ public class Parser
   public static class Nonterminal extends Symbol
   {
     public String name;
+    public  Symbol[] attributes;
     public Symbol[] children;
 
-    public Nonterminal(String name, int begin, int end, Symbol[] children)
+    public Nonterminal(String name, int begin, int end, Symbol[] attributes, Symbol[] children)
     {
       super(begin, end);
       this.name = name;
+      this.attributes = attributes;
       this.children = children;
     }
 
@@ -316,46 +263,35 @@ public class Parser
     }
   }
 
-  public static class ParseTreeBuilder implements BottomUpEventHandler
-  {
+  public static class ParseTreeBuilder implements BottomUpEventHandler {
     private String input;
     public Symbol[] stack = new Symbol[64];
     public int top = -1;
 
     @Override
-    public void reset(String input)
-    {
+    public void reset(String input) {
       this.input = input;
       top = -1;
     }
 
     @Override
-    public void nonterminal(String name, int begin, int end, int count)
-    {
-      if (count > top + 1)
-      {
-        Symbol[] content = pop(top + 1);
-        nonterminal("UNAMBIGUOUS", begin, content.length == 0 ? end : content[0].begin, 0);
-        for (Symbol symbol : content)
-        {
-          push(symbol);
-        }
-        count = top + 1;
-      }
-      push(new Nonterminal(name, begin, end, pop(count)));
+    public void nonterminal(String name, int begin, int end, int count) {
+      top -= count;
+      int from = top + 1;
+      int to = top + count + 1;
+
+      Symbol[] children = Arrays.copyOfRange(stack, from, to);
+      push(new Nonterminal(name, begin, end, null, children));
     }
 
     @Override
-    public void terminal(int begin, int end)
-    {
+    public void terminal(int begin, int end) {
       push(new Terminal(begin, end));
     }
 
-    public void serialize(EventHandler e)
-    {
+    public void serialize(EventHandler e) {
       e.reset(input);
-      for (int i = 0; i <= top; ++i)
-      {
+      for (int i = 0; i <= top; ++i) {
         stack[i].send(e);
       }
     }
@@ -368,12 +304,6 @@ public class Parser
       }
       stack[top] = s;
     }
-
-    public Symbol[] pop(int count)
-    {
-      top -= count;
-      return Arrays.copyOfRange(stack, top + 1, top + count + 1);
-    }
   }
 
   public Parser(int[] asciiMap, CompressedMap bmpMap, int[] smpMap,
@@ -381,7 +311,8 @@ public class Parser
       CompressedMap nonterminalTransitions, int numberOfNonterminals,
       ReduceArgument[] reduceArguments,
       String[] nonterminal,
-      RangeSet[] terminal)
+      RangeSet[] terminal,
+      int[] forks)
   {
     this.asciiMap = asciiMap;
     this.bmpMap = bmpMap;
@@ -393,6 +324,7 @@ public class Parser
     this.reduceArguments = reduceArguments;
     this.nonterminal = nonterminal;
     this.terminal = terminal;
+    this.forks = forks;
   }
 
   public void initialize(String source, BottomUpEventHandler parsingEventHandler)
@@ -405,34 +337,27 @@ public class Parser
     thread.reset(0, 0, 0);
   }
 
-  public RangeSet getOffendingToken(ParseException e)
-  {
+  public RangeSet getOffendingToken(ParseException e) {
     return e.getOffending() < 0 ? null : terminal[e.getOffending()];
   }
 
-  public String[] getExpectedTokenSet(ParseException e)
-  {
+  public String[] getExpectedTokenSet(ParseException e) {
     String[] expected = {};
-    if (e.getExpected() >= 0)
-    {
+    if (e.getExpected() >= 0) {
       expected = new String[]{terminal[e.getExpected()].shortName()};
     }
-    else if (! e.isAmbiguousInput())
-    {
+    else if (! e.isAmbiguousInput()) {
       expected = getTokenSet(- e.getState());
     }
     return expected;
   }
 
-  public String getErrorMessage(ParseException e)
-  {
+  public String getErrorMessage(ParseException e) {
     String message = e.getMessage();
-    if (e.isAmbiguousInput())
-    {
+    if (e.isAmbiguousInput()) {
       message += "\n";
     }
-    else
-    {
+    else {
       String[] tokenSet = getExpectedTokenSet(e);
       String found = e.getOffending() < 0
                    ? null
@@ -440,7 +365,7 @@ public class Parser
       int size = e.getEnd() - e.getBegin();
       message += (found == null ? "" : ", found " + found)
               + "\nwhile expecting "
-              + (tokenSet.length == 1 ? tokenSet[0] : java.util.Arrays.toString(tokenSet))
+              + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
               + "\n"
               + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ");
     }
@@ -481,31 +406,26 @@ public class Parser
     }
   }
 
-  public void parse_json()
-  {
+  public void parse_json() {
     thread = parse(0, eventHandler, thread);
   }
 
-  private static class StackNode
-  {
+  private static class StackNode {
     public int state;
     public int pos;
     public StackNode link;
 
-    public StackNode(int state, int pos, StackNode link)
-    {
+    public StackNode(int state, int pos, StackNode link) {
       this.state = state;
       this.pos = pos;
       this.link = link;
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(Object obj) {
       StackNode lhs = this;
       StackNode rhs = (StackNode) obj;
-      while (lhs != null && rhs != null)
-      {
+      while (lhs != null && rhs != null) {
         if (lhs == rhs) return true;
         if (lhs.state != rhs.state) return false;
         if (lhs.pos != rhs.pos) return false;
@@ -514,17 +434,14 @@ public class Parser
       }
       return lhs == rhs;
     }
-
   }
 
-  private abstract static class DeferredEvent
-  {
+  private abstract static class DeferredEvent {
     public DeferredEvent link;
     public int begin;
     public int end;
 
-    public DeferredEvent(DeferredEvent link, int begin, int end)
-    {
+    public DeferredEvent(DeferredEvent link, int begin, int end) {
       this.link = link;
       this.begin = begin;
       this.end = end;
@@ -532,81 +449,67 @@ public class Parser
 
     public abstract void execute(BottomUpEventHandler eventHandler);
 
-    public void release(BottomUpEventHandler eventHandler)
-    {
+    public void release(BottomUpEventHandler eventHandler) {
       DeferredEvent current = this;
       DeferredEvent predecessor = current.link;
       current.link = null;
-      while (predecessor != null)
-      {
+      while (predecessor != null) {
         DeferredEvent next = predecessor.link;
         predecessor.link = current;
         current = predecessor;
         predecessor = next;
       }
-      do
-      {
+      do {
         current.execute(eventHandler);
         current = current.link;
       }
       while (current != null);
     }
 
-    public void show(BottomUpEventHandler eventHandler)
-    {
-      java.util.Stack<DeferredEvent> stack = new java.util.Stack<>();
-      for (DeferredEvent current = this; current != null; current = current.link)
-      {
+    public void show(BottomUpEventHandler eventHandler) {
+      Stack<DeferredEvent> stack = new Stack<>();
+      for (DeferredEvent current = this; current != null; current = current.link) {
         stack.push(current);
       }
-      while (! stack.isEmpty())
-      {
+      while (! stack.isEmpty()) {
         stack.pop().execute(eventHandler);
       }
     }
   }
 
-  public static class TerminalEvent extends DeferredEvent
-  {
-    public TerminalEvent(DeferredEvent link, int begin, int end)
-    {
+  public static class TerminalEvent extends DeferredEvent {
+    public TerminalEvent(DeferredEvent link, int begin, int end) {
       super(link, begin, end);
     }
 
     @Override
-    public void execute(BottomUpEventHandler eventHandler)
-    {
+    public void execute(BottomUpEventHandler eventHandler) {
       eventHandler.terminal(begin, end);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
       return "terminal(" + begin + ", " + end + ")";
     }
   }
 
-  public static class NonterminalEvent extends DeferredEvent
-  {
+  public static class NonterminalEvent extends DeferredEvent {
     public String name;
     public int count;
 
-    public NonterminalEvent(DeferredEvent link, String name, int begin, int end, int count)
-    {
+    public NonterminalEvent(DeferredEvent link, String name, int begin, int end, int count) {
       super(link, begin, end);
       this.name = name;
       this.count = count;
     }
 
     @Override
-    public void execute(BottomUpEventHandler eventHandler)
-    {
+    public void execute(BottomUpEventHandler eventHandler) {
       eventHandler.nonterminal(name, begin, end, count);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
       return "nonterminal(" + name + ", " + begin + ", " + end + ", " + count + ")";
     }
   }
@@ -615,17 +518,13 @@ public class Parser
   private static final int ACCEPTED = 1;
   private static final int ERROR = 2;
 
-  private ParsingThread parse(int target, BottomUpEventHandler eventHandler, ParsingThread thread)
-  {
+  private ParsingThread parse(int target, BottomUpEventHandler eventHandler, ParsingThread thread) {
     PriorityQueue<ParsingThread> threads = thread.open(0, eventHandler, target);
-    for (;;)
-    {
+    for (;;) {
       thread = threads.poll();
-      if (thread.accepted)
-      {
+      if (thread.accepted) {
         ParsingThread other = null;
-        while (! threads.isEmpty())
-        {
+        while (! threads.isEmpty()) {
           other = threads.poll();
           if (thread.e0 < other.e0)
           {
@@ -633,47 +532,38 @@ public class Parser
             other = null;
           }
         }
-        if (other != null)
-        {
+        if (other != null) {
           rejectAmbiguity(thread.stack.pos, thread.e0, thread.deferredEvent, other.deferredEvent);
         }
-        if (thread.deferredEvent != null)
-        {
+        if (thread.deferredEvent != null) {
           thread.deferredEvent.release(eventHandler);
           thread.deferredEvent = null;
         }
         return thread;
       }
 
-      if (! threads.isEmpty())
-      {
-        if (threads.peek().equals(thread))
-        {
+      if (! threads.isEmpty()) {
+        if (threads.peek().equals(thread)) {
           rejectAmbiguity(thread.stack.pos, thread.e0, thread.deferredEvent, threads.peek().deferredEvent);
         }
       }
-      else
-      {
-        if (thread.deferredEvent != null)
-        {
+      else {
+        if (thread.deferredEvent != null) {
           thread.deferredEvent.release(eventHandler);
           thread.deferredEvent = null;
         }
       }
 
       int status;
-      for (;;)
-      {
+      for (;;) {
         if ((status = thread.parse()) != PARSING) break;
         if (! threads.isEmpty()) break;
       }
 
-      if (status != ERROR)
-      {
+      if (status != ERROR) {
         threads.offer(thread);
       }
-      else if (threads.isEmpty())
-      {
+      else if (threads.isEmpty()) {
         throw new ParseException(thread.b1,
                                  thread.e1,
                                  TOKENSET[thread.state] + 1,
@@ -684,18 +574,18 @@ public class Parser
     }
   }
 
-  private void rejectAmbiguity(int begin, int end, DeferredEvent first, DeferredEvent second)
-  {
-    ParseTreeBuilder treeBuilder = new ParseTreeBuilder();
-    treeBuilder.reset(input);
-    second.show(treeBuilder);
-    treeBuilder.nonterminal("ALTERNATIVE", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, treeBuilder.top + 1);
-    Symbol secondTree = treeBuilder.pop(1)[0];
-    first.show(treeBuilder);
-    treeBuilder.nonterminal("ALTERNATIVE", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, treeBuilder.top + 1);
-    treeBuilder.push(secondTree);
-    treeBuilder.nonterminal("AMBIGUOUS", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, 2);
-    throw new ParseException(begin, end, treeBuilder);
+  private void rejectAmbiguity(int begin, int end, DeferredEvent first, DeferredEvent second) {
+    throw new UnsupportedOperationException();
+//    ParseTreeBuilder treeBuilder = new ParseTreeBuilder();
+//    treeBuilder.reset(input);
+//    second.show(treeBuilder);
+//    treeBuilder.nonterminal("ALTERNATIVE", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, treeBuilder.top + 1);
+//    Symbol secondTree = treeBuilder.pop(1)[0];
+//    first.show(treeBuilder);
+//    treeBuilder.nonterminal("ALTERNATIVE", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, treeBuilder.top + 1);
+//    treeBuilder.push(secondTree);
+//    treeBuilder.nonterminal("AMBIGUOUS", treeBuilder.stack[0].begin, treeBuilder.stack[treeBuilder.top].end, 2);
+//    throw new ParseException(begin, end, treeBuilder);
   }
 
   private ParsingThread thread = new ParsingThread();
@@ -703,18 +593,9 @@ public class Parser
   private String input = null;
   private int size = 0;
   private int maxId = 0;
-  private Writer err;
-  {
-    try
-    {
-      err = new OutputStreamWriter(System.err, "UTF-8");
-    }
-    catch (UnsupportedEncodingException uee)
-    {}
-  }
+  private Writer err = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
 
-  private class ParsingThread implements Comparable<ParsingThread>
-  {
+  private class ParsingThread implements Comparable<ParsingThread> {
     public PriorityQueue<ParsingThread> threads;
     public boolean accepted;
     public StackNode stack;
@@ -724,13 +605,11 @@ public class Parser
     public DeferredEvent deferredEvent;
     public int id;
 
-    public PriorityQueue<ParsingThread> open(int initialState, BottomUpEventHandler eh, int t)
-    {
+    public PriorityQueue<ParsingThread> open(int initialState, BottomUpEventHandler eh, int t) {
       accepted = false;
       target = t;
       eventHandler = eh;
-      if (eventHandler != null)
-      {
+      if (eventHandler != null) {
         eventHandler.reset(input);
       }
       deferredEvent = null;
@@ -745,8 +624,7 @@ public class Parser
       return threads;
     }
 
-    public ParsingThread copy(ParsingThread other, int action)
-    {
+    public ParsingThread copy(ParsingThread other, int action) {
       this.action = action;
       accepted = other.accepted;
       target = other.target;
@@ -769,8 +647,7 @@ public class Parser
     }
 
     @Override
-    public int compareTo(ParsingThread other)
-    {
+    public int compareTo(ParsingThread other) {
       if (accepted != other.accepted)
         return accepted ? 1 : -1;
       int comp = e0 - other.e0;
@@ -778,8 +655,7 @@ public class Parser
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(Object obj) {
       ParsingThread other = (ParsingThread) obj;
       if (accepted != other.accepted) return false;
       if (b1 != other.b1) return false;
@@ -791,14 +667,11 @@ public class Parser
       return true;
     }
 
-    public int parse()
-    {
+    public int parse() {
       int nonterminalId = -1;
-      for (;;)
-      {
+      for (;;) {
         writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
-        if (nonterminalId >= 0)
-        {
+        if (nonterminalId >= 0) {
           writeTrace(xmlEscape(nonterminal[nonterminalId]));
           if (l1 != 0)
             writeTrace(" ");
@@ -807,9 +680,7 @@ public class Parser
         int argument = action >> Action.Type.BITS;
         int shift = -1;
         int reduce = -1;
-        int symbols = -1;
-        switch (action & ((1 << Action.Type.BITS) - 1))
-        {
+        switch (action & ((1 << Action.Type.BITS) - 1)) {
         case 1: // SHIFT
           shift = argument;
           break;
@@ -819,14 +690,13 @@ public class Parser
           // fall through
 
         case 3: // REDUCE
-          reduce = reduceArguments[argument].getNonterminalId();
-          symbols = reduceArguments[argument].getMarks().length;
+          reduce = argument;
           break;
 
         case 4: // FORK
           writeTrace("fork\"/>\n");
-          threads.offer(new ParsingThread().copy(this, APPENDIX[argument]));
-          action = APPENDIX[argument + 1];
+          threads.offer(new ParsingThread().copy(this, forks[argument]));
+          action = forks[argument + 1];
           return PARSING;
 
         case 5: // ACCEPT
@@ -840,8 +710,7 @@ public class Parser
           return ERROR;
         }
 
-        if (shift >= 0)
-        {
+        if (shift >= 0) {
           writeTrace("shift");
           if (nonterminalId < 0)
           {
@@ -875,7 +744,9 @@ public class Parser
         }
         else
         {
-          nonterminalId = reduce;
+          ReduceArgument reduceArgument = reduceArguments[reduce];
+          int symbols = reduceArgument.getMarks().length;
+          nonterminalId = reduceArgument.getNonterminalId();
           if (shift >= 0)
           {
             writeTrace(" ");
@@ -979,84 +850,62 @@ public class Parser
            : terminalTransitions.get(state * numberOfTokens + l1);
     }
 
-    private int match()
-    {
+    private int match() {
       writeTrace("  <tokenize thread=\"" + id + "\">\n");
+      writeTrace("    <next");
+      writeTrace(" offset=\"" + end + "\"");
 
       begin = end;
-      int current = end;
-      int state = 0;
-
-      writeTrace("    <next");
-      writeTrace(" offset=\"" + current + "\"");
-
       final int charclass;
       int c0;
-      if (current >= size) {
+      if (end >= size) {
         c0 = -1;
         charclass = 0;
       }
       else {
-        c0 = input.charAt(current++);
-        if (c0 < 0x80)
-        {
-          if (c0 >= 32 && c0 <= 126)
-          {
+        c0 = input.charAt(end++);
+        if (c0 < 0x80) {
+          if (c0 >= 32 && c0 <= 126) {
             writeTrace(" char=\"" + xmlEscape(String.valueOf((char) c0)) + "\"");
           }
           charclass = asciiMap[c0];
         }
-        else if (c0 < 0xd800)
-        {
+        else if (c0 < 0xd800) {
           charclass = bmpMap.get(c0);
         }
         else
         {
-          if (c0 < 0xdc00)
-          {
-            int c1 = current < size ? input.charAt(current) : 0;
-            if (c1 >= 0xdc00 && c1 < 0xe000)
-            {
-              ++current;
+          if (c0 < 0xdc00) {
+            int c1 = end < size ? input.charAt(end) : 0;
+            if (c1 >= 0xdc00 && c1 < 0xe000) {
+              ++end;
               c0 = ((c0 & 0x3ff) << 10) + (c1 & 0x3ff) + 0x10000;
             }
           }
 
-          int lo = 0, hi = 314;
-          for (int m = 157; ; m = (hi + lo) >> 1)
-          {
+          final var smpMapSize = smpMap.length / 3;
+          int lo = 0, hi = smpMapSize - 1;
+          for (int m = hi >> 1; ; m = (hi + lo) >> 1) {
             if (smpMap[m] > c0) {hi = m - 1;}
-            else if (smpMap[315 + m] < c0) {lo = m + 1;}
-            else {charclass = smpMap[630 + m]; break;}
+            else if (smpMap[smpMapSize + m] < c0) {lo = m + 1;}
+            else {charclass = smpMap[2 * smpMapSize + m]; break;}
             if (lo > hi) {charclass = -1; break;}
           }
         }
       }
-
-      end = current;
 
       if (c0 >= 0)
         writeTrace(" codepoint=\"" + c0 + "\"");
       writeTrace(" class=\"" + charclass + "\"");
       writeTrace("/>\n");
 
-      if (charclass < 0)
-      {
-        if (end > begin) {
-          --end;
-          int c1 = end < size ? input.charAt(end) : 0;
-          if (c1 >= 0xdc00 && c1 < 0xe000)
-          {
-            --end;
-          }
-        }
-        writeTrace("    <fail begin=\"" + begin + "\" end=\"" + end + "\" state=\"" + state + "\"/>\n");
+      if (charclass < 0) {
+        writeTrace("    <fail begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
         writeTrace("  </tokenize>\n");
         end = begin;
         return -1;
       }
 
-      if (end > size) end = size;
       writeTrace("    <done result=\"" + xmlEscape(terminal[charclass].shortName()) + "\" begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
       writeTrace("  </tokenize>\n");
       return charclass;
@@ -1111,7 +960,7 @@ public class Parser
 
   private String[] getTokenSet(int tokenSetId)
   {
-    java.util.ArrayList<String> expected = new java.util.ArrayList<>();
+    List<String> expected = new ArrayList<>();
     int s = tokenSetId < 0 ? - tokenSetId : INITIAL[tokenSetId] & 31;
     for (int i = 0; i < 31; i += 32)
     {
@@ -1139,6 +988,7 @@ public class Parser
   private final ReduceArgument[] reduceArguments;
   private final String[] nonterminal;
   private final RangeSet[] terminal;
+  private final int[] forks;
 
   private static final int[] INITIAL =
   {
@@ -1158,11 +1008,4 @@ public class Parser
     /* 28 */ 10, 8, 24, 19, 6, 24, 8, 24, 19, 17, 24, 19, 19, 0, 3, 5, 2, 5, 2, 4, 1, 2, 1
   };
 
-  private static final int[] APPENDIX =
-  {
-    /* 0 */ 130, 770, 130, 1154, 130, 778, 130, 1162
-  };
-
 }
-
-// End

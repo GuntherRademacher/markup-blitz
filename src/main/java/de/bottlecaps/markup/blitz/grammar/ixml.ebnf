@@ -14,12 +14,13 @@
                                                             ?>
                                 s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
          mark::= ( '@' s                                    <?java mark = Mark.ATTRIBUTE;?>
-                 | '^' s                                    <?java mark = Mark.ELEMENT;?>
-                 | '-' s                                    <?java mark = Mark.DELETED;?>
+                 | '^' s                                    <?java mark = Mark.NODE;?>
+                 | '-' s                                    <?java mark = Mark.DELETE;?>
                  |                                          <?java mark = Mark.NONE;?>
                  )
          alts::= alt ( ( ';' | '|' ) s alt )*
-          alt::=                                            <?java alts.peek().addAlt(new Alt());?>
+                                                            addAlt::= <?java alts.peek().addAlt(new Alt());?>
+          alt::=                                            addAlt
                  ( term ( ',' s term )* )?
          term::= factor
                | option

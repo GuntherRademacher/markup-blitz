@@ -22,8 +22,8 @@ public class Action {
   /** The action code, interpreted depending on the action:<ul>
    * <li> - for SHIFT: the target state</li>
    * <li> - for REDUCE and SHIFT_REDUCE: the reduction id</li>
-   * <li> - for ACCEPT: 0 (not needed)</li>
-   * <li> - for FORK: the fork id</li></ul> */
+   * <li> - for FORK: the fork id</li></li>
+   * <li> - for ERROR and ACCEPT: 0 (not needed)</ul> */
   private final int argument;
 
   public Action(Type type, int argument) {

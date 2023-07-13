@@ -30,6 +30,7 @@ import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
+import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class TestBNF {
     private static final String ixmlResource = "ixml.ixml";
@@ -325,7 +326,20 @@ public class TestBNF {
       Grammar bnf = BNF.process(grammar);
       assertEquals(expectedResult, bnf.toString());
 
-      Generator.process(bnf);
+      Parser parser = Generator.process(bnf);
+
+      try {
+//      parser.parse("{\"a\":42}");
+        parser.parse(ixmlIxmlResourceContent);
+//      parser.parse("xd");
+      }
+      catch (Parser.ParseException e) {
+        throw new RuntimeException(parser.getErrorMessage(e));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
     }
 
     @Test
@@ -462,6 +476,22 @@ public class TestBNF {
             "S: C, C.\n"
           + "C: 'c', C;\n"
           + "   'd'.";
+      Grammar grammar = parse(ebnf, "ebnf");
+      System.out.println(grammar);
+      Grammar bnf = BNF.process(grammar);
+      System.out.println(bnf);
+
+      Generator.process(bnf);
+    }
+
+    @Test
+    public void testMultiwayFork() {
+      String ebnf =
+            "S: A, 'x', 'a'; B, 'x', 'b'; C, 'x', 'c'; D, 'x', 'd'.\n"
+          + "A: .\n"
+          + "B: .\n"
+          + "C: .\n"
+          + "D: .";
       Grammar grammar = parse(ebnf, "ebnf");
       System.out.println(grammar);
       Grammar bnf = BNF.process(grammar);

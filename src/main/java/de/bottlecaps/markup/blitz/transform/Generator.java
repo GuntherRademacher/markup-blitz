@@ -1,6 +1,5 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -52,8 +51,9 @@ public class Generator {
   private Map<State, State> states = new LinkedHashMap<>();
   private Deque<State> statesTodo = new LinkedList<>();
 
-  private Map<int[], Integer> forkId;
-  private int[][] forks;
+  private Map<Integer, Integer> forkId;
+  private int[] forks;
+
   private ReduceArgument[] reduceArguments;
 
   private Map2D terminalTransitionData;
@@ -62,7 +62,7 @@ public class Generator {
   private Generator() {
   }
 
-  public static void process(Grammar g) {
+  public static Parser process(Grammar g) {
     Generator ci  = new Generator();
     ci.grammar = g;
 
@@ -78,12 +78,10 @@ public class Generator {
     ci.states.put(initialState, initialState);
     ci.statesTodo.offer(initialState);
 
-    ci.forkId = new TreeMap<>(new Comparator<int[]>() {
-      @Override
-      public int compare(int[] o1, int[] o2) {
-        return Arrays.compare(o1, o2);
-      }
-    });
+    ci.forks = new int[32];
+    Comparator<Integer> forkComparator = (lhs, rhs) ->
+      Arrays.compare(ci.forks, lhs, lhs + 2, ci.forks, rhs, rhs + 2);
+    ci.forkId = new TreeMap<>(forkComparator);
 
     while (! ci.statesTodo.isEmpty()) {
       State s = ci.statesTodo.poll();
@@ -91,8 +89,7 @@ public class Generator {
       s.transitions();
     }
 
-    ci.forks = new int[ci.forkId.size()][];
-    ci.forkId.forEach((k, v) -> ci.forks[v] = k);
+    ci.forks = Arrays.copyOf(ci.forks, 2 * ci.forkId.size());
 
     ci.parserData();
 
@@ -100,11 +97,12 @@ public class Generator {
 
     System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
     System.out.println(ci.reduceArguments.length + " reduce arguments");
-    System.out.println(ci.forks.length + " forks");
+    System.out.println(ci.forks.length / 2 + " forks2");
 
-    for (int i = 0; i < ci.forks.length; ++i) {
+    for (int i = 0; i < ci.forks.length; i += 2) {
       System.out.println("\nfork " + i + ":");
-      for (int code : ci.forks[i]) {
+      for (int j = 0; j < 2; ++j) {
+        int code = ci.forks[i + j];
         Action action = Action.of(code);
         System.out.print(action);
         if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
@@ -115,6 +113,7 @@ public class Generator {
         System.out.println();
       }
     }
+
     for (State state : ci.states.keySet())
       System.out.println("\nstate " + state.id + ":\n" + state);
 
@@ -152,21 +151,13 @@ public class Generator {
 
     System.out.println(Arrays.toString(asciiMap));
 
-    Parser parser = new Parser(asciiMap, bmpMap, smpMap,
+    return new Parser(asciiMap, bmpMap, smpMap,
         terminalTransitions, ci.terminalTransitionData.getEndY(),
         nonterminalTransitions, ci.nonterminalTransitionData.getEndY(),
         ci.reduceArguments,
         ci.nonterminal,
-        ci.terminal);
-    try {
-      parser.parse("{\"a\":42}");
-    }
-    catch (Parser.ParseException e) {
-      throw new RuntimeException(parser.getErrorMessage(e));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+        ci.terminal,
+        ci.forks);
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
@@ -401,18 +392,27 @@ public class Generator {
         }
         for (Alt alt : reductions.get(conflictToken))
           forkList.add(Action.code(Action.Type.REDUCE, alt.getReductionId()));
-        int[] fork = forkList.stream().mapToInt(Integer::intValue).toArray();
-        Integer newId = forkId.size();
-        Integer id = forkId.putIfAbsent(fork, forkId.size());
-        conflicts.put(conflictToken, id == null ? newId : id);
+
+        Integer id = -1;
+        for (int i = forkList.size() - 2; i >= 0; --i) {
+          int newId = 2 * forkId.size();
+          if (newId + 2 > forks.length)
+            forks = Arrays.copyOf(forks, forks.length << 1);
+          forks[newId    ] = forkList.get(i);
+          forks[newId + 1] = id < 0
+                           ? forkList.get(i + 1)
+                           : Action.code(Action.Type.FORK, id);
+          id = forkId.putIfAbsent(newId, newId);
+          id = id != null ? id : newId;
+        }
+
+        conflicts.put(conflictToken, id);
       }
     }
 
     void put(Node node, TokenSet lookahead) {
       kernel.put(node, lookahead);
     }
-
-    // TODO: accept handling must be generated into forks as well!!!!!
 
     void parserData() {
       conflicts.forEach((terminalId, forkId) -> {
@@ -448,7 +448,6 @@ public class Generator {
           code = Action.code(Action.Type.SHIFT, state.id);
         }
         nonterminalTransitionData.put(new Map2D.Index(id , nonterminalId), code);
-        System.out.println("put " + id + " " + nonterminalId + " " + code + " " + nonterminalTransitionData.getEndY());
       });
       reductions.forEach((terminalId, alts) -> {
         if (! conflicts.containsKey(terminalId)) {
