@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.parser;
 
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -65,8 +66,10 @@ public class Parser
 
   public interface EventHandler
   {
-    public void reset(String string);
+    public void reset();
     public void startNonterminal(String name);
+    public void startAttribute(String name);
+    public void endAttribute(String name);
     public void endNonterminal(String name);
     public void terminal(String content);
   }
@@ -80,8 +83,8 @@ public class Parser
   {
     public String content;
 
-    public Terminal(int begin, int end) {
-      content = input.substring(begin, end);
+    public Terminal(int codepoint) {
+      content = Character.toString(codepoint);
     }
 
     @Override
@@ -92,56 +95,68 @@ public class Parser
 
   public static class Nonterminal extends Symbol
   {
-    public String name;
-    public  Symbol[] attributes;
-    public Symbol[] children;
+    private String name;
+    private Symbol[] children;
+    private boolean isAttribute;
 
-    public Nonterminal(String name, Symbol[] attributes, Symbol[] children)
+    public Nonterminal(String name, Symbol[] children)
     {
       this.name = name;
-      this.attributes = attributes;
       this.children = children;
+      this.isAttribute = false;
+    }
+
+    public void setAttribute(boolean isAttribute) {
+      this.isAttribute = isAttribute;
     }
 
     @Override
     public void send(EventHandler e)
     {
-      e.startNonterminal(name);
-      for (Symbol c : children)
-        c.send(e);
-      e.endNonterminal(name);
+      if (isAttribute) {
+        e.startAttribute(name);
+        for (Symbol c : children)
+          c.send(e);
+        e.endAttribute(name);
+      }
+      else {
+        e.startNonterminal(name);
+        for (Symbol c : children)
+          if (c instanceof Nonterminal && ((Nonterminal) c).isAttribute)
+            c.send(e);
+        for (Symbol c : children)
+          if (! (c instanceof Nonterminal) || ! ((Nonterminal) c).isAttribute)
+            c.send(e);
+        e.endNonterminal(name);
+      }
     }
   }
 
   public interface BottomUpEventHandler
   {
-    public void reset(String string);
     public void nonterminal(ReduceArgument reduceArgument);
-    public void terminal(int begin, int end);
+    public void terminal(int codepoint);
   }
 
-  public static class XmlSerializer implements EventHandler
-  {
-    private String input;
+  public static class XmlSerializer implements EventHandler {
     private String delayedTag;
     private Writer out;
     private boolean indent;
     private boolean hasChildElement;
     private int depth;
+    private int attributeLevel;
 
     public XmlSerializer(Writer w, boolean indent)
     {
-      input = null;
       delayedTag = null;
       out = w;
       this.indent = indent;
     }
 
     @Override
-    public void reset(String string)
+    public void reset()
     {
       writeOutput("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">");
-      input = string;
       delayedTag = null;
       hasChildElement = false;
       depth = 0;
@@ -149,72 +164,95 @@ public class Parser
 
     @Override
     public void startNonterminal(String name) {
-      if (delayedTag != null)
-      {
-        writeOutput("<");
-        writeOutput(delayedTag);
-        writeOutput(">");
-      }
-      delayedTag = name;
-      if (indent)
-      {
-        writeOutput("\n");
-        for (int i = 0; i < depth; ++i)
+      if (attributeLevel == 0) {
+        if (delayedTag != null)
         {
-          writeOutput("  ");
+          writeOutput(">");
         }
+        delayedTag = name;
+        if (indent)
+        {
+          writeOutput("\n");
+          for (int i = 0; i < depth; ++i)
+          {
+            writeOutput("  ");
+          }
+        }
+        writeOutput("<");
+        writeOutput(name);
+        hasChildElement = false;
+        ++depth;
       }
-      hasChildElement = false;
-      ++depth;
     }
 
     @Override
     public void endNonterminal(String name) {
-      --depth;
-      if (delayedTag != null)
-      {
-        delayedTag = null;
-        writeOutput("<");
-        writeOutput(name);
-        writeOutput("/>");
-      }
-      else
-      {
-        if (indent)
+      if (attributeLevel == 0) {
+        --depth;
+        if (delayedTag != null)
         {
-          if (hasChildElement)
+          delayedTag = null;
+          writeOutput("/>");
+        }
+        else
+        {
+          if (indent)
           {
-            writeOutput("\n");
-            for (int i = 0; i < depth; ++i)
+            if (hasChildElement)
             {
-              writeOutput("  ");
+              writeOutput("\n");
+              for (int i = 0; i < depth; ++i)
+              {
+                writeOutput("  ");
+              }
             }
           }
+          writeOutput("</");
+          writeOutput(name);
+          writeOutput(">");
         }
-        writeOutput("</");
-        writeOutput(name);
-        writeOutput(">");
+        hasChildElement = true;
       }
-      hasChildElement = true;
+    }
+
+
+    @Override
+    public void startAttribute(String name) {
+      ++attributeLevel;
+      writeOutput(" ");
+      writeOutput(name);
+      writeOutput("=\"");
+    }
+
+    @Override
+    public void endAttribute(String name) {
+      writeOutput("\"");
+      --attributeLevel;
     }
 
     @Override
     public void terminal(String content) {
-      String name = "TOKEN";
-      startNonterminal(name);
       if (! content.isEmpty()) {
-        if (delayedTag != null) {
-          writeOutput("<");
-          writeOutput(delayedTag);
-          writeOutput(">");
-          delayedTag = null;
+        if (attributeLevel > 0) {
+          writeOutput(content
+              .replace("&", "&amp;")
+              .replace("<", "&lt;")
+              .replace(">", "&gt;")
+              .replace("\"", "&quot;")
+              .replace("\r", "&#xA;"));
         }
-        writeOutput(content
-                         .replace("&", "&amp;")
-                         .replace("<", "&lt;")
-                         .replace(">", "&gt;"));
+        else {
+          if (delayedTag != null) {
+            writeOutput(">");
+            delayedTag = null;
+          }
+          writeOutput(content
+                           .replace("&", "&amp;")
+                           .replace("<", "&lt;")
+                           .replace(">", "&gt;")
+                           .replace("\r", "&#xA;"));
+        }
       }
-      endNonterminal(name);
     }
 
     public void writeOutput(String content)
@@ -231,15 +269,8 @@ public class Parser
   }
 
   public class ParseTreeBuilder implements BottomUpEventHandler {
-    private String input;
     public Symbol[] stack = new Symbol[64];
     public int top = -1;
-
-    @Override
-    public void reset(String input) {
-      this.input = input;
-      top = -1;
-    }
 
     @Override
     public void nonterminal(ReduceArgument reduceArgument) {
@@ -249,33 +280,60 @@ public class Parser
       int from = top + 1;
       int to = top + count + 1;
 
-      Symbol[] children = Arrays.copyOfRange(stack, from, to);
-
+      List<Symbol> children = null;
+      List<Nonterminal> attributes = null;
 
       for (int i = from; i < to; ++i) {
         Symbol symbol = stack[i];
-        switch (marks[i - top - 1]) {
-        case NODE:
-
-        case ATTRIBUTE:
-
-        case DELETE:
-          break;
-        case NONE:
-          throw new IllegalStateException();
+        if (symbol instanceof Terminal) {
+          switch (marks[i - top - 1]) {
+          case NODE:
+            if (children == null)
+              children = new ArrayList<>();
+            children.add(symbol);
+            break;
+          case DELETE:
+            break;
+          case ATTRIBUTE:
+            throw new IxmlException("cannot promote a terminal to an attribute");
+          case NONE:
+            throw new IllegalStateException();
+          }
+        }
+        else {
+          Nonterminal nonterminal = (Nonterminal) symbol;
+          switch (marks[i - top - 1]) {
+          case ATTRIBUTE:
+            nonterminal.setAttribute(true);
+            // fall through
+          case NODE:
+            if (children == null)
+              children = new ArrayList<>();
+            children.add(nonterminal);
+            break;
+          case DELETE:
+            if (children == null)
+              children = new ArrayList<>();
+            children.addAll(Arrays.asList(nonterminal.children));
+            break;
+          case NONE:
+            throw new IllegalStateException();
+          }
         }
       }
 
-      push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()], null, children));
+      push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()],
+          children == null ? new Symbol[0] : children.toArray(Symbol[]::new)
+      ));
     }
 
     @Override
-    public void terminal(int begin, int end) {
-      push(new Terminal(begin, end));
+    public void terminal(int codepoint) {
+      push(new Terminal(codepoint));
     }
 
     public void serialize(EventHandler e) {
-      e.reset(input);
+      e.reset();
       for (int i = 0; i <= top; ++i) {
         stack[i].send(e);
       }
@@ -397,12 +455,10 @@ public class Parser
 
   private static class StackNode {
     public int state;
-    public int pos;
     public StackNode link;
 
-    public StackNode(int state, int pos, StackNode link) {
+    public StackNode(int state, StackNode link) {
       this.state = state;
-      this.pos = pos;
       this.link = link;
     }
 
@@ -413,7 +469,6 @@ public class Parser
       while (lhs != null && rhs != null) {
         if (lhs == rhs) return true;
         if (lhs.state != rhs.state) return false;
-        if (lhs.pos != rhs.pos) return false;
         lhs = lhs.link;
         rhs = rhs.link;
       }
@@ -463,13 +518,16 @@ public class Parser
   }
 
   public static class TerminalEvent extends DeferredEvent {
-    public TerminalEvent(DeferredEvent link, int begin, int end) {
-      super(link, begin, end);
+    private int codepoint;
+
+    public TerminalEvent(DeferredEvent link, int codepoint) {
+      super(link, 0, 0);
+      this.codepoint = codepoint;
     }
 
     @Override
     public void execute(BottomUpEventHandler eventHandler) {
-      eventHandler.terminal(begin, end);
+      eventHandler.terminal(codepoint);
     }
   }
 
@@ -506,7 +564,7 @@ public class Parser
           }
         }
         if (other != null) {
-          rejectAmbiguity(thread.stack.pos, thread.e0, thread.deferredEvent, other.deferredEvent);
+          rejectAmbiguity(0, thread.e0, thread.deferredEvent, other.deferredEvent);
         }
         if (thread.deferredEvent != null) {
           thread.deferredEvent.release(eventHandler);
@@ -517,7 +575,7 @@ public class Parser
 
       if (! threads.isEmpty()) {
         if (threads.peek().equals(thread)) {
-          rejectAmbiguity(thread.stack.pos, thread.e0, thread.deferredEvent, threads.peek().deferredEvent);
+          rejectAmbiguity(0, thread.e0, thread.deferredEvent, threads.peek().deferredEvent);
         }
       }
       else {
@@ -582,16 +640,10 @@ public class Parser
       accepted = false;
       target = t;
       eventHandler = eh;
-      if (eventHandler != null) {
-        eventHandler.reset(input);
-      }
       deferredEvent = null;
-      stack = new StackNode(-1, e0, null);
+      stack = new StackNode(-1, null);
       state = initialState;
       action = predict(initialState);
-      bw = e0;
-      bs = e0;
-      es = e0;
       threads = new PriorityQueue<>();
       threads.offer(this);
       return threads;
@@ -601,9 +653,6 @@ public class Parser
       this.action = action;
       accepted = other.accepted;
       target = other.target;
-      bs = other.bs;
-      es = other.es;
-      bw = other.bw;
       eventHandler = other.eventHandler;
       deferredEvent = other.deferredEvent;
       id = ++maxId;
@@ -612,6 +661,7 @@ public class Parser
       stack = other.stack;
       b0 = other.b0;
       e0 = other.e0;
+      c1 = other.c1;
       l1 = other.l1;
       b1 = other.b1;
       e1 = other.e1;
@@ -685,26 +735,20 @@ public class Parser
 
         if (shift >= 0) {
           writeTrace("shift");
-          if (nonterminalId < 0)
-          {
-            if (eventHandler != null)
-            {
-              if (isUnambiguous())
-              {
-                eventHandler.terminal(b1, e1);
+          if (nonterminalId < 0) {
+            if (eventHandler != null) {
+              if (isUnambiguous()) {
+                eventHandler.terminal(c1);
               }
-              else
-              {
-                deferredEvent = new TerminalEvent(deferredEvent, b1, e1);
+              else {
+                deferredEvent = new TerminalEvent(deferredEvent, c1);
               }
             }
-            es = e1;
-            stack = new StackNode(state, b1, stack);
+            stack = new StackNode(state, stack);
             consume(l1);
           }
-          else
-          {
-            stack = new StackNode(state, bs, stack);
+          else {
+            stack = new StackNode(state, stack);
           }
           state = shift;
         }
@@ -732,19 +776,7 @@ public class Parser
               stack = stack.link;
             }
             state = stack.state;
-            bs = stack.pos;
             stack = stack.link;
-          }
-          else
-          {
-            bs = b1;
-            es = b1;
-          }
-          if (nonterminalId == target && stack.link == null)
-          {
-            bs = bw;
-            es = b1;
-            bw = b1;
           }
           if (eventHandler != null)
           {
@@ -780,7 +812,7 @@ public class Parser
     {
       if (l1 == t)
       {
-        b0 = b1; e0 = e1; l1 = 0;
+        b0 = b1; e0 = e1; c1 = -1; l1 = 0;
       }
       else
       {
@@ -806,7 +838,6 @@ public class Parser
 
     private int         b0, e0;
     private int c1, l1, b1, e1;
-    private int     bw, bs, es;
     private BottomUpEventHandler eventHandler = null;
 
     private int begin = 0;
