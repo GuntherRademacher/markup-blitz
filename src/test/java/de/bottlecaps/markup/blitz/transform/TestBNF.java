@@ -487,7 +487,8 @@ public class TestBNF {
     @Test
     public void testMultiwayFork() {
       String ebnf =
-            "S: A, 'x', 'a'; B, 'x', 'b'; C, 'x', 'c'; D, 'x', 'd'.\n"
+            "S: T*.\n"
+          + "T: A, 'x', 'a'; B, 'x', 'b'; C, 'x', 'c'; D, 'x', 'd'.\n"
           + "A: .\n"
           + "B: .\n"
           + "C: .\n"
@@ -497,7 +498,19 @@ public class TestBNF {
       Grammar bnf = BNF.process(grammar);
       System.out.println(bnf);
 
-      Generator.process(bnf);
+      Parser parser = Generator.process(bnf);
+
+      try {
+//      parser.parse("{\"a\":42}");
+//        parser.parse(ixmlIxmlResourceContent);
+      parser.parse("xaxbxcxd");
+      }
+      catch (Parser.ParseException e) {
+        throw new RuntimeException(parser.getErrorMessage(e));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     private static class PropertiesChecker extends Visitor {

@@ -231,9 +231,15 @@ public class Generator {
     }
 
     public boolean isLr0ReduceState() {
-      return kernel.size() == 1
-          && (  kernel.keySet().iterator().next() instanceof Alt
-             || kernel.keySet().iterator().next() instanceof Insertion);
+      if (kernel.size() != 1)
+        return false;
+      Node node = kernel.keySet().iterator().next();
+      if (! (node instanceof Alt || node instanceof Insertion))
+        return false;
+      Alt alt = node instanceof Alt
+              ? (Alt) node
+              : (Alt) node.getParent();
+      return reduceArguments[alt.getReductionId()].getNonterminalId() != 0;
     }
 
     public void close() {
@@ -437,10 +443,7 @@ public class Generator {
       });
       nonterminalTransitions.forEach((nonterminalId, state) -> {
         final int code;
-        if (nonterminalId == 1) {
-          code = Action.code(Action.Type.ACCEPT, state.id);
-        }
-        else if (state.isLr0ReduceState()) {
+        if (state.isLr0ReduceState()) {
           int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
           code = Action.code(Action.Type.SHIFT_REDUCE, argument);
         }
@@ -453,7 +456,10 @@ public class Generator {
         if (! conflicts.containsKey(terminalId)) {
           if (alts.size() != 1)
             throw new IllegalStateException();
-          final int code = Action.code(Action.Type.REDUCE, alts.get(0).getReductionId());
+          final int reductionId = alts.get(0).getReductionId();
+          final int code = reduceArguments[reductionId].getNonterminalId() == 0
+                         ? Action.code(Action.Type.ACCEPT, 0)
+                         : Action.code(Action.Type.REDUCE, reductionId);
           terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
         }
       });
@@ -498,11 +504,15 @@ public class Generator {
     }
 
     private Action action(Node node) {
-      if (node instanceof Alt)
-        return new Action(Action.Type.REDUCE, ((Alt) node).getReductionId());
-      if (node instanceof Insertion)
-        return new Action(Action.Type.REDUCE, ((Alt) node.getParent()).getReductionId());
-      Alt alt = (Alt) (node.getParent());
+      Alt alt = node instanceof Alt
+             ? (Alt) node
+             : (Alt) (node.getParent());
+      if (node instanceof Alt || node instanceof Insertion) {
+        if (reduceArguments[alt.getReductionId()].getNonterminalId() == 0)
+          return new Action(Action.Type.ACCEPT, 0);
+        else
+          return new Action(Action.Type.REDUCE, alt.getReductionId());
+      }
       State toState;
       if (node instanceof Nonterminal) {
         int code = nonterminalCode.get(((Nonterminal) node).getName());
@@ -516,9 +526,7 @@ public class Generator {
       else {
         throw new IllegalStateException("Unexpected type: " + node.getClass().getSimpleName());
       }
-      if (node.getRule() == grammar.getRules().values().iterator().next())
-        return new Action(Action.Type.ACCEPT, 0);
-      else if (toState.isLr0ReduceState())
+      if (toState.isLr0ReduceState())
         return new Action(Action.Type.SHIFT_REDUCE, alt.getReductionId());
       else
         return new Action(Action.Type.SHIFT, toState.id);

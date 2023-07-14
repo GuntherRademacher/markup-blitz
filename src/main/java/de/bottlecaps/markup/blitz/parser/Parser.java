@@ -11,6 +11,7 @@ import java.util.PriorityQueue;
 import java.util.Stack;
 
 import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
 public class Parser
@@ -65,37 +66,27 @@ public class Parser
   public interface EventHandler
   {
     public void reset(String string);
-    public void startNonterminal(String name, int begin);
-    public void endNonterminal(String name, int end);
-    public void terminal(int begin, int end);
-    public void whitespace(int begin, int end);
+    public void startNonterminal(String name);
+    public void endNonterminal(String name);
+    public void terminal(String content);
   }
 
   public static abstract class Symbol
   {
-    public int begin;
-    public int end;
-
-    protected Symbol(int begin, int end)
-    {
-      this.begin = begin;
-      this.end = end;
-    }
-
     public abstract void send(EventHandler e);
   }
 
-  public static class Terminal extends Symbol
+  public class Terminal extends Symbol
   {
-    public Terminal(int begin, int end)
-    {
-      super(begin, end);
+    public String content;
+
+    public Terminal(int begin, int end) {
+      content = input.substring(begin, end);
     }
 
     @Override
-    public void send(EventHandler e)
-    {
-      e.terminal(begin, end);
+    public void send(EventHandler e) {
+      e.terminal(content);
     }
   }
 
@@ -105,9 +96,8 @@ public class Parser
     public  Symbol[] attributes;
     public Symbol[] children;
 
-    public Nonterminal(String name, int begin, int end, Symbol[] attributes, Symbol[] children)
+    public Nonterminal(String name, Symbol[] attributes, Symbol[] children)
     {
-      super(begin, end);
       this.name = name;
       this.attributes = attributes;
       this.children = children;
@@ -116,23 +106,17 @@ public class Parser
     @Override
     public void send(EventHandler e)
     {
-      e.startNonterminal(name, begin);
-      int pos = begin;
+      e.startNonterminal(name);
       for (Symbol c : children)
-      {
-        if (pos < c.begin) e.whitespace(pos, c.begin);
         c.send(e);
-        pos = c.end;
-      }
-      if (pos < end) e.whitespace(pos, end);
-      e.endNonterminal(name, end);
+      e.endNonterminal(name);
     }
   }
 
   public interface BottomUpEventHandler
   {
     public void reset(String string);
-    public void nonterminal(String name, int begin, int end, int count);
+    public void nonterminal(ReduceArgument reduceArgument);
     public void terminal(int begin, int end);
   }
 
@@ -164,8 +148,7 @@ public class Parser
     }
 
     @Override
-    public void startNonterminal(String name, int begin)
-    {
+    public void startNonterminal(String name) {
       if (delayedTag != null)
       {
         writeOutput("<");
@@ -186,8 +169,7 @@ public class Parser
     }
 
     @Override
-    public void endNonterminal(String name, int end)
-    {
+    public void endNonterminal(String name) {
       --depth;
       if (delayedTag != null)
       {
@@ -217,37 +199,22 @@ public class Parser
     }
 
     @Override
-    public void terminal(int begin, int end)
-    {
+    public void terminal(String content) {
       String name = "TOKEN";
-      startNonterminal(name, begin);
-      characters(begin, end);
-      endNonterminal(name, end);
-    }
-
-    @Override
-    public void whitespace(int begin, int end)
-    {
-      characters(begin, end);
-    }
-
-    private void characters(int begin, int end)
-    {
-      if (begin < end)
-      {
-        if (delayedTag != null)
-        {
+      startNonterminal(name);
+      if (! content.isEmpty()) {
+        if (delayedTag != null) {
           writeOutput("<");
           writeOutput(delayedTag);
           writeOutput(">");
           delayedTag = null;
         }
-        writeOutput(input.subSequence(begin, end)
-                         .toString()
+        writeOutput(content
                          .replace("&", "&amp;")
                          .replace("<", "&lt;")
                          .replace(">", "&gt;"));
       }
+      endNonterminal(name);
     }
 
     public void writeOutput(String content)
@@ -263,7 +230,7 @@ public class Parser
     }
   }
 
-  public static class ParseTreeBuilder implements BottomUpEventHandler {
+  public class ParseTreeBuilder implements BottomUpEventHandler {
     private String input;
     public Symbol[] stack = new Symbol[64];
     public int top = -1;
@@ -275,13 +242,31 @@ public class Parser
     }
 
     @Override
-    public void nonterminal(String name, int begin, int end, int count) {
+    public void nonterminal(ReduceArgument reduceArgument) {
+      Mark[] marks = reduceArgument.getMarks();
+      int count = marks.length;
       top -= count;
       int from = top + 1;
       int to = top + count + 1;
 
       Symbol[] children = Arrays.copyOfRange(stack, from, to);
-      push(new Nonterminal(name, begin, end, null, children));
+
+
+      for (int i = from; i < to; ++i) {
+        Symbol symbol = stack[i];
+        switch (marks[i - top - 1]) {
+        case NODE:
+
+        case ATTRIBUTE:
+
+        case DELETE:
+          break;
+        case NONE:
+          throw new IllegalStateException();
+        }
+      }
+
+      push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()], null, children));
     }
 
     @Override
@@ -486,31 +471,19 @@ public class Parser
     public void execute(BottomUpEventHandler eventHandler) {
       eventHandler.terminal(begin, end);
     }
-
-    @Override
-    public String toString() {
-      return "terminal(" + begin + ", " + end + ")";
-    }
   }
 
   public static class NonterminalEvent extends DeferredEvent {
-    public String name;
-    public int count;
+    public ReduceArgument reduceArgument;
 
-    public NonterminalEvent(DeferredEvent link, String name, int begin, int end, int count) {
-      super(link, begin, end);
-      this.name = name;
-      this.count = count;
+    public NonterminalEvent(DeferredEvent link, ReduceArgument reduceArgument) {
+      super(link, 0, 0);
+      this.reduceArgument = reduceArgument;
     }
 
     @Override
     public void execute(BottomUpEventHandler eventHandler) {
-      eventHandler.nonterminal(name, begin, end, count);
-    }
-
-    @Override
-    public String toString() {
-      return "nonterminal(" + name + ", " + begin + ", " + end + ", " + count + ")";
+      eventHandler.nonterminal(reduceArgument);
     }
   }
 
@@ -777,11 +750,11 @@ public class Parser
           {
             if (isUnambiguous())
             {
-              eventHandler.nonterminal(nonterminal[nonterminalId], bs, es, symbols);
+              eventHandler.nonterminal(reduceArgument);
             }
             else
             {
-              deferredEvent = new NonterminalEvent(deferredEvent, nonterminal[nonterminalId], bs, es, symbols);
+              deferredEvent = new NonterminalEvent(deferredEvent, reduceArgument);
             }
           }
           action = nonterminalTransitions.get(state * numberOfNonterminals + nonterminalId);
@@ -831,9 +804,9 @@ public class Parser
       return result;
     }
 
-    private int     b0, e0;
-    private int l1, b1, e1;
-    private int bw, bs, es;
+    private int         b0, e0;
+    private int c1, l1, b1, e1;
+    private int     bw, bs, es;
     private BottomUpEventHandler eventHandler = null;
 
     private int begin = 0;
@@ -857,45 +830,44 @@ public class Parser
 
       begin = end;
       final int charclass;
-      int c0;
       if (end >= size) {
-        c0 = -1;
+        c1 = -1;
         charclass = 0;
       }
       else {
-        c0 = input.charAt(end++);
-        if (c0 < 0x80) {
-          if (c0 >= 32 && c0 <= 126) {
-            writeTrace(" char=\"" + xmlEscape(String.valueOf((char) c0)) + "\"");
+        c1 = input.charAt(end++);
+        if (c1 < 0x80) {
+          if (c1 >= 32 && c1 <= 126) {
+            writeTrace(" char=\"" + xmlEscape(String.valueOf((char) c1)) + "\"");
           }
-          charclass = asciiMap[c0];
+          charclass = asciiMap[c1];
         }
-        else if (c0 < 0xd800) {
-          charclass = bmpMap.get(c0);
+        else if (c1 < 0xd800) {
+          charclass = bmpMap.get(c1);
         }
         else
         {
-          if (c0 < 0xdc00) {
-            int c1 = end < size ? input.charAt(end) : 0;
-            if (c1 >= 0xdc00 && c1 < 0xe000) {
+          if (c1 < 0xdc00) {
+            int lowSurrogate = end < size ? input.charAt(end) : 0;
+            if (lowSurrogate >= 0xdc00 && lowSurrogate < 0xe000) {
               ++end;
-              c0 = ((c0 & 0x3ff) << 10) + (c1 & 0x3ff) + 0x10000;
+              c1 = ((c1 & 0x3ff) << 10) + (lowSurrogate & 0x3ff) + 0x10000;
             }
           }
 
           final var smpMapSize = smpMap.length / 3;
           int lo = 0, hi = smpMapSize - 1;
           for (int m = hi >> 1; ; m = (hi + lo) >> 1) {
-            if (smpMap[m] > c0) {hi = m - 1;}
-            else if (smpMap[smpMapSize + m] < c0) {lo = m + 1;}
+            if (smpMap[m] > c1) {hi = m - 1;}
+            else if (smpMap[smpMapSize + m] < c1) {lo = m + 1;}
             else {charclass = smpMap[2 * smpMapSize + m]; break;}
             if (lo > hi) {charclass = -1; break;}
           }
         }
       }
 
-      if (c0 >= 0)
-        writeTrace(" codepoint=\"" + c0 + "\"");
+      if (c1 >= 0)
+        writeTrace(" codepoint=\"" + c1 + "\"");
       writeTrace(" class=\"" + charclass + "\"");
       writeTrace("/>\n");
 
