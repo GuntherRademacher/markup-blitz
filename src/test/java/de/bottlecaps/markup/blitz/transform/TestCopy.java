@@ -27,12 +27,12 @@ public class TestCopy {
 
   @Test
   public void testCopyIxmlResource() {
-    testCopy(parse(ixmlIxmlResourceContent, ixmlResource));
+    testCopy(parse(ixmlIxmlResourceContent));
   }
 
   @Test
   public void testCopyJsonResource() {
-    testCopy(parse(jsonIxmlResourceContent, jsonIxmlResource));
+    testCopy(parse(jsonIxmlResourceContent));
   }
 
   private void testCopy(Grammar grammar) {

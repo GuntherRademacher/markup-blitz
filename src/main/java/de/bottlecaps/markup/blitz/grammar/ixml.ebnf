@@ -933,7 +933,7 @@ namefollower^token << '.' 'x'
                                                                 private StringBuilder stringBuilder = new StringBuilder();
                                                                 private StringBuilder nameBuilder = new StringBuilder();
 
-                                                                public static Grammar parse(String content, String sourceId) {
+                                                                public static Grammar parse(String content) {
                                                                   Ixml parser = new Ixml(content);
                                                                   try
                                                                   {
@@ -941,7 +941,7 @@ namefollower^token << '.' 'x'
                                                                   }
                                                                   catch (ParseException pe)
                                                                   {
-                                                                    throw new RuntimeException("ParseException while processing " + sourceId + ":\n" + parser.getErrorMessage(pe), pe);
+                                                                    throw new RuntimeException("Failed to process grammar:\n" + parser.getErrorMessage(pe), pe);
                                                                   }
                                                                   de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                   return parser.grammar;

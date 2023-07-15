@@ -4,19 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
   public static final Charset END = new Charset(true, false);
+
   private final boolean deleted;
   private final boolean exclusion;
+
   private final List<Member> members;
-  protected String bnfRuleName;
+  private final RangeSet rangeSet;
 
   public Charset(boolean deleted, boolean exclusion) {
     this.deleted = deleted;
     this.exclusion = exclusion;
-    members = new ArrayList<>();
+    this.members = new ArrayList<>();
+    this.rangeSet = null;
+  }
+
+  public Charset(boolean deleted, RangeSet rangeSet) {
+    this.deleted = deleted;
+    this.exclusion = false;
+    this.members = null;
+    this.rangeSet = rangeSet;
   }
 
   public boolean isDeleted() {
@@ -31,12 +42,8 @@ public class Charset extends Term {
     return members;
   }
 
-  public void setBnfRuleName(String bnfRuleName) {
-    this.bnfRuleName = bnfRuleName;
-  }
-
-  public String getBnfRuleName() {
-    return bnfRuleName;
+  public RangeSet getRangeSet() {
+    return rangeSet;
   }
 
   public void addLiteral(String literal, boolean isHex) {
@@ -59,9 +66,15 @@ public class Charset extends Term {
   @SuppressWarnings("unchecked")
   @Override
   public Charset copy() {
-    Charset charset = new Charset(deleted, exclusion);
-    for (Member member : members)
-      charset.getMembers().add(member.copy());
+    Charset charset;
+    if (members == null) {
+     charset = new Charset(deleted, rangeSet);
+    }
+    else {
+      charset= new Charset(deleted, exclusion);
+      for (Member member : members)
+        charset.getMembers().add(member.copy());
+    }
     return charset;
   }
 
@@ -71,7 +84,9 @@ public class Charset extends Term {
                   + (exclusion ? "~" : "");
     return prefix + (this.equals(END) && grammar.getAdditionalNames() != null
         ? grammar.getAdditionalNames().get(END)[0]
-        : members.stream().map(Member::toString).collect(Collectors.joining("; ", "[", "]")));
+        : members != null
+          ? members.stream().map(Member::toString).collect(Collectors.joining("; ", "[", "]"))
+          : rangeSet.toString());
   }
 
   @Override
@@ -81,6 +96,7 @@ public class Charset extends Term {
     result = prime * result + (deleted ? 1231 : 1237);
     result = prime * result + (exclusion ? 1231 : 1237);
     result = prime * result + ((members == null) ? 0 : members.hashCode());
+    result = prime * result + ((rangeSet == null) ? 0 : rangeSet.hashCode());
     return result;
   }
 
@@ -100,6 +116,12 @@ public class Charset extends Term {
         return false;
     }
     else if (!members.equals(other.members))
+      return false;
+    if (rangeSet == null) {
+      if (other.rangeSet != null)
+        return false;
+    }
+    else if (!rangeSet.equals(other.rangeSet))
       return false;
     return true;
   }

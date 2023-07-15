@@ -27,7 +27,7 @@ public class TestToREx {
 
   @Test
   public void testIxmlResource() throws Exception {
-    Grammar grammar = Ixml.parse(ixmlIxmlResourceContent, ixmlResource);
+    Grammar grammar = Ixml.parse(ixmlIxmlResourceContent);
     String expectedResult =
           "_start        ::= ixml _end\n"
         + "ixml          ::= s _ixml_option _ixml_list s\n"
@@ -1804,7 +1804,7 @@ public class TestToREx {
 
   @Test
   public void testJsonResource() throws Exception {
-    Grammar grammar = Ixml.parse(jsonIxmlResourceContent, jsonIxmlResource);
+    Grammar grammar = Ixml.parse(jsonIxmlResourceContent);
     String expectedResult =
           "_start        ::= json _end\n"
         + "json          ::= ws value ws\n"

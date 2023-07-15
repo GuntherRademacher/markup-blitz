@@ -2,6 +2,7 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.bottlecaps.markup.blitz.BlitzOption;
 import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
@@ -59,11 +61,18 @@ public class Generator {
   private Map2D terminalTransitionData;
   private Map2D nonterminalTransitionData;
 
+  private boolean verbose;
+
   private Generator() {
   }
 
-  public static Parser process(Grammar g) {
+  public static Parser generate(Grammar g) {
+    return generate(g,  Collections.emptySet());
+  }
+
+  public static Parser generate(Grammar g, Set<BlitzOption> options) {
     Generator ci  = new Generator();
+    ci.verbose = options.contains(BlitzOption.VERBOSE);
     ci.grammar = g;
 
     ci.new SymbolCodeAssigner().visit(g);
@@ -95,63 +104,54 @@ public class Generator {
 
     // report status
 
-    System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
-    System.out.println(ci.reduceArguments.length + " reduce arguments");
-    System.out.println(ci.forks.length / 2 + " forks2");
+    if (ci.verbose) {
+      System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
+      System.out.println(ci.reduceArguments.length + " reduce arguments");
+      System.out.println(ci.forks.length / 2 + " forks");
 
-    for (int i = 0; i < ci.forks.length; i += 2) {
-      System.out.println("\nfork " + i + ":");
-      for (int j = 0; j < 2; ++j) {
-        int code = ci.forks[i + j];
-        Action action = Action.of(code);
-        System.out.print(action);
-        if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
-          System.out.print(" (");
-          System.out.print(ci.toString(ci.reduceArguments[action.getArgument()]));
-          System.out.print(")");
+      for (int i = 0; i < ci.forks.length; i += 2) {
+        System.out.println("\nfork " + i + ":");
+        for (int j = 0; j < 2; ++j) {
+          int code = ci.forks[i + j];
+          Action action = Action.of(code);
+          System.out.print(action);
+          if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
+            System.out.print(" (");
+            System.out.print(ci.toString(ci.reduceArguments[action.getArgument()]));
+            System.out.print(")");
+          }
+          System.out.println();
         }
-        System.out.println();
       }
-    }
 
-    for (State state : ci.states.keySet())
-      System.out.println("\nstate " + state.id + ":\n" + state);
+      for (State state : ci.states.keySet())
+        System.out.println("\nstate " + state.id + ":\n" + state);
+    }
 
     final var bmpMapEnd = 0xD800;
     Function<Integer, TileIterator> tokenMapIterator =
         bits -> TileIterator.of(ci.terminalCodeByRange, bmpMapEnd, bits, 0);
-    CompressedMap bmpMap = new CompressedMap(tokenMapIterator, 1);
+    CompressedMap bmpMap = new CompressedMap(tokenMapIterator, 3);
 
     int[] asciiMap = ci.asciiMap(bmpMap);
     int[] smpMap = ci.supplementaryMap(bmpMapEnd);
 
-    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
-    bmpMap = new CompressedMap(tokenMapIterator, 2);
-    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
-    bmpMap = new CompressedMap(tokenMapIterator, 3);
-    System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
-
     Function<Integer, TileIterator> terminalTransitionIterator =
         bits -> TileIterator.of(ci.terminalTransitionData, bits, 0);
-    CompressedMap terminalTransitions = new CompressedMap(terminalTransitionIterator, 1);
-    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
-    terminalTransitions = new CompressedMap(terminalTransitionIterator, 2);
-    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
-    terminalTransitions = new CompressedMap(terminalTransitionIterator, 3);
-    System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+    CompressedMap terminalTransitions = new CompressedMap(terminalTransitionIterator, 3);
 
     Function<Integer, TileIterator> nonterminalTransitionIterator =
         bits -> TileIterator.of(ci.nonterminalTransitionData, bits, 0);
-    CompressedMap nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 1);
-    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
-    nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 2);
-    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
-    nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
-    System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+    CompressedMap nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
 
-    System.out.println(Arrays.toString(asciiMap));
+    if (ci.verbose) {
+      System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
+      System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+      System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+    }
 
-    return new Parser(asciiMap, bmpMap, smpMap,
+    return new Parser(options,
+        asciiMap, bmpMap, smpMap,
         terminalTransitions, ci.terminalTransitionData.getEndY(),
         nonterminalTransitions, ci.nonterminalTransitionData.getEndY(),
         ci.reduceArguments,

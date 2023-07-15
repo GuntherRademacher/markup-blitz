@@ -264,8 +264,6 @@ public interface TileIterator {
         else {
           Map.Entry<Index, Integer> entry = it.next();
           index = entry.getKey().getX() * map.getEndY() + entry.getKey().getY();
-          if (map.getEndX() == 3 && map.getEndY() == 3)
-            System.out.println("put index " + entry.getKey().getX() + " " + entry.getKey().getY() + " " + map.getEndY() + " " + index);
           value = entry.getValue();
         }
       }

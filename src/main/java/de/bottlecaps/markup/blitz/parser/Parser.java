@@ -1,23 +1,26 @@
 package de.bottlecaps.markup.blitz.parser;
 
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.Stack;
 
+import de.bottlecaps.markup.blitz.BlitzException;
+import de.bottlecaps.markup.blitz.BlitzOption;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
 public class Parser
 {
-  public static class ParseException extends RuntimeException
+  private static class ParseException extends Exception
   {
     private static final long serialVersionUID = 1L;
     private int begin, end, offending, expected, state;
@@ -64,9 +67,7 @@ public class Parser
     public boolean isAmbiguousInput() {return ambiguousInput;}
   }
 
-  public interface EventHandler
-  {
-    public void reset();
+  public interface EventHandler {
     public void startNonterminal(String name);
     public void startAttribute(String name);
     public void endAttribute(String name);
@@ -74,13 +75,11 @@ public class Parser
     public void terminal(String content);
   }
 
-  public static abstract class Symbol
-  {
+  public static abstract class Symbol {
     public abstract void send(EventHandler e);
   }
 
-  public class Terminal extends Symbol
-  {
+  public class Terminal extends Symbol {
     public String content;
 
     public Terminal(int codepoint) {
@@ -148,16 +147,9 @@ public class Parser
 
     public XmlSerializer(Writer w, boolean indent)
     {
+      this.indent = indent;
       delayedTag = null;
       out = w;
-      this.indent = indent;
-    }
-
-    @Override
-    public void reset()
-    {
-      writeOutput("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">");
-      delayedTag = null;
       hasChildElement = false;
       depth = 0;
     }
@@ -263,7 +255,7 @@ public class Parser
       }
       catch (IOException e)
       {
-        throw new RuntimeException(e);
+        throw new BlitzException(e);
       }
     }
   }
@@ -281,7 +273,6 @@ public class Parser
       int to = top + count + 1;
 
       List<Symbol> children = null;
-      List<Nonterminal> attributes = null;
 
       for (int i = from; i < to; ++i) {
         Symbol symbol = stack[i];
@@ -333,7 +324,6 @@ public class Parser
     }
 
     public void serialize(EventHandler e) {
-      e.reset();
       for (int i = 0; i <= top; ++i) {
         stack[i].send(e);
       }
@@ -349,7 +339,9 @@ public class Parser
     }
   }
 
-  public Parser(int[] asciiMap, CompressedMap bmpMap, int[] smpMap,
+  public Parser(
+      Set<BlitzOption> defaultOptions,
+      int[] asciiMap, CompressedMap bmpMap, int[] smpMap,
       CompressedMap terminalTransitions, int numberOfTokens,
       CompressedMap nonterminalTransitions, int numberOfNonterminals,
       ReduceArgument[] reduceArguments,
@@ -357,6 +349,7 @@ public class Parser
       RangeSet[] terminal,
       int[] forks)
   {
+    this.defaultOptions = defaultOptions;
     this.asciiMap = asciiMap;
     this.bmpMap = bmpMap;
     this.smpMap = smpMap;
@@ -368,16 +361,6 @@ public class Parser
     this.nonterminal = nonterminal;
     this.terminal = terminal;
     this.forks = forks;
-  }
-
-  public void initialize(String source, BottomUpEventHandler parsingEventHandler)
-  {
-    eventHandler = parsingEventHandler;
-    input = source;
-    size = source.length();
-    maxId = 0;
-    thread = new ParsingThread();
-    thread.reset(0, 0, 0);
   }
 
   public RangeSet getOffendingToken(ParseException e) {
@@ -421,36 +404,52 @@ public class Parser
          + "...";
   }
 
-  public Nonterminal parse(String string) throws IOException {
-    boolean indent = true;
-    Writer w = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+  public String parse(String string, BlitzOption... options) throws BlitzException {
+    Set<BlitzOption> currentOptions = options.length == 0
+        ? defaultOptions
+        : Set.of(options);
+
+    boolean indent = currentOptions.contains(BlitzOption.INDENT);
+    StringWriter w = new StringWriter(string.length());
     XmlSerializer s = new XmlSerializer(w, indent);
     ParseTreeBuilder b = new ParseTreeBuilder();
 
-    initialize(string, b);
-    try {
+    trace = currentOptions.contains(BlitzOption.TRACE);
+    if (trace)
       writeTrace("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">\n<trace>\n");
-      parse_json();
-      b.serialize(s);
-      return (Nonterminal) b.stack[0];
+
+    eventHandler = b;
+    input = string;
+    size = string.length();
+    maxId = 0;
+    thread = new ParsingThread();
+    thread.reset(0, 0, 0);
+
+    try {
+      thread = parse(0, eventHandler, thread);
     }
     catch (ParseException pe) {
       if (pe.isAmbiguousInput()) {
         pe.serialize(s);
         w.write("\n");
-        w.flush();
       }
-      throw new RuntimeException("ParseException:\n" + getErrorMessage(pe));
+      throw new BlitzException("Failed to parse input:\n" + getErrorMessage(pe));
     }
     finally {
-      writeTrace("</trace>\n");
-      flushTrace();
-      w.close();
+      if (trace) {
+        writeTrace("</trace>\n");
+        try {
+          err.flush();
+        }
+        catch (IOException e) {
+          throw new BlitzException(e);
+        }
+      }
+      w.flush();
     }
-  }
 
-  public void parse_json() {
-    thread = parse(0, eventHandler, thread);
+    b.serialize(s);
+    return w.toString();
   }
 
   private static class StackNode {
@@ -549,7 +548,7 @@ public class Parser
   private static final int ACCEPTED = 1;
   private static final int ERROR = 2;
 
-  private ParsingThread parse(int target, BottomUpEventHandler eventHandler, ParsingThread thread) {
+  private ParsingThread parse(int target, BottomUpEventHandler eventHandler, ParsingThread thread) throws ParseException {
     PriorityQueue<ParsingThread> threads = thread.open(0, eventHandler, target);
     for (;;) {
       thread = threads.poll();
@@ -690,16 +689,19 @@ public class Parser
       return true;
     }
 
-    public int parse() {
+    public int parse() throws ParseException {
       int nonterminalId = -1;
       for (;;) {
-        writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
-        if (nonterminalId >= 0) {
-          writeTrace(xmlEscape(nonterminal[nonterminalId]));
-          if (l1 != 0)
-            writeTrace(" ");
+        if (trace) {
+          writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
+          if (nonterminalId >= 0) {
+            writeTrace(xmlEscape(nonterminal[nonterminalId]));
+            if (l1 != 0)
+              writeTrace(" ");
+          }
+          writeTrace(xmlEscape(lookaheadString()) + "\" action=\"");
         }
-        writeTrace(xmlEscape(lookaheadString()) + "\" action=\"");
+
         int argument = action >> Action.Type.BITS;
         int shift = -1;
         int reduce = -1;
@@ -717,24 +719,28 @@ public class Parser
           break;
 
         case 4: // FORK
-          writeTrace("fork\"/>\n");
+          if (trace)
+            writeTrace("fork\"/>\n");
           threads.offer(new ParsingThread().copy(this, forks[argument]));
           action = forks[argument + 1];
           return PARSING;
 
         case 5: // ACCEPT
-          writeTrace("accept\"/>\n");
+          if (trace)
+            writeTrace("accept\"/>\n");
           accepted = true;
           action = 0;
           return ACCEPTED;
 
         default: // ERROR
-          writeTrace("fail\"/>\n");
+          if (trace)
+            writeTrace("fail\"/>\n");
           return ERROR;
         }
 
         if (shift >= 0) {
-          writeTrace("shift");
+          if (trace)
+            writeTrace("shift");
           if (nonterminalId < 0) {
             if (eventHandler != null) {
               if (isUnambiguous()) {
@@ -755,7 +761,8 @@ public class Parser
 
         if (reduce < 0)
         {
-          writeTrace("\"/>\n");
+          if (trace)
+            writeTrace("\"/>\n");
           action = predict(state);
           return PARSING;
         }
@@ -764,11 +771,11 @@ public class Parser
           ReduceArgument reduceArgument = reduceArguments[reduce];
           int symbols = reduceArgument.getMarks().length;
           nonterminalId = reduceArgument.getNonterminalId();
-          if (shift >= 0)
-          {
-            writeTrace(" ");
+          if (trace) {
+            if (shift >= 0)
+              writeTrace(" ");
+            writeTrace("reduce\" nonterminal=\"" + xmlEscape(nonterminal[nonterminalId]) + "\" count=\"" + symbols + "\"/>\n");
           }
-          writeTrace("reduce\" nonterminal=\"" + xmlEscape(nonterminal[nonterminalId]) + "\" count=\"" + symbols + "\"/>\n");
           if (symbols > 0)
           {
             for (int i = 1; i < symbols; i++)
@@ -808,7 +815,7 @@ public class Parser
       id = maxId;
     }
 
-    private void consume(int t)
+    private void consume(int t) throws ParseException
     {
       if (l1 == t)
       {
@@ -820,9 +827,8 @@ public class Parser
       }
     }
 
-    private int error(int b, int e, int s, int l, int t)
+    private int error(int b, int e, int s, int l, int t) throws ParseException
     {
-      flushTrace();
       throw new ParseException(b, e, s, l, t);
     }
 
@@ -855,9 +861,11 @@ public class Parser
     }
 
     private int match() {
-      writeTrace("  <tokenize thread=\"" + id + "\">\n");
-      writeTrace("    <next");
-      writeTrace(" offset=\"" + end + "\"");
+      if (trace) {
+        writeTrace("  <tokenize thread=\"" + id + "\">\n");
+        writeTrace("    <next");
+        writeTrace(" offset=\"" + end + "\"");
+      }
 
       begin = end;
       final int charclass;
@@ -868,9 +876,9 @@ public class Parser
       else {
         c1 = input.charAt(end++);
         if (c1 < 0x80) {
-          if (c1 >= 32 && c1 <= 126) {
-            writeTrace(" char=\"" + xmlEscape(String.valueOf((char) c1)) + "\"");
-          }
+          if (trace)
+            if (c1 >= 32 && c1 <= 126)
+              writeTrace(" char=\"" + xmlEscape(String.valueOf((char) c1)) + "\"");
           charclass = asciiMap[c1];
         }
         else if (c1 < 0xd800) {
@@ -897,20 +905,26 @@ public class Parser
         }
       }
 
-      if (c1 >= 0)
-        writeTrace(" codepoint=\"" + c1 + "\"");
-      writeTrace(" class=\"" + charclass + "\"");
-      writeTrace("/>\n");
+      if (trace) {
+        if (c1 >= 0)
+          writeTrace(" codepoint=\"" + c1 + "\"");
+        writeTrace(" class=\"" + charclass + "\"");
+        writeTrace("/>\n");
+      }
 
       if (charclass < 0) {
-        writeTrace("    <fail begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
-        writeTrace("  </tokenize>\n");
+        if (trace) {
+          writeTrace("    <fail begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
+          writeTrace("  </tokenize>\n");
+        }
         end = begin;
         return -1;
       }
 
-      writeTrace("    <done result=\"" + xmlEscape(terminal[charclass].shortName()) + "\" begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
-      writeTrace("  </tokenize>\n");
+      if (trace) {
+        writeTrace("    <done result=\"" + xmlEscape(terminal[charclass].shortName()) + "\" begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
+        writeTrace("  </tokenize>\n");
+      }
       return charclass;
     }
   }
@@ -932,32 +946,17 @@ public class Parser
     return sb.toString();
   }
 
-  public void setTraceWriter(Writer w)
-  {
+  public void setTraceWriter(Writer w) {
     err = w;
   }
 
   private void writeTrace(String content)
   {
-    try
-    {
+    try {
       err.write(content);
     }
-    catch (IOException e)
-    {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void flushTrace()
-  {
-    try
-    {
-      err.flush();
-    }
-    catch (IOException e)
-    {
-      throw new RuntimeException(e);
+    catch (IOException e) {
+      throw new BlitzException(e);
     }
   }
 
@@ -981,6 +980,7 @@ public class Parser
     return expected.toArray(new String[]{});
   }
 
+  private final Set<BlitzOption> defaultOptions;
   private final int[] asciiMap;
   private final CompressedMap bmpMap;
   private final int[] smpMap;
@@ -992,6 +992,8 @@ public class Parser
   private final String[] nonterminal;
   private final RangeSet[] terminal;
   private final int[] forks;
+
+  private boolean trace;
 
   private static final int[] INITIAL =
   {

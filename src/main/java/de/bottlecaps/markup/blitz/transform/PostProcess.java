@@ -97,8 +97,10 @@ public class PostProcess extends Visitor {
   @Override
   public void visit(Charset c) {
     visitPreOrder(c);
-    for (Member member : c.getMembers())
-      member.accept(this);
+    List<Member> members = c.getMembers();
+    if (members != null)
+      for (Member member : members)
+        member.accept(this);
     visitPostOrder(c);
   }
 

@@ -36,7 +36,7 @@ public class TestCoffee {
   public void testIxmlResource() throws Exception {
     String originalResult = runCoffee(ixmlIxmlResourceContent, ixmlIxmlResourceContent);
 
-    Grammar grammar = Ixml.parse(ixmlIxmlResourceContent, ixmlResource);
+    Grammar grammar = Ixml.parse(ixmlIxmlResourceContent);
     Grammar bnf = BNF.process(grammar, true); // need to isolate charsets here, otherwise we risk an OOME
 
     String equivalentResult = runCoffee(bnf.toString(), ixmlIxmlResourceContent);
@@ -47,7 +47,7 @@ public class TestCoffee {
   public void testJsonResource() throws Exception {
     String originalResult = runCoffee(jsonIxmlResourceContent, jsonResourceContent);
 
-    Grammar grammar = Ixml.parse(jsonIxmlResourceContent, jsonIxmlResource);
+    Grammar grammar = Ixml.parse(jsonIxmlResourceContent);
     Grammar bnf = BNF.process(grammar);
 
     String equivalentResult = runCoffee(bnf.toString(), jsonResourceContent);

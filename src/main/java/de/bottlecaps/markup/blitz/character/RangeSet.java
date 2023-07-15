@@ -169,6 +169,32 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     return 1;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((addedRanges == null) ? 0 : addedRanges.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!super.equals(obj))
+      return false;
+    if (!(obj instanceof RangeSet))
+      return false;
+    RangeSet other = (RangeSet) obj;
+    if (addedRanges == null) {
+      if (other.addedRanges != null)
+        return false;
+    }
+    else if (!addedRanges.equals(other.addedRanges))
+      return false;
+    return true;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -244,6 +270,9 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   }
 
   public static RangeSet of(Charset c) {
+    RangeSet rangeSet = c.getRangeSet();
+    if (rangeSet != null)
+      return rangeSet;
     Builder builder = new Builder();
     for (Member member : c.getMembers()) {
       if (member instanceof StringMember) {
@@ -268,24 +297,14 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
         throw new IllegalStateException();
       }
     }
-    return c.isExclusion()
+    rangeSet = c.isExclusion()
          ? ALPHABET.minus(builder.build())
          : builder.build();
+    return rangeSet;
   }
 
-  public Term toTerm(boolean isDeleted) {
-//    if (addedRanges.size() == 1 && addedRanges.iterator().next().size() == 1) {
-//      int codepoint = addedRanges.iterator().next().getFirstCodepoint();
-//      return Range.isAscii(codepoint)
-//          ? new Literal(isDeleted, Character.toString(codepoint), false)
-//          : new Literal(isDeleted, "#" + Integer.toHexString(codepoint), true);
-//    }
-//    else {
-      Charset set = new Charset(isDeleted, false);
-      for (Range range : addedRanges)
-        set.getMembers().add(new RangeMember(range));
-      return set;
-//    }
+  public Term toCharset(boolean isDeleted) {
+    return new Charset(isDeleted, this);
   }
 
   public static final RangeSet ALPHABET = builder().add(0x0, 0x377)
@@ -297,7 +316,8 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
 //        new Thread(new Runnable() {
 //          @Override
 //          public void run() {
-//            unicodeClasses.forEach((k, v) -> System.out.println("unicodeClasses.put(\"" + k + "\", " + v.toJava() + ");"));
+//            unicodeClasses.forEach((k, v) ->
+//              System.out.println("unicodeClasses.put(\"" + k + "\", " + v.toJava() + ");"));
 //          }
 //        },
 //        "ShutdownHook")

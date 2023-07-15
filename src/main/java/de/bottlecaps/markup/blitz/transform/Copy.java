@@ -84,10 +84,17 @@ public class Copy extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    Charset set = new Charset(c.isDeleted(), c.isExclusion());
-    members = set.getMembers();
-    for (Member member : c.getMembers())
-      member.accept(this);
+    final Charset set;
+    List<Member> cMembers = c.getMembers();
+    if (cMembers == null) {
+      set = new Charset(c.isDeleted(), c.getRangeSet());
+    }
+    else {
+      set = new Charset(c.isDeleted(), c.isExclusion());
+      members = set.getMembers();
+      for (Member member : cMembers)
+        member.accept(this);
+    }
     alts.peek().last().getTerms().add(set);
   }
 

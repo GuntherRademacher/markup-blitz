@@ -32,13 +32,13 @@ public class IxmlTest {
 
     @Test
     public void testIxmlResource() throws Exception {
-      Grammar grammar = parse(ixmlIxmlResourceContent, ixmlResource);
+      Grammar grammar = parse(ixmlIxmlResourceContent);
       assertEquals(ixmlIxmlResourceContent, grammar.toString(), "roundtrip failed for " + ixmlResource);
     }
 
     @Test
     public void testJsonIxmlResource() throws Exception {
-      Grammar grammar = parse(jsonIxmlResourceContent, jsonIxmlResource);
+      Grammar grammar = parse(jsonIxmlResourceContent);
       assertEquals(jsonIxmlResourceContent, grammar.toString(), "roundtrip failed for " + jsonIxmlResource);
     }
 
@@ -55,7 +55,7 @@ public class IxmlTest {
     }
 
     private void testUrlContent(String url, String resource, String resourceContent) throws IOException, MalformedURLException {
-      Grammar grammar = Ixml.parse(urlContent(new URL(url)), url);
+      Grammar grammar = Ixml.parse(urlContent(new URL(url)));
       assertEquals(resourceContent, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
     }
 }

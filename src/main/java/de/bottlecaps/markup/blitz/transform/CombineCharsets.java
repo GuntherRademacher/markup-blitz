@@ -219,17 +219,17 @@ public class CombineCharsets extends Copy {
   private List<Charset> literalToCharsets(Literal l) {
     List<Charset> charsets = new ArrayList<>();
     if (l.isHex()) {
-      Charset charset = new Charset(l.isDeleted(), false);
-      charset.addRange(l.getValue(), l.getValue());
-      collect(RangeSet.of(charset), charset, l.getRule().getName());
+      int c = Integer.parseInt(l.getValue(), 16);
+      RangeSet rangeSet = RangeSet.builder().add(c).build();
+      Charset charset = new Charset(l.isDeleted(), rangeSet);
+      collect(rangeSet, charset, l.getRule().getName());
       charsets.add(charset);
     }
     else {
       for (char c : l.getValue().toCharArray()) {
-        Charset charset = new Charset(l.isDeleted(), false);
-        String value = Character.toString(c);
-        charset.addRange(value, value);
-        collect(RangeSet.of(charset), charset, l.getRule().getName());
+        RangeSet rangeSet = RangeSet.builder().add(c).build();
+        Charset charset = new Charset(l.isDeleted(), rangeSet);
+        collect(rangeSet, charset, l.getRule().getName());
         charsets.add(charset);
       }
     }
@@ -404,13 +404,13 @@ public class CombineCharsets extends Copy {
 
       if (rangeSets.size() == 1) {
         RangeSet firstSet = rangeSets.iterator().next();
-        alts.peek().last().getTerms().add(firstSet.toTerm(c.isDeleted()));
+        alts.peek().last().getTerms().add(firstSet.toCharset(c.isDeleted()));
       }
       else {
         Alts a = new Alts();
         for (RangeSet rangeSet : rangeSets) {
           Alt alt = new Alt();
-          alt.getTerms().add(rangeSet.toTerm(c.isDeleted()));
+          alt.getTerms().add(rangeSet.toCharset(c.isDeleted()));
           a.addAlt(alt);
         }
         alts.peek().last().getTerms().add(a);

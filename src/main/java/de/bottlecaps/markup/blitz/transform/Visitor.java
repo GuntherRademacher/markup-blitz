@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.transform;
 
+import java.util.List;
+
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -27,8 +29,10 @@ public abstract class Visitor {
   }
 
   public void visit(Charset c) {
-    for (Member member : c.getMembers())
-      member.accept(this);
+    List<Member> members = c.getMembers();
+    if (members != null)
+      for (Member member : members)
+        member.accept(this);
   }
 
   public void visit(ClassMember c) {

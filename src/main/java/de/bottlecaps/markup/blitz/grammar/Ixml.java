@@ -1,4 +1,4 @@
-// This file was generated on Tue Jul 11, 2023 22:51 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Sat Jul 15, 2023 13:50 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1716,7 +1716,7 @@ public class Ixml
                                                               private StringBuilder stringBuilder = new StringBuilder();
                                                               private StringBuilder nameBuilder = new StringBuilder();
 
-                                                              public static Grammar parse(String content, String sourceId) {
+                                                              public static Grammar parse(String content) {
                                                                 Ixml parser = new Ixml(content);
                                                                 try
                                                                 {
@@ -1724,7 +1724,7 @@ public class Ixml
                                                                 }
                                                                 catch (ParseException pe)
                                                                 {
-                                                                  throw new RuntimeException("ParseException while processing " + sourceId + ":\n" + parser.getErrorMessage(pe), pe);
+                                                                  throw new RuntimeException("Failed to process input grammar:\n" + parser.getErrorMessage(pe), pe);
                                                                 }
                                                                 de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                 return parser.grammar;
