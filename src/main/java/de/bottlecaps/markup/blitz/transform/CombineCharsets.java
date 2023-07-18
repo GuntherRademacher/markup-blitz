@@ -72,12 +72,12 @@ public class CombineCharsets extends Copy {
     Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
     collectRanges(charsetToCharclasses);
 
-    System.out.println();
-    System.out.println("number of charClasses: " + usingSetsToCharclasses.size());
-    System.out.println("----------------------");
-    RangeSet[] charClass = usingSetsToCharclasses.values().stream().sorted().toArray(RangeSet[]::new);
-    for (int i = 0; i < charClass.length; ++i)
-      System.out.println(i + ": " + charClass[i]);
+//    System.out.println();
+//    System.out.println("number of charClasses: " + usingSetsToCharclasses.size());
+//    System.out.println("----------------------");
+//    RangeSet[] charClass = usingSetsToCharclasses.values().stream().sorted().toArray(RangeSet[]::new);
+//    for (int i = 0; i < charClass.length; ++i)
+//      System.out.println(i + ": " + charClass[i]);
 
     return ReplaceCharsets.process(copy, charsetToCharclasses);
   }
@@ -180,10 +180,12 @@ public class CombineCharsets extends Copy {
         preservedChars = preservedChars.union(charset.getRangeSet());
       }
     }
-    System.out.println(a.getRule());
-    System.out.println("    preserved: " + preservedChars);
-    System.out.println("      deleted: " + deletedChars);
-    System.out.println("        other: " + other);
+
+//    System.out.println(a.getRule());
+//    System.out.println("    preserved: " + preservedChars);
+//    System.out.println("      deleted: -" + deletedChars);
+//    System.out.println("        other: " + other);
+
     if (other.equals(a)) {
       super.visit(a);
     }
@@ -370,8 +372,9 @@ public class CombineCharsets extends Copy {
             isPreserved = isPreserved && ! l.isDeleted();
             isDeleted = isDeleted && l.isDeleted();
           }
-        } {
-          rangeSet = null;
+          else {
+            rangeSet = null;
+          }
         }
       }
     }
