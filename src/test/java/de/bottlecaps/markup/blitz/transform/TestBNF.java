@@ -20,7 +20,6 @@ import de.bottlecaps.markup.blitz.character.RangeSet.Builder;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
-import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
@@ -28,7 +27,6 @@ import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 import de.bottlecaps.markup.blitz.parser.Parser;
 
@@ -552,21 +550,11 @@ public class TestBNF {
     @Override
     public void visit(Charset c) {
       super.visit(c);
-      check(RangeSet.of(c));
+      check(c.getRangeSet());
     }
 
     @Override
     public void visit(Literal l) {
-      fail();
-    }
-
-    @Override
-    public void visit(ClassMember c) {
-      fail();
-    }
-
-    @Override
-    public void visit(StringMember s) {
       fail();
     }
 

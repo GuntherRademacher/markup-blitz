@@ -1,7 +1,5 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import de.bottlecaps.markup.blitz.transform.Visitor;
-
 public class ClassMember extends Member {
   private final String value;
 
@@ -11,11 +9,6 @@ public class ClassMember extends Member {
 
   public String getValue() {
     return value;
-  }
-
-  @Override
-  public void accept(Visitor v) {
-    v.visit(this);
   }
 
   @Override

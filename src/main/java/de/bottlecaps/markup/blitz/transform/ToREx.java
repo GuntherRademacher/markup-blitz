@@ -65,7 +65,7 @@ public class ToREx extends Visitor {
   @Override
   public void visit(Charset c) {
     sb.append(" ");
-    RangeSet rangeSet = RangeSet.of(c);
+    RangeSet rangeSet = c.getRangeSet();
     if (rangeSet.charCount() == 1 && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint())) {
       sb.append(rangeSet.iterator().next().toREx());
     }

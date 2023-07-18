@@ -22,12 +22,9 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
-import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
-import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class CombineCharsets extends Copy {
@@ -138,7 +135,7 @@ public class CombineCharsets extends Copy {
   @Override
   public void visit(Charset c) {
     super.visit(c);
-    collect(RangeSet.of(c).join(), c, c.getRule().getName());
+    collect(c.getRangeSet().join(), c, c.getRule().getName());
   }
 
   @Override
@@ -146,7 +143,7 @@ public class CombineCharsets extends Copy {
     Charset charset = CharsetCollector.collect(n);
     if (charset != null) {
       alts.peek().last().getTerms().add(charset);
-      collect(RangeSet.of(charset).join(), charset, n.getName());
+      collect(charset.getRangeSet().join(), charset, n.getName());
     }
     else {
       if (! done.contains(n.getName()))
@@ -158,9 +155,9 @@ public class CombineCharsets extends Copy {
   @Override
   public void visit(Alts a) {
     boolean hasDeletedChars = false;
-    Charset deletedChars = new Charset(true, false);
+    RangeSet deletedChars = RangeSet.EMPTY;
     boolean hasPreservedChars = false;
-    Charset preservedChars = new Charset(false, false);;
+    RangeSet preservedChars = RangeSet.EMPTY;
     Alts other = new Alts();
     for (Alt alt : a.getAlts()) {
       Charset charset = CharsetCollector.collect(alt);
@@ -169,11 +166,11 @@ public class CombineCharsets extends Copy {
       }
       else if (charset.isDeleted()) {
         hasDeletedChars = true;
-        deletedChars.getMembers().addAll(charset.getMembers());
+        deletedChars = deletedChars.union(charset.getRangeSet());
       }
       else {
         hasPreservedChars = true;
-        preservedChars.getMembers().addAll(charset.getMembers());
+        preservedChars = preservedChars.union(charset.getRangeSet());
       }
     }
     if (other.equals(a)) {
@@ -182,12 +179,14 @@ public class CombineCharsets extends Copy {
     else {
       Alts replacement = new Alts();
       if (hasDeletedChars) {
-        replacement.addAlt(new Alt().addCharset(deletedChars));
-        collect(RangeSet.of(deletedChars).join(), deletedChars, a.getRule().getName());
+        Charset charset = new Charset(true, deletedChars);
+        replacement.addAlt(new Alt().addCharset(charset));
+        collect(deletedChars.join(), charset, a.getRule().getName());
       }
       if (hasPreservedChars) {
-        replacement.addAlt(new Alt().addCharset(preservedChars));
-        collect(RangeSet.of(preservedChars).join(), preservedChars, a.getRule().getName());
+        Charset charset = new Charset(false, preservedChars);
+        replacement.addAlt(new Alt().addCharset(charset));
+        collect(preservedChars.join(), charset, a.getRule().getName());
       }
 
       boolean topLevel = alts.isEmpty();
@@ -219,19 +218,19 @@ public class CombineCharsets extends Copy {
   private List<Charset> literalToCharsets(Literal l) {
     List<Charset> charsets = new ArrayList<>();
     if (l.isHex()) {
-      int c = Integer.parseInt(l.getValue(), 16);
+      int c = Integer.parseInt(l.getValue().substring(1), 16);
       RangeSet rangeSet = RangeSet.builder().add(c).build();
       Charset charset = new Charset(l.isDeleted(), rangeSet);
       collect(rangeSet, charset, l.getRule().getName());
       charsets.add(charset);
     }
     else {
-      for (char c : l.getValue().toCharArray()) {
-        RangeSet rangeSet = RangeSet.builder().add(c).build();
+      l.getValue().codePoints().forEach(codepoint -> {
+        RangeSet rangeSet = RangeSet.builder().add(codepoint).build();
         Charset charset = new Charset(l.isDeleted(), rangeSet);
         collect(rangeSet, charset, l.getRule().getName());
         charsets.add(charset);
-      }
+      });
     }
     return charsets;
   }
@@ -292,28 +291,26 @@ public class CombineCharsets extends Copy {
   private static class CharsetCollector extends Visitor {
     private boolean isDeleted;
     private boolean isPreserved;
-    private List<Member> members;
+    private RangeSet rangeSet;
 
     private CharsetCollector() {
     }
 
     public static Charset collect(Node node) {
       CharsetCollector cc = new CharsetCollector();
-      cc.members = new ArrayList<>();
+      cc.rangeSet = RangeSet.EMPTY;
       cc.isDeleted = true;
       cc.isPreserved = true;
       node.accept(cc);
-      if (cc.members == null || cc.isPreserved == cc.isDeleted)
+      if (cc.rangeSet == null || cc.isPreserved == cc.isDeleted)
         return null;
-      Charset charset = new Charset(cc.isDeleted, false);
-      cc.members.forEach(member -> charset.getMembers().add(member));
-      return charset;
+      return new Charset(cc.isDeleted, cc.rangeSet);
     }
 
     @Override
     public void visit(Alt a) {
       if (a.getTerms().size() != 1)
-        members = null;
+        rangeSet = null;
       else
         super.visit(a);
     }
@@ -325,13 +322,8 @@ public class CombineCharsets extends Copy {
 
     @Override
     public void visit(Charset c) {
-      if (members != null) {
-        if (c.isExclusion()) {
-          RangeSet.of(c).forEach(range -> members.add(new RangeMember(range)));
-        }
-        else {
-          members.addAll(c.getMembers());
-        }
+      if (rangeSet != null) {
+        rangeSet = rangeSet.union(c.getRangeSet());
         isPreserved = isPreserved && ! c.isDeleted();
         isDeleted = isDeleted && c.isDeleted();
       }
@@ -339,38 +331,45 @@ public class CombineCharsets extends Copy {
 
     @Override
     public void visit(Control c) {
-      members = null;
+      rangeSet = null;
     }
 
     @Override
     public void visit(Grammar g) {
-      members = null;
+      rangeSet = null;
     }
 
     @Override
     public void visit(Insertion i) {
-      members = null;
+      rangeSet = null;
     }
 
     @Override
     public void visit(Literal l) {
-      if (members != null) {
-        if (l.isHex() || l.getValue().length() == 1) {
-          members.add(new StringMember(l.getValue(), l.isHex()));
+      if (rangeSet != null) {
+        if (l.isHex()) {
+          rangeSet = rangeSet.union(RangeSet.builder().add(new Range(Integer.parseInt(l.getValue().substring(1), 16))).build());
           isPreserved = isPreserved && ! l.isDeleted();
           isDeleted = isDeleted && l.isDeleted();
         }
         else {
-          members = null;
+          int[] codepoints = l.getValue().codePoints().toArray();
+          if (codepoints.length == 1) {
+            rangeSet = rangeSet.union(RangeSet.builder().add(codepoints[0]).build());
+            isPreserved = isPreserved && ! l.isDeleted();
+            isDeleted = isDeleted && l.isDeleted();
+          }
+        } {
+          rangeSet = null;
         }
       }
     }
 
     @Override
     public void visit(Nonterminal n) {
-      if (members != null) {
+      if (rangeSet != null) {
         if (n.getEffectiveMark() != Mark.DELETE) {
-          members = null;
+          rangeSet = null;
         }
         else {
           n.getGrammar().getRules().get(n.getName()).getAlts().accept(this);
@@ -380,7 +379,7 @@ public class CombineCharsets extends Copy {
 
     @Override
     public void visit(Rule r) {
-      members = null;
+      rangeSet = null;
     }
   }
 

@@ -77,7 +77,7 @@
      terminal::=                                            <?java deleted = false;?>
                  ( tmark s )?
                  ( literal
-                 | charset                                  <?java alts.peek().last().addCharset(charset);?>
+                 | charset                                  <?java alts.peek().last().addCharset(new Charset(deleted, exclusion, members));?>
                  )
                  s
         tmark::= '^'
@@ -95,15 +95,21 @@
 
       charset::= inclusion
                | exclusion
-    inclusion::=                                            <?java charset = new Charset(deleted, false);?>
+    inclusion::=                                            <?java
+                                                              exclusion = false;
+                                                              members = new java.util.ArrayList<>();
+                                                            ?>
                        set
-    exclusion::= '~' s                                      <?java charset = new Charset(deleted, true);?>
+    exclusion::= '~' s                                      <?java
+                                                              exclusion = true;
+                                                              members = new java.util.ArrayList<>();
+                                                            ?>
                        set
           set::= '[' s  (member s ( ( ( ';' | '|' ) s) member s )* )? ']'
-       member::= string                                     <?java charset.addLiteral(stringBuilder.toString(), false);?>
-               | hex                                        <?java charset.addLiteral(codepoint, true);?>
-               | range                                      <?java charset.addRange(firstCodepoint, lastCodepoint);?>
-               | class                                      <?java charset.addClass(clazz);?>
+       member::= string                                     <?java members.add(new StringMember(stringBuilder.toString(), false));?>
+               | hex                                        <?java members.add(new StringMember(codepoint, true));?>
+               | range                                      <?java members.add(new RangeMember(firstCodepoint, lastCodepoint));?>
+               | class                                      <?java members.add(new ClassMember(clazz));?>
         range::= from s '-' s to
          from::= character                                  <?java firstCodepoint = codepoint;?>
            to::= character                                  <?java lastCodepoint = codepoint;?>
@@ -922,11 +928,12 @@ namefollower^token << '.' 'x'
                                                             <?java
                                                                 private int hexBegin;
                                                                 private boolean deleted;
+                                                                private boolean exclusion;
                                                                 private String codepoint;
                                                                 private String firstCodepoint;
                                                                 private String lastCodepoint;
                                                                 private String clazz;
-                                                                private Charset charset;
+                                                                private java.util.List<Member> members;
                                                                 private Grammar grammar;
                                                                 private Mark mark;
                                                                 private java.util.Stack<Alts> alts = new java.util.Stack<>();

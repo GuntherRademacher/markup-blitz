@@ -68,7 +68,7 @@ public class GenerateAdditionalNames extends Visitor {
     String suffix = c.isDeleted()
         ? "deleted_chars"
         : "preserved_chars";
-    addAdditionalNames(c, getAdditionalName(originOf.apply(RangeSet.of(c)), c, suffix));
+    addAdditionalNames(c, getAdditionalName(originOf.apply(c.getRangeSet()), c, suffix));
   }
 
   @Override

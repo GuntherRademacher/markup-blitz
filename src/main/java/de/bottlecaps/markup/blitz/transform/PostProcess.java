@@ -6,17 +6,13 @@ import java.util.List;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
-import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
-import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
-import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class PostProcess extends Visitor {
@@ -97,16 +93,6 @@ public class PostProcess extends Visitor {
   @Override
   public void visit(Charset c) {
     visitPreOrder(c);
-    List<Member> members = c.getMembers();
-    if (members != null)
-      for (Member member : members)
-        member.accept(this);
-    visitPostOrder(c);
-  }
-
-  @Override
-  public void visit(ClassMember c) {
-    visitPreOrder(c);
     visitPostOrder(c);
   }
 
@@ -143,18 +129,6 @@ public class PostProcess extends Visitor {
   public void visit(Nonterminal n) {
     visitPreOrder(n);
     visitPostOrder(n);
-  }
-
-  @Override
-  public void visit(RangeMember r) {
-    visitPreOrder(r);
-    visitPostOrder(r);
-  }
-
-  @Override
-  public void visit(StringMember s) {
-    visitPreOrder(s);
-    visitPostOrder(s);
   }
 
   private void visitPreOrder(Node node) {

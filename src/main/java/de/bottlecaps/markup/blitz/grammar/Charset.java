@@ -1,57 +1,44 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.character.RangeSet.Builder;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
-  public static final Charset END = new Charset(true, false);
+  public static final Charset END = new Charset(true, RangeSet.builder().build());
 
   private final boolean deleted;
-  private final boolean exclusion;
-
-  private final List<Member> members;
   private final RangeSet rangeSet;
 
-  public Charset(boolean deleted, boolean exclusion) {
+  private final boolean exclusion;
+  private final List<Member> members;
+
+  private Charset(boolean deleted, RangeSet rangeSet, boolean exclusion, List<Member> members) {
     this.deleted = deleted;
     this.exclusion = exclusion;
-    this.members = new ArrayList<>();
-    this.rangeSet = null;
+    this.members = members;
+    this.rangeSet = rangeSet != null
+                  ? rangeSet
+                  : toRangeSet(exclusion, members);
+  }
+
+  public Charset(boolean deleted, boolean exclusion, List<Member> members) {
+    this(deleted, null, exclusion, members);
   }
 
   public Charset(boolean deleted, RangeSet rangeSet) {
-    this.deleted = deleted;
-    this.exclusion = false;
-    this.members = null;
-    this.rangeSet = rangeSet;
+    this(deleted, rangeSet, false, null);
   }
 
   public boolean isDeleted() {
     return deleted;
   }
 
-  public boolean isExclusion() {
-    return exclusion;
-  }
-
-  public List<Member> getMembers() {
-    return members;
-  }
-
   public RangeSet getRangeSet() {
     return rangeSet;
-  }
-
-  public void addLiteral(String literal, boolean isHex) {
-    members.add(new StringMember(literal, isHex));
-  }
-
-  public void addRange(String firstCodepoint, String lastCodepoint) {
-    members.add(new RangeMember(firstCodepoint, lastCodepoint));
   }
 
   @Override
@@ -59,23 +46,40 @@ public class Charset extends Term {
     v.visit(this);
   }
 
-  public void addClass(String clazz) {
-    members.add(new ClassMember(clazz));
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public Charset copy() {
-    Charset charset;
-    if (members == null) {
-     charset = new Charset(deleted, rangeSet);
+    return this;
+  }
+
+  private static RangeSet toRangeSet(boolean exclusion, List<Member> members) {
+    Builder builder = new Builder();
+    for (Member member : members) {
+      if (member instanceof StringMember) {
+        StringMember m = (StringMember) member;
+        String value = m.getValue();
+        if (m.isHex()) {
+          int codepoint = Integer.parseInt(value.substring(1), 16);
+          builder.add(codepoint);
+        }
+        else {
+          for (char chr : value.toCharArray())
+            builder.add(chr);
+        }
+      }
+      else if (member instanceof RangeMember) {
+        builder.add(((RangeMember) member).getRange());
+      }
+      else if (member instanceof ClassMember) {
+        RangeSet.of(((ClassMember) member).getValue()).forEach(builder::add);
+      }
+      else {
+        throw new IllegalStateException();
+      }
     }
-    else {
-      charset= new Charset(deleted, exclusion);
-      for (Member member : members)
-        charset.getMembers().add(member.copy());
-    }
-    return charset;
+    return exclusion
+         ? RangeSet.ALPHABET.minus(builder.build())
+         : builder.build();
   }
 
   @Override
@@ -94,8 +98,6 @@ public class Charset extends Term {
     final int prime = 31;
     int result = 1;
     result = prime * result + (deleted ? 1231 : 1237);
-    result = prime * result + (exclusion ? 1231 : 1237);
-    result = prime * result + ((members == null) ? 0 : members.hashCode());
     result = prime * result + ((rangeSet == null) ? 0 : rangeSet.hashCode());
     return result;
   }
@@ -109,14 +111,6 @@ public class Charset extends Term {
     Charset other = (Charset) obj;
     if (deleted != other.deleted)
       return false;
-    if (exclusion != other.exclusion)
-      return false;
-    if (members == null) {
-      if (other.members != null)
-        return false;
-    }
-    else if (!members.equals(other.members))
-      return false;
     if (rangeSet == null) {
       if (other.rangeSet != null)
         return false;
@@ -125,4 +119,5 @@ public class Charset extends Term {
       return false;
     return true;
   }
+
 }

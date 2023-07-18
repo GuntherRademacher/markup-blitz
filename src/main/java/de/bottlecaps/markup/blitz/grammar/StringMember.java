@@ -1,7 +1,5 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import de.bottlecaps.markup.blitz.transform.Visitor;
-
 public class StringMember extends Member {
   private final boolean isHex;
   private final String value;
@@ -17,11 +15,6 @@ public class StringMember extends Member {
 
   public String getValue() {
     return value;
-  }
-
-  @Override
-  public void accept(Visitor v) {
-    v.visit(this);
   }
 
   @Override

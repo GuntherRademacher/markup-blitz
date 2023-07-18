@@ -1,7 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
 import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class RangeMember extends Member {
   private final Range range;
@@ -29,11 +28,6 @@ public class RangeMember extends Member {
   @Override
   public String toString() {
     return range.toString();
-  }
-
-  @Override
-  public void accept(Visitor v) {
-    v.visit(this);
   }
 
   @Override

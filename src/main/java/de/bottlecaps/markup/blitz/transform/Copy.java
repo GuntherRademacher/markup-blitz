@@ -1,25 +1,19 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import java.util.List;
 import java.util.Stack;
 
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
-import de.bottlecaps.markup.blitz.grammar.ClassMember;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
-import de.bottlecaps.markup.blitz.grammar.Member;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
-import de.bottlecaps.markup.blitz.grammar.RangeMember;
 import de.bottlecaps.markup.blitz.grammar.Rule;
-import de.bottlecaps.markup.blitz.grammar.StringMember;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class Copy extends Visitor {
-  protected List<Member> members;
   protected final Stack<Alts> alts = new Stack<>();
   protected final Grammar copy = new Grammar();
 
@@ -84,32 +78,6 @@ public class Copy extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    final Charset set;
-    List<Member> cMembers = c.getMembers();
-    if (cMembers == null) {
-      set = new Charset(c.isDeleted(), c.getRangeSet());
-    }
-    else {
-      set = new Charset(c.isDeleted(), c.isExclusion());
-      members = set.getMembers();
-      for (Member member : cMembers)
-        member.accept(this);
-    }
-    alts.peek().last().getTerms().add(set);
-  }
-
-  @Override
-  public void visit(StringMember s) {
-    members.add(s.copy());
-  }
-
-  @Override
-  public void visit(RangeMember r) {
-    members.add(r.copy());
-  }
-
-  @Override
-  public void visit(ClassMember c) {
-    members.add(c.copy());
+    alts.peek().last().getTerms().add(c);
   }
 }

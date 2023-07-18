@@ -80,7 +80,7 @@ public class Generator {
     ci.collectFirst();
 
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
-    Integer endToken = ci.terminalCode.get(RangeSet.of(Charset.END));
+    Integer endToken = ci.terminalCode.get(Charset.END.getRangeSet());
     State initialState = ci.new State();
     initialState.put(startNode, TokenSet.of(endToken));
     initialState.id = 0;
@@ -323,7 +323,7 @@ public class Generator {
               transitions = nonterminalTransitions;
             }
             else if (node instanceof Charset) {
-              code = terminalCode.get(RangeSet.of((Charset) node));
+              code = terminalCode.get(((Charset) node).getRangeSet());
               transitions = terminalTransitions;
             }
             else {
@@ -520,7 +520,7 @@ public class Generator {
       }
       else if (node instanceof Charset) {
         //TODO: get rid of transformation to RangeSet
-        int code = terminalCode.get(RangeSet.of((Charset) node));
+        int code = terminalCode.get(((Charset) node).getRangeSet());
         toState = terminalTransitions.get(code);
       }
       else {
@@ -603,7 +603,7 @@ public class Generator {
               if (t instanceof Charset) {
                 if (initial) {
                   changed = true;
-                  first.put(t, TokenSet.of(terminalCode.get(RangeSet.of((Charset) t))));
+                  first.put(t, TokenSet.of(terminalCode.get(((Charset) t).getRangeSet())));
                 }
               }
               else if (t instanceof Nonterminal) {
@@ -696,7 +696,7 @@ public class Generator {
       terminalCodeByRange = new TreeMap<>();
 
       nonterminalCode.put(g.getRules().keySet().iterator().next(), nonterminalCode.size());
-      terminalCode.put(RangeSet.of(Charset.END), terminalCode.size());
+      terminalCode.put(Charset.END.getRangeSet(), terminalCode.size());
       super.visit(g);
       nonterminal = nonterminalCode.keySet().toArray(String[]::new);
       terminal = terminalCode.keySet().toArray(RangeSet[]::new);
@@ -713,7 +713,7 @@ public class Generator {
     @Override
     public void visit(Charset c) {
       // TODO: avoid transformation to RangeSet
-      RangeSet r = RangeSet.of(c);
+      RangeSet r = c.getRangeSet();
       if (! terminalCode.containsKey(r)) {
         int code = terminalCode.size();
         terminalCode.put(r, code);
