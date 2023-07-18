@@ -73,25 +73,11 @@ public class CombineCharsets extends Copy {
     collectRanges(charsetToCharclasses);
 
     System.out.println();
-    System.out.println("term: rangeSet");
-    System.out.println("--------------");
-    allRangeSets.keySet().stream().forEach(k -> {
-      System.out.println(k + ": " + allRangeSets.get(k));
-    });
-
-    System.out.println();
-    System.out.println("range: users");
-    System.out.println("------------");
-    rangeToUsingSets.keySet().stream().sorted().forEach(k -> {
-      System.out.println(k + ": " + rangeToUsingSets.get(k));
-    });
-
-    System.out.println();
-    System.out.println("users: charClass");
-    System.out.println("----------------");
-    usingSetsToCharclasses.forEach((k, v) -> {
-      System.out.println(k + ": " + v);
-    });
+    System.out.println("number of charClasses: " + usingSetsToCharclasses.size());
+    System.out.println("----------------------");
+    RangeSet[] charClass = usingSetsToCharclasses.values().stream().sorted().toArray(RangeSet[]::new);
+    for (int i = 0; i < charClass.length; ++i)
+      System.out.println(i + ": " + charClass[i]);
 
     return ReplaceCharsets.process(copy, charsetToCharclasses);
   }
