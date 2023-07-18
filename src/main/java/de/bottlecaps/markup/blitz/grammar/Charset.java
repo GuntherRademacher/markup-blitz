@@ -82,7 +82,7 @@ public class Charset extends Term {
   public String toString() {
     String prefix = (deleted ? "-" : "")
                   + (exclusion ? "~" : "");
-    return prefix + (this.equals(END) && grammar.getAdditionalNames() != null
+    return prefix + (this.equals(END) && grammar != null && grammar.getAdditionalNames() != null
         ? grammar.getAdditionalNames().get(END)[0]
         : members != null
           ? members.stream().map(Member::toString).collect(Collectors.joining("; ", "[", "]"))
