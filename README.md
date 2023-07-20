@@ -6,11 +6,7 @@ The algorithms used are
 * [LALR(1)][LALR] for parser table construction, and
 * [GLR][GLR] for dynamic conflict resolution.
 
-Markup Blitz is still under development. 
-
-Markup Blitz also uses concepts from [REx Parser Generator][REx], and as with REx, the goal is to provide good performance. In general, however, REx parsers can be expected to perform much better. This is primarily because REx allows separating the specification into tokenization and parsing steps. This is in contrast to Invisible XML, which uses a uniform grammar to resolve from the start symbol down to codepoint level. Separate tokenization enables the use of algorithms optimized for this purpose, the establishment of token termination rules, and the easy accommodation of whitespace rules. Without it, all this has to be accomplished by the parser, which often leads to costly handling of local ambiguities.
-
-Some performance comparison of REx-generated parsers and Invisible XML parsers can be found in the [rex-parser-benchmark][rex-parser-benchmark] project. It will soon be extended to cover Markup Blitz as well.
+Markup Blitz also uses concepts from [REx Parser Generator][REx].
 
 ## Building Markup Blitz
 
@@ -45,6 +41,12 @@ Usage: java de.bottlecaps.markup.Blitz [<OPTION>...] <GRAMMAR> <INPUT>
     -t, --trace      print parser trace (to standard error).
     -?, -h, --help   print this information.
 ```
+
+## Performance
+
+As with [REx Parser Generator][REx], the goal of Markup Blitz is to provide good performance. In general, however, REx parsers can be expected to perform much better. This is primarily because REx allows separating the specification into tokenization and parsing steps. This is in contrast to Invisible XML, which uses a uniform grammar to resolve from the start symbol down to codepoint level. Separate tokenization enables the use of algorithms optimized for this purpose, the establishment of token termination rules, and the easy accommodation of whitespace rules. Without it, all this has to be accomplished by the parser, which often leads to costly handling of local ambiguities.
+
+Some performance comparison of REx-generated parsers and Invisible XML parsers can be found in the [rex-parser-benchmark][rex-parser-benchmark] project. It will soon be extended to cover Markup Blitz as well.
 
 ## License
 

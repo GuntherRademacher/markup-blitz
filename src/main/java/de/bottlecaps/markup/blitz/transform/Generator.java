@@ -105,6 +105,12 @@ public class Generator {
     // report status
 
     if (ci.verbose) {
+      System.out.println();
+      System.out.println("BNF grammar:");
+      System.out.println("------------");
+      System.out.println(g);
+
+      System.out.println();
       System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
       System.out.println(ci.reduceArguments.length + " reduce arguments");
       System.out.println(ci.forks.length / 2 + " forks");

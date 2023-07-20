@@ -167,7 +167,7 @@ public class Parser
           writeOutput("\n");
           for (int i = 0; i < depth; ++i)
           {
-            writeOutput("  ");
+            writeOutput("   ");
           }
         }
         writeOutput("<");
@@ -195,7 +195,7 @@ public class Parser
               writeOutput("\n");
               for (int i = 0; i < depth; ++i)
               {
-                writeOutput("  ");
+                writeOutput("   ");
               }
             }
           }
@@ -861,11 +861,8 @@ public class Parser
     }
 
     private int match() {
-      if (trace) {
-        writeTrace("  <tokenize thread=\"" + id + "\">\n");
-        writeTrace("    <next");
-        writeTrace(" offset=\"" + end + "\"");
-      }
+      if (trace)
+        writeTrace("  <tokenize thread=\"" + id + "\" offset=\"" + end + "\"");
 
       begin = end;
       final int charclass;
@@ -909,22 +906,17 @@ public class Parser
         if (c1 >= 0)
           writeTrace(" codepoint=\"" + c1 + "\"");
         writeTrace(" class=\"" + charclass + "\"");
-        writeTrace("/>\n");
       }
 
       if (charclass < 0) {
-        if (trace) {
-          writeTrace("    <fail begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
-          writeTrace("  </tokenize>\n");
-        }
+        if (trace)
+          writeTrace(" status=\"fail\" end=\"" + end + "\"/>\n");
         end = begin;
         return -1;
       }
 
-      if (trace) {
-        writeTrace("    <done result=\"" + xmlEscape(terminal[charclass].shortName()) + "\" begin=\"" + begin + "\" end=\"" + end + "\"/>\n");
-        writeTrace("  </tokenize>\n");
-      }
+      if (trace)
+        writeTrace(" status=\"success\" result=\"" + xmlEscape(terminal[charclass].shortName()) + "\" end=\"" + end + "\"/>\n");
       return charclass;
     }
   }

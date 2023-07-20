@@ -1,12 +1,29 @@
 package de.bottlecaps.markup;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.junit.jupiter.api.Test;
+
+import de.bottlecaps.markup.blitz.parser.Parser;
+
 public class BlitzTest {
-  public static String resourceContent(String resource) throws IOException, MalformedURLException {
+  public static String resourceContent(String resource) {
     URL url = BlitzTest.class.getClassLoader().getResource(resource);
-    return Blitz.urlContent(url);
+    try {
+      return Blitz.urlContent(url);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  @Test
+  public void testAddress() {
+    Parser parser = Blitz.generate(resourceContent("address.ixml"), BlitzOption.VERBOSE, BlitzOption.TRACE);
+    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT, BlitzOption.TRACE);
+    assertEquals(resourceContent("address.xml"), xml);
   }
 }
