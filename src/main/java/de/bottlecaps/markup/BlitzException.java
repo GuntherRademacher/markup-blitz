@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz;
+package de.bottlecaps.markup;
 
 public class BlitzException extends RuntimeException {
   private static final long serialVersionUID = 1L;

@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz;
+package de.bottlecaps.markup;
 
 public enum BlitzOption {
   VERBOSE,

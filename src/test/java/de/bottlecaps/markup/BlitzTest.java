@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz;
+package de.bottlecaps.markup;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

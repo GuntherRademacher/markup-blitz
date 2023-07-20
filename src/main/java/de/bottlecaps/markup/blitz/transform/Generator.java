@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.bottlecaps.markup.blitz.BlitzOption;
+import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;

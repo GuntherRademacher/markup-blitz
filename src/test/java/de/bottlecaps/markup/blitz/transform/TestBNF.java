@@ -1,6 +1,6 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import static de.bottlecaps.markup.blitz.Blitz.resourceContent;
+import static de.bottlecaps.markup.Blitz.resourceContent;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

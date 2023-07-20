@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz;
+package de.bottlecaps.markup;
 
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 
@@ -53,8 +53,8 @@ public class Blitz {
     System.err.println("  <INPUT>            the input (file name or URL).");
     System.err.println();
     System.err.println("  Options:");
-    System.err.println("    -v, --verbose    print intermediate results to standard output.");
-    System.err.println("    -t, --trace      print parser trace to standard error.");
+    System.err.println("    -v, --verbose    print intermediate results (to standard output).");
+    System.err.println("    -t, --trace      print parser trace (to standard error).");
     System.err.println("    -?, -h, --help   print this information.");
     System.err.println();
     System.err.println();

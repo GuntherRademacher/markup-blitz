@@ -12,8 +12,8 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Stack;
 
-import de.bottlecaps.markup.blitz.BlitzException;
-import de.bottlecaps.markup.blitz.BlitzOption;
+import de.bottlecaps.markup.BlitzException;
+import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
