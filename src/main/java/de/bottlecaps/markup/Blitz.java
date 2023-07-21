@@ -27,6 +27,8 @@ public class Blitz {
         options.add(BlitzOption.VERBOSE);
       else if (args[i].equals("-t") || args[i].equals("--trace"))
         options.add(BlitzOption.TRACE);
+      else if (args[i].equals("-i") || args[i].equals("--indent"))
+        options.add(BlitzOption.INDENT);
       else if (args[i].equals("-?") || args[i].equals("--help"))
         usage(0);
       else if (args[i].startsWith("-"))
@@ -55,6 +57,7 @@ public class Blitz {
     System.err.println("  Options:");
     System.err.println("    -v, --verbose    print intermediate results (to standard output).");
     System.err.println("    -t, --trace      print parser trace (to standard error).");
+    System.err.println("    -i, --indent     generate resulting xml with indentation.");
     System.err.println("    -?, -h, --help   print this information.");
     System.err.println();
     System.err.println();

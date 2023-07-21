@@ -20,16 +20,22 @@ public class TestCoffee {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
   private static final String jsonResource = "sample.json";
+  private static final String addressIxmlResource = "address.ixml";
+  private static final String addressResource = "address.input";
 
   private static String ixmlIxmlResourceContent;
   private static String jsonIxmlResourceContent;
   private static String jsonResourceContent;
+  private static String addressIxmlResourceContent;
+  private static String addressResourceContent;
 
   @BeforeAll
   public static void beforeAll() throws URISyntaxException, IOException {
     ixmlIxmlResourceContent = resourceContent(ixmlResource);
     jsonIxmlResourceContent = resourceContent(jsonIxmlResource);
     jsonResourceContent = resourceContent(jsonResource);
+    addressIxmlResourceContent = resourceContent(addressIxmlResource);
+    addressResourceContent = resourceContent(addressResource);
   }
 
   @Test
@@ -51,6 +57,17 @@ public class TestCoffee {
     Grammar bnf = BNF.process(grammar);
 
     String equivalentResult = runCoffee(bnf.toString(), jsonResourceContent);
+    assertEquals(originalResult, equivalentResult);
+  }
+
+  @Test
+  public void testAddressResource() throws Exception {
+    String originalResult = runCoffee(addressIxmlResourceContent, addressResourceContent);
+
+    Grammar grammar = Ixml.parse(addressIxmlResourceContent);
+    Grammar bnf = BNF.process(grammar);
+
+    String equivalentResult = runCoffee(bnf.toString(), addressResourceContent);
     assertEquals(originalResult, equivalentResult);
   }
 

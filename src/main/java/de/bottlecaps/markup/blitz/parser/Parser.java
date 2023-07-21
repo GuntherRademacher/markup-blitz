@@ -162,7 +162,7 @@ public class Parser
           writeOutput(">");
         }
         delayedTag = name;
-        if (indent)
+        if (indent && depth > 0)
         {
           writeOutput("\n");
           for (int i = 0; i < depth; ++i)

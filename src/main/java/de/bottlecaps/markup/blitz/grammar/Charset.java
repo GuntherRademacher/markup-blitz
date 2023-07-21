@@ -49,7 +49,7 @@ public class Charset extends Term {
   @SuppressWarnings("unchecked")
   @Override
   public Charset copy() {
-    return this;
+    return new Charset(deleted, rangeSet, exclusion, members);
   }
 
   private static RangeSet toRangeSet(boolean exclusion, List<Member> members) {

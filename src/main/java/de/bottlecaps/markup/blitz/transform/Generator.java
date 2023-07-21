@@ -257,7 +257,7 @@ public class Generator {
           .collect(Collectors.toCollection(LinkedList::new));
       for (Map.Entry<Node, TokenSet> item; null != (item = todo.poll()); ) {
         Node node = item.getKey();
-        if (node instanceof Nonterminal) {
+        if (node instanceof Nonterminal) { // TODO: isn't this check superfluous?
           TokenSet lookahead = item.getValue();
           Node next = node.getNext();
           if (next != null)
@@ -525,7 +525,6 @@ public class Generator {
         toState = nonterminalTransitions.get(code);
       }
       else if (node instanceof Charset) {
-        //TODO: get rid of transformation to RangeSet
         int code = terminalCode.get(((Charset) node).getRangeSet());
         toState = terminalTransitions.get(code);
       }
@@ -560,12 +559,16 @@ public class Generator {
         })
         .collect(Collectors.joining(", ")));
       sb.append("}] ");
-      final Action action = action(node);
-      sb.append(action);
-      if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
-        sb.append(" (")
-          .append(Generator.this.toString(reduceArguments[action.getArgument()]))
-          .append(")");
+      if (nonterminalTransitions != null &&
+          terminalTransitions != null
+          ) {
+        final Action action = action(node);
+        sb.append(action);
+        if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
+          sb.append(" (")
+            .append(Generator.this.toString(reduceArguments[action.getArgument()]))
+            .append(")");
+      }
       return sb.toString();
     }
 
@@ -718,7 +721,6 @@ public class Generator {
 
     @Override
     public void visit(Charset c) {
-      // TODO: avoid transformation to RangeSet
       RangeSet r = c.getRangeSet();
       if (! terminalCode.containsKey(r)) {
         int code = terminalCode.size();
