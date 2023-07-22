@@ -5,6 +5,7 @@ import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,6 +21,8 @@ import de.bottlecaps.markup.blitz.transform.Generator;
 
 public class Blitz {
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
+    System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+
     Set<BlitzOption> options = new HashSet<>();
     int i = 0;
     for (; i < args.length; ++i) {
@@ -43,13 +46,17 @@ public class Blitz {
     String input = args[i + 1];
 
     Parser parser = generate(urlContent(url(grammar)), options.toArray(BlitzOption[]::new));
-    parser.parse(urlContent(url(input)));
+    String result = parser.parse(urlContent(url(input)));
+    System.out.print("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+    if (options.contains(BlitzOption.INDENT))
+      System.out.println();
+    System.out.print(result);
   }
 
   private static void usage(int exitCode) {
     System.err.println("Usage: java " + Blitz.class.getName() + " [<OPTION>...] <GRAMMAR> <INPUT>");
     System.err.println();
-    System.err.println("  compile an Invisible XML grammar, and parse input with the resulting parser.");
+    System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
     System.err.println("  <GRAMMAR>          the grammar (file name or URL).");
     System.err.println("  <INPUT>            the input (file name or URL).");

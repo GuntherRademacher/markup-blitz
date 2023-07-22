@@ -30,7 +30,6 @@ public class GenerateAdditionalNames extends Visitor {
     this.grammar = grammar;
     this.originOf = originOf;
     this.nameByRhs = new HashMap<>();
-    grammar.setAdditionalNames(new HashMap<>());
   }
 
   @Override
@@ -60,7 +59,7 @@ public class GenerateAdditionalNames extends Visitor {
   }
 
   private void addAdditionalNames(Term t, String... names) {
-    grammar.getAdditionalNames().put(t, names);
+    grammar.getAdditionalNames().putIfAbsent(t, names);
   }
 
   @Override

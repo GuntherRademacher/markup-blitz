@@ -57,6 +57,7 @@ public class CombineCharsets extends Copy {
     originToChars = new HashMap<>();
     allRangeSets = new HashMap<>();
     builder = new RangeSet.Builder();
+    g.setAdditionalNames(new HashMap<>());
 
     Rule firstRule = g.getRules().values().iterator().next();
     done.add(firstRule.getName());
@@ -67,6 +68,7 @@ public class CombineCharsets extends Copy {
       done.add(name);
       visit(g.getRules().get(name));
     }
+    copy.setAdditionalNames(g.getAdditionalNames());
     PostProcess.process(copy);
 
     Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
@@ -150,7 +152,8 @@ public class CombineCharsets extends Copy {
     Charset charset = CharsetCollector.collect(n);
     if (charset != null) {
       alts.peek().last().getTerms().add(charset);
-      collect(charset.getRangeSet().join(), charset, n.getName());
+      collect(charset.getRangeSet(), charset, n.getName());
+      n.getGrammar().getAdditionalNames().put(charset, new String[] {n.getName()});
     }
     else {
       if (! done.contains(n.getName()))
@@ -407,6 +410,7 @@ public class CombineCharsets extends Copy {
       ReplaceCharsets rc = new ReplaceCharsets();
       rc.charsetToCharclasses = charsetToCharclasses;
       rc.visit(g);
+      rc.copy.setAdditionalNames(g.getAdditionalNames());
       PostProcess.process(rc.copy);
       return rc.copy;
     }
@@ -414,7 +418,6 @@ public class CombineCharsets extends Copy {
     @Override
     public void visit(Charset c) {
       Set<RangeSet> rangeSets = charsetToCharclasses.get(c);
-
       if (rangeSets.size() == 1) {
         RangeSet firstSet = rangeSets.iterator().next();
         alts.peek().last().getTerms().add(firstSet.toCharset(c.isDeleted()));
@@ -427,6 +430,9 @@ public class CombineCharsets extends Copy {
           a.addAlt(alt);
         }
         alts.peek().last().getTerms().add(a);
+        String[] name = c.getGrammar().getAdditionalNames().get(c);
+        if (name != null)
+          c.getGrammar().getAdditionalNames().put(a, name);
       }
     }
   }

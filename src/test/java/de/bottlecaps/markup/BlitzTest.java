@@ -22,8 +22,8 @@ public class BlitzTest {
 
   @Test
   public void testAddress() {
-    Parser parser = Blitz.generate(resourceContent("address.ixml"), BlitzOption.VERBOSE, BlitzOption.TRACE);
-    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT, BlitzOption.TRACE);
+    Parser parser = Blitz.generate(resourceContent("address.ixml"));
+    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT);
     assertEquals(resourceContent("address.xml"), xml);
   }
 }
