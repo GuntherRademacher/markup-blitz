@@ -75,6 +75,13 @@ public class Generator {
     ci.verbose = options.contains(BlitzOption.VERBOSE);
     ci.grammar = g;
 
+    if (ci.verbose) {
+      System.out.println();
+      System.out.println("BNF grammar:");
+      System.out.println("------------");
+      System.out.println(g);
+    }
+
     ci.new SymbolCodeAssigner().visit(g);
     ci.reduceArguments = ci.reduceArguments();
     ci.collectFirst();
@@ -105,11 +112,6 @@ public class Generator {
     // report status
 
     if (ci.verbose) {
-      System.out.println();
-      System.out.println("BNF grammar:");
-      System.out.println("------------");
-      System.out.println(g);
-
       System.out.println();
       System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
       System.out.println(ci.reduceArguments.length + " reduce arguments");
@@ -249,8 +251,6 @@ public class Generator {
     }
 
     public void close() {
-      if (closure != null)
-        return;
       closure = new IdentityHashMap<>();
       Deque<Map.Entry<Node, TokenSet>> todo = kernel.entrySet().stream()
           .filter(e -> e.getKey() instanceof Nonterminal)
@@ -371,11 +371,7 @@ public class Generator {
               transitions.put(code, state);
               for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
                 if (state.kernel.get(k.getKey()).addAll(k.getValue())) {
-                  if (state.closure != null)
-                    state.closure = null;
-                    state.nonterminalTransitions = null;
-                    state.terminalTransitions = null;
-                    statesTodo.add(state);
+                  statesTodo.add(state);
                 }
               }
             }

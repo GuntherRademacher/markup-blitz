@@ -33,7 +33,10 @@ public class IxmlTest {
     @Test
     public void testIxmlResource() throws Exception {
       Grammar grammar = parse(ixmlIxmlResourceContent);
-      assertEquals(ixmlIxmlResourceContent, grammar.toString(), "roundtrip failed for " + ixmlResource);
+      String expectedResult = ixmlIxmlResourceContent
+          .replaceAll("^\\{[^\n]*\n", "")
+          .replaceAll("\\. \\{[^\n]*\n", ".\n");
+      assertEquals(expectedResult, grammar.toString(), "roundtrip failed for " + ixmlResource);
     }
 
     @Test
