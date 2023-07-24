@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class Generator {
 
   private Map<Node, TokenSet> first = new IdentityHashMap<>();
   private Map<State, State> states = new LinkedHashMap<>();
-  private Deque<State> statesTodo = new LinkedList<>();
+  private Set<State> statesTodo = new LinkedHashSet<>();
 
   private Map<Integer, Integer> forkId;
   private int[] forks;
@@ -92,7 +93,7 @@ public class Generator {
     initialState.put(startNode, TokenSet.of(endToken));
     initialState.id = 0;
     ci.states.put(initialState, initialState);
-    ci.statesTodo.offer(initialState);
+    ci.statesTodo.add(initialState);
 
     ci.forks = new int[32];
     Comparator<Integer> forkComparator = (lhs, rhs) ->
@@ -100,7 +101,8 @@ public class Generator {
     ci.forkId = new TreeMap<>(forkComparator);
 
     while (! ci.statesTodo.isEmpty()) {
-      State s = ci.statesTodo.poll();
+      State s = ci.statesTodo.iterator().next();
+      ci.statesTodo.remove(s);
       s.close();
       s.transitions();
     }

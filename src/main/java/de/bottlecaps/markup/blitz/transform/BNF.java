@@ -1,11 +1,13 @@
 package de.bottlecaps.markup.blitz.transform;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -33,23 +35,40 @@ public class BNF extends Visitor {
   }
 
   public static Grammar process(Grammar g) {
-    return process(g, false);
+    return process(g, Collections.emptySet());
   }
 
-  public static Grammar process(Grammar g, boolean isolateCharsets) {
-    CombineCharsets cc = new CombineCharsets();
-    Grammar grammar = cc.combine(g);
+  public static Grammar process(Grammar g, Set<BlitzOption> options) {
+    return process(g, false, options);
+  }
 
+  public static Grammar process(Grammar g, boolean isolateCharsets, Set<BlitzOption> options) {
+    long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
+    boolean timing = options.contains(BlitzOption.TIMING);
+
+    if (timing)
+      t0 = System.currentTimeMillis();
+    CombineCharsets cc = new CombineCharsets();
+    Grammar grammar = cc.combine(g, options);
+
+    if (timing)
+      t1 = System.currentTimeMillis();
     GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar, r -> cc.smallestUsingNonterminal(r.iterator().next()));
     generateNames.visit(grammar);
 
+    if (timing)
+      t2 = System.currentTimeMillis();
     BNF bnf = new BNF(grammar, isolateCharsets);
     bnf.visit(grammar);
-
     bnf.copy.setAdditionalNames(grammar.getAdditionalNames());
     PostProcess.process(bnf.copy);
 
-//    System.out.println("-------REx:\n" + ToREx.process(bnf.copy, generateNames.getAdditionalNames()));
+    if (timing) {
+      t3 = System.currentTimeMillis();
+      System.err.println("                                charset combination time: " + (t1 - t0) + " msec");
+      System.err.println("                                    name generation time: " + (t2 - t1) + " msec");
+      System.err.println("                                                BNF time: " + (t3 - t2) + " msec");
+    }
 
     return bnf.copy;
   }

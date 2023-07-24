@@ -15,10 +15,11 @@ import java.util.TreeMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 
-public class TileIteratorTest {
+public class TileIteratorTest extends TestBase {
   private Random random;
   private String msgPrefix;
 
@@ -205,30 +206,6 @@ public class TileIteratorTest {
         n /= i;
       }
     return primeFactors;
-  }
-
-  public static List<Range> transformIntegerToBitRanges(int num) {
-    List<Range> bitRanges = new ArrayList<>();
-    int start = -1;
-    int end = -1;
-    int bitPosition = 0;
-    while (num > 0) {
-      if ((num & 1) == 1) {
-        if (start == -1)
-          start = bitPosition;
-        end = bitPosition;
-      }
-      else if (start != -1) {
-        bitRanges.add(new Range(start, end));
-        start = -1;
-        end = -1;
-      }
-      num >>= 1;
-      ++bitPosition;
-    }
-    if (start != -1)
-      bitRanges.add(new Range(start, end));
-    return bitRanges;
   }
 
   private void test2D(int[] data, int bits, int defaultValue) {

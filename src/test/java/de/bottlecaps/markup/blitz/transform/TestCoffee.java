@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ public class TestCoffee {
     String originalResult = runCoffee(ixmlIxmlResourceContent, ixmlIxmlResourceContent);
 
     Grammar grammar = Ixml.parse(ixmlIxmlResourceContent);
-    Grammar bnf = BNF.process(grammar, true); // need to isolate charsets here, otherwise we risk an OOME
+    Grammar bnf = BNF.process(grammar, true, Collections.emptySet()); // need to isolate charsets here, otherwise we risk an OOME
 
     String equivalentResult = runCoffee(bnf.toString(), ixmlIxmlResourceContent);
     assertEquals(originalResult, equivalentResult);

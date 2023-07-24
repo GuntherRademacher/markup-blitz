@@ -409,6 +409,8 @@ public class Parser
         ? defaultOptions
         : Set.of(options);
 
+    long t0 = System.currentTimeMillis();
+
     boolean indent = currentOptions.contains(BlitzOption.INDENT);
     StringWriter w = new StringWriter(string.length());
     XmlSerializer s = new XmlSerializer(w, indent);
@@ -449,7 +451,13 @@ public class Parser
     }
 
     b.serialize(s);
-    return w.toString();
+    String result = w.toString();
+
+    if (currentOptions.contains(BlitzOption.TIMING)) {
+      long t1 = System.currentTimeMillis();
+      System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
+    }
+    return result;
   }
 
   private static class StackNode {

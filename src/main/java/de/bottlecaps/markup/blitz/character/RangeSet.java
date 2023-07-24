@@ -34,6 +34,27 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     return builder.build().join();
   }
 
+  public RangeSet intersection(RangeSet rangeSet) {
+    Builder builder = new Builder();
+    Iterator<Range> lhsIt = rangeSet.join().iterator();
+    Range lhs = lhsIt.hasNext() ? lhsIt.next() : null;
+    Iterator<Range> rhsIt = join().iterator();
+    Range rhs = rhsIt.hasNext() ? rhsIt.next() : null;
+    while (lhs != null && rhs != null) {
+      if (lhs.overlaps(rhs)) {
+        builder.add(Math.max(lhs.getFirstCodepoint(), rhs.getFirstCodepoint()),
+                    Math.min(lhs.getLastCodepoint(),  rhs.getLastCodepoint()));
+      }
+      else if (lhs.getLastCodepoint() < rhs.getLastCodepoint()) {
+        lhs = lhsIt.hasNext() ? lhsIt.next() : null;
+      }
+      else {
+        rhs = rhsIt.hasNext() ? rhsIt.next() : null;
+      }
+    }
+    return builder.build().join();
+  }
+
   public RangeSet minus(RangeSet rangeSet) {
     Iterator<Range> removeIt = rangeSet.join().iterator();
     Range remove = removeIt.hasNext() ? removeIt.next() : null;
@@ -212,11 +233,14 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     }
 
     public RangeSet build() {
+      ++buildCalls;
       RangeSet result = set;
       set = null;
       return result;
     }
   }
+
+  public static int buildCalls = 0;
 
   public static RangeSet of(Range... ranges) {
     Builder builder = new Builder();

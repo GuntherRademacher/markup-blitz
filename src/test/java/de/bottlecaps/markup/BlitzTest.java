@@ -2,28 +2,16 @@ package de.bottlecaps.markup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.net.URL;
-
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.parser.Parser;
 
-public class BlitzTest {
-  public static String resourceContent(String resource) {
-    URL url = BlitzTest.class.getClassLoader().getResource(resource);
-    try {
-      return Blitz.urlContent(url);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }
-  }
+public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = Blitz.generate(resourceContent("ixml.ixml"));
-    String xml = parser.parse(resourceContent("ixml.ixml"), BlitzOption.INDENT);
+    Parser parser = Blitz.generate(resourceContent("ixml.ixml"), BlitzOption.INDENT, BlitzOption.TIMING);
+    String xml = parser.parse(resourceContent("ixml.ixml"));
     assertEquals(resourceContent("ixml.xml"), xml);
   }
 
@@ -36,7 +24,7 @@ public class BlitzTest {
 
   @Test
   public void testJson() {
-    Parser parser = Blitz.generate(resourceContent("json.ixml"));
+    Parser parser = Blitz.generate(resourceContent("json.ixml"), BlitzOption.TIMING);
     String result = parser.parse(resourceContent("sample.json"));
     String expectedResult = "<json><map><member><key>string</key><value><string>Hello, World!</string></value></member><member><key>number</key><value><number>42</number></value></member><member><key>boolean</key><value><boolean>true</boolean></value></member><member><key>nullValue</key><value><null/></value></member><member><key>arrayEmpty</key><value><array/></value></member><member><key>arraySingle</key><value><array><number>1</number></array></value></member><member><key>arrayMultiple</key><value><array><number>1</number><number>2</number></array></value></member><member><key>object</key><value><map><member><key>property</key><value><string>value</string></value></member></map></value></member><member><key>escapedString</key><value><string>This string contains escape sequences: \\\" \\\\ \\/ \\b \\f \\n \\r \\t</string></value></member><member><key>unicodeString</key><value><string><unicode code=\"20AC\"/></string></value></member></map></json>";
     assertEquals(expectedResult, result);
@@ -288,8 +276,7 @@ public class BlitzTest {
         + "number: @value.\n"
         + "value: digit+.\n"
         + "-letter: [\"a\"-\"z\"].\n"
-        + "-digit: [\"0\"-\"9\"].",
-        BlitzOption.VERBOSE);
+        + "-digit: [\"0\"-\"9\"].");
     String result = parser.parse(
         "pi+(10\u00d7b)",
         BlitzOption.INDENT);

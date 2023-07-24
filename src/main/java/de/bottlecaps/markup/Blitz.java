@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.transform.BNF;
@@ -62,10 +63,11 @@ public class Blitz {
     System.err.println("  <INPUT>            the input (file name or URL).");
     System.err.println();
     System.err.println("  Options:");
-    System.err.println("    -v, --verbose    print intermediate results (to standard output).");
-    System.err.println("    -t, --trace      print parser trace (to standard error).");
-    System.err.println("    -i, --indent     generate resulting xml with indentation.");
-    System.err.println("    -?, -h, --help   print this information.");
+    System.err.println("    -v,     --verbose   print intermediate results (to standard output).");
+    System.err.println("            --timing    print timing information (to standard output).");
+    System.err.println("    -i,     --indent    generate resulting xml with indentation.");
+    System.err.println("            --trace     print parser trace (to standard error).");
+    System.err.println("    -?, -h, --help      print this information.");
     System.err.println();
     System.err.println();
     System.exit(exitCode);
@@ -102,8 +104,26 @@ public class Blitz {
   }
 
   public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
+    long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
+    Set<BlitzOption> options = Set.of(blitzOptions);
+    boolean timing = options.contains(BlitzOption.TIMING);
+    if (timing)
+      t0 = System.currentTimeMillis();
     Grammar tree = parse(grammar);
-    Grammar bnf = BNF.process(tree);
-    return Generator.generate(bnf, Set.of(blitzOptions));
+    if (timing)
+      t1 = System.currentTimeMillis();
+    Grammar bnf = BNF.process(tree, options);
+    if (timing)
+      t2 = System.currentTimeMillis();
+    Parser parser = Generator.generate(bnf, options);
+    if (timing) {
+      t3 = System.currentTimeMillis();
+      System.err.println("             parsing time: " + (t1 - t0) + " msec");
+      System.err.println("  BNF transformation time: " + (t2 - t1) + " msec");
+      System.err.println("LALR(1) construction time: " + (t3 - t2) + " msec");
+      System.err.println("     RangeSet build calls: " + RangeSet.buildCalls);
+      RangeSet.buildCalls = 0;
+    }
+    return parser;
   }
 }
