@@ -48,17 +48,23 @@ public class IxmlTest {
     @Test
     @Disabled
     public void testGithubJsonIxmlUrl() throws Exception {
-      testUrlContent(githubJsonIxmlUrl, jsonIxmlResource, jsonIxmlResourceContent);
+      String expectedResult = jsonIxmlResourceContent
+          .replaceAll("^\\{[^\n]*\n", "")
+          .replaceAll("\\. \\{[^\n]*\n", ".\n");
+      testUrlContent(githubJsonIxmlUrl, jsonIxmlResource, expectedResult);
     }
 
     @Test
     @Disabled
     public void testInvisiblexmlOrgUrlContent() throws Exception {
-      testUrlContent(invisiblexmlOrgUrl, ixmlResource, ixmlIxmlResourceContent);
+      String expectedResult = ixmlIxmlResourceContent
+          .replaceAll("^\\{[^\n]*\n", "")
+          .replaceAll("\\. \\{[^\n]*\n", ".\n");
+      testUrlContent(invisiblexmlOrgUrl, ixmlResource, expectedResult);
     }
 
-    private void testUrlContent(String url, String resource, String resourceContent) throws IOException, MalformedURLException {
+    private void testUrlContent(String url, String resource, String expectedResult) throws IOException, MalformedURLException {
       Grammar grammar = Ixml.parse(urlContent(new URL(url)));
-      assertEquals(resourceContent, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
+      assertEquals(expectedResult, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
     }
 }

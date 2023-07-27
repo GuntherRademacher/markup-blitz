@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.character.RangeSet;
-import de.bottlecaps.markup.blitz.character.RangeSet.Builder;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -549,26 +548,12 @@ public class TestBNF {
     }
 
     private void check(RangeSet rangeSet) {
-      assertEquals(rangeSet, rangeSet.join());
+      int charCountWithout = allChars.charCount();
+      RangeSet union = allChars.union(rangeSet);
+      int charCountWith = union.charCount();
 
-      int sizeWithout = allChars.size();
-      int charCountWithout = allChars.join().charCount();
-
-      Builder builder = new Builder();
-      allChars.stream().forEach(builder::add);
-      rangeSet.stream().forEach(builder::add);
-      RangeSet union = builder.build();
-
-      int sizeWith = union.size();
-      int charCountWith = union.join().charCount();
-
-      if (sizeWithout == sizeWith) {
-        assertEquals(charCountWithout, charCountWith);
-      }
-      else {
-        assertEquals(sizeWithout + rangeSet.size(), sizeWith);
+      if (charCountWithout != charCountWith)
         assertEquals(charCountWithout + rangeSet.charCount(), charCountWith);
-      }
 
       allChars = union;
     }

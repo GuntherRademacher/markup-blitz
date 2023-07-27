@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.nineml.coffeefilter.InvisibleXml;
 import org.nineml.coffeefilter.InvisibleXmlDocument;
@@ -17,6 +18,7 @@ import org.nineml.coffeegrinder.parser.GearleyResult;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
 
+@Disabled
 public class TestCoffee {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";

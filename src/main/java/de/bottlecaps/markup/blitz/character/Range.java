@@ -23,6 +23,10 @@ public class Range implements Comparable<Range> {
     return lastCodepoint;
   }
 
+  public boolean isSingleton() {
+    return firstCodepoint == lastCodepoint;
+  }
+
   public boolean overlaps(Range other) {
     return firstCodepoint <= other.lastCodepoint
         && lastCodepoint >= other.firstCodepoint;
@@ -73,7 +77,9 @@ public class Range implements Comparable<Range> {
 
   private String toJava(int codepoint) {
     if (codepoint == '\'')
-      return "";
+      return "'\\''";
+    else if (codepoint == '\\')
+      return "'\\\\'";
     else if (isAscii(codepoint))
       return "'" + (char) codepoint + "'";
     else
@@ -119,4 +125,5 @@ public class Range implements Comparable<Range> {
   public int size() {
     return lastCodepoint - firstCodepoint + 1;
   }
+
 }

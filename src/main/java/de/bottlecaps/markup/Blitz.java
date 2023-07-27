@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.transform.BNF;
@@ -121,8 +120,6 @@ public class Blitz {
       System.err.println("             parsing time: " + (t1 - t0) + " msec");
       System.err.println("  BNF transformation time: " + (t2 - t1) + " msec");
       System.err.println("LALR(1) construction time: " + (t3 - t2) + " msec");
-      System.err.println("     RangeSet build calls: " + RangeSet.buildCalls);
-      RangeSet.buildCalls = 0;
     }
     return parser;
   }

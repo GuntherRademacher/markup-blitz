@@ -48,13 +48,13 @@ public class BNF extends Visitor {
 
     if (timing)
       t0 = System.currentTimeMillis();
-    CombineCharsets cc = new CombineCharsets();
+    ClassifyCharacters cc = new ClassifyCharacters();
     Grammar grammar = cc.combine(g, options);
 
     if (timing)
       t1 = System.currentTimeMillis();
-    GenerateAdditionalNames generateNames = new GenerateAdditionalNames(grammar, r -> cc.smallestUsingNonterminal(r.iterator().next()));
-    generateNames.visit(grammar);
+
+    new GenerateAdditionalNames(grammar).visit(grammar);
 
     if (timing)
       t2 = System.currentTimeMillis();

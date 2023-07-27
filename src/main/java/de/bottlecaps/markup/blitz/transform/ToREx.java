@@ -29,6 +29,7 @@ public class ToREx extends Visitor {
     toREx.visit(Charset.END);
     toREx.sb.setLength(0);
     toREx.visit(g);
+
     if (! toREx.charsets.isEmpty()) {
       toREx.sb.append("\n\n<?TOKENS?>\n");
       toREx.charsets.values().forEach(toREx.sb::append);
@@ -66,7 +67,7 @@ public class ToREx extends Visitor {
   public void visit(Charset c) {
     sb.append(" ");
     RangeSet rangeSet = c.getRangeSet();
-    if (rangeSet.charCount() == 1 && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint())) {
+    if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint())) {
       sb.append(rangeSet.iterator().next().toREx());
     }
     else {
@@ -85,7 +86,7 @@ public class ToREx extends Visitor {
           tb.append("$");
         else
           tb.append(rangeSet.stream().map(Range::toREx).collect(Collectors.joining("\n" + padding + "| ")));
-          charsets.put(name[0], tb.toString());
+        charsets.put(name[0], tb.toString());
       }
     }
   }

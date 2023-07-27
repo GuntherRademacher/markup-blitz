@@ -4,7 +4,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -18,9 +18,10 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
 
   public static final Map<String, RangeSet> unicodeClasses = new ConcurrentHashMap<>();
 
-  private final TreeSet<Range> addedRanges = new TreeSet<>();
+  private final NavigableSet<Range> ranges;
 
-  private RangeSet() {
+  private RangeSet(NavigableSet<Range> ranges) {
+    this.ranges  = ranges;
   }
 
   public RangeSet complement() {
@@ -31,19 +32,28 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     Builder builder = new Builder();
     stream().forEach(builder::add);
     rangeSet.stream().forEach(builder::add);
-    return builder.build().join();
+    return builder.build();
   }
 
   public RangeSet intersection(RangeSet rangeSet) {
     Builder builder = new Builder();
-    Iterator<Range> lhsIt = rangeSet.join().iterator();
+    Iterator<Range> lhsIt = rangeSet.iterator();
     Range lhs = lhsIt.hasNext() ? lhsIt.next() : null;
-    Iterator<Range> rhsIt = join().iterator();
+    Iterator<Range> rhsIt = iterator();
     Range rhs = rhsIt.hasNext() ? rhsIt.next() : null;
     while (lhs != null && rhs != null) {
       if (lhs.overlaps(rhs)) {
-        builder.add(Math.max(lhs.getFirstCodepoint(), rhs.getFirstCodepoint()),
-                    Math.min(lhs.getLastCodepoint(),  rhs.getLastCodepoint()));
+        Range range = new Range(Math.max(lhs.getFirstCodepoint(), rhs.getFirstCodepoint()),
+                                Math.min(lhs.getLastCodepoint(),  rhs.getLastCodepoint()));
+        builder.add(range);
+        if (lhs.getLastCodepoint() > range.getLastCodepoint())
+          lhs = new Range(range.getLastCodepoint() + 1, lhs.getLastCodepoint());
+        else
+          lhs = lhsIt.hasNext() ? lhsIt.next() : null;
+        if (rhs.getLastCodepoint() > range.getLastCodepoint())
+          rhs = new Range(range.getLastCodepoint() + 1, rhs.getLastCodepoint());
+        else
+          rhs = rhsIt.hasNext() ? rhsIt.next() : null;
       }
       else if (lhs.getLastCodepoint() < rhs.getLastCodepoint()) {
         lhs = lhsIt.hasNext() ? lhsIt.next() : null;
@@ -52,13 +62,13 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
         rhs = rhsIt.hasNext() ? rhsIt.next() : null;
       }
     }
-    return builder.build().join();
+    return builder.build();
   }
 
   public RangeSet minus(RangeSet rangeSet) {
-    Iterator<Range> removeIt = rangeSet.join().iterator();
+    Iterator<Range> removeIt = rangeSet.iterator();
     Range remove = removeIt.hasNext() ? removeIt.next() : null;
-    Iterator<Range> rangeIt = join().iterator();
+    Iterator<Range> rangeIt = iterator();
     Range range = rangeIt.hasNext() ? rangeIt.next() : null;
     Builder builder = new Builder();
     while (range != null) {
@@ -90,72 +100,45 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     return builder.build();
   }
 
-  public RangeSet join() {
-    Integer firstCodepoint = null;
-    Integer lastCodepoint = null;
-    Builder builder = new Builder();
-    for (Range range : split(addedRanges)) {
-      if (firstCodepoint == null) {
-        firstCodepoint = range.getFirstCodepoint();
-      }
-      else if (lastCodepoint + 1 != range.getFirstCodepoint()) {
-        builder.add(new Range(firstCodepoint, lastCodepoint));
-        firstCodepoint = range.getFirstCodepoint();
-      }
-      lastCodepoint = range.getLastCodepoint();
-    }
-    if (firstCodepoint != null)
-      builder.add(new Range(firstCodepoint, lastCodepoint));
-    return builder.build();
-  }
-
-  public RangeSet split(Set<Range> ranges) {
-    TreeSet<Integer> lastCodepoints = new TreeSet<>();
-    addedRanges.forEach(r -> {
-      lastCodepoints.add(r.getFirstCodepoint() - 1);
-      lastCodepoints.add(r.getLastCodepoint());
-    });
-    Builder builder = new Builder();
-    for (Range range : ranges) {
-      for (int firstCodepoint = range.getFirstCodepoint(), lastCodepoint;
-          firstCodepoint <= range.getLastCodepoint();
-          firstCodepoint = lastCodepoint + 1) {
-        lastCodepoint = lastCodepoints.ceiling(firstCodepoint);
-        builder.add(new Range(firstCodepoint, lastCodepoint));
-      }
-    }
-    return builder.build();
-  }
-
-  public RangeSet split() {
-    return split(addedRanges);
+  public boolean containsCodepoint(int codepoint) {
+    Range floor = ranges.floor(new Range(codepoint));
+    if (floor == null)
+      floor = ranges.first();
+    else if (floor.getLastCodepoint() < codepoint)
+      floor = ranges.higher(floor);
+    return floor != null && floor.getFirstCodepoint() <= codepoint && codepoint <= floor.getLastCodepoint();
   }
 
   public int charCount() {
     return stream().mapToInt(Range::size).sum();
   }
 
+  public boolean isSingleton() {
+    return ranges.size() == 1
+        && ranges.iterator().next().isSingleton();
+  }
+
   @Override
   public String toString() {
-    return addedRanges.stream()
+    return ranges.stream()
       .map(Range::toString)
       .collect(Collectors.joining("; ", "[", "]"));
   }
 
   public String toJava() {
-    return addedRanges.stream()
+    return ranges.stream()
       .map(Range::toJava)
       .collect(Collectors.joining("", "builder()", ".build()"));
   }
 
   @Override
   public Iterator<Range> iterator() {
-    return addedRanges.iterator();
+    return ranges.iterator();
   }
 
   @Override
   public int size() {
-    return addedRanges.size();
+    return ranges.size();
   }
 
   @Override
@@ -190,7 +173,7 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
-    result = prime * result + ((addedRanges == null) ? 0 : addedRanges.hashCode());
+    result = prime * result + ((ranges == null) ? 0 : ranges.hashCode());
     return result;
   }
 
@@ -203,11 +186,11 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     if (!(obj instanceof RangeSet))
       return false;
     RangeSet other = (RangeSet) obj;
-    if (addedRanges == null) {
-      if (other.addedRanges != null)
+    if (ranges == null) {
+      if (other.ranges != null)
         return false;
     }
-    else if (!addedRanges.equals(other.addedRanges))
+    else if (!ranges.equals(other.ranges))
       return false;
     return true;
   }
@@ -217,7 +200,10 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   }
 
   public static final class Builder {
-    private RangeSet set = new RangeSet();
+    private NavigableSet<Range> set = new TreeSet<>();
+
+    private Builder() {
+    }
 
     public Builder add(int codepoint) {
       return add(codepoint, codepoint);
@@ -228,19 +214,48 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
     }
 
     public Builder add(Range range) {
-      set.addedRanges.add(range);
+      set.add(range);
+      return this;
+    }
+
+    public Builder addAll(Collection<Range> ranges) {
+      set.addAll(ranges);
       return this;
     }
 
     public RangeSet build() {
-      ++buildCalls;
-      RangeSet result = set;
+      Range r = null;
+      boolean isNormalized = true;
+      for (Range range : set) {
+        if (r != null && range.getFirstCodepoint() <= r.getLastCodepoint() + 1) {
+          isNormalized = false;
+          break;
+        }
+        r = range;
+      }
+      if (! isNormalized) {
+        int firstCodepoint = -1;
+        int lastCodepoint = -1;
+        NavigableSet<Range> joinedRanges = new TreeSet<>();
+        for (Range range : set) {
+          if (firstCodepoint < 0) {
+            firstCodepoint = range.getFirstCodepoint();
+          }
+          else if (lastCodepoint + 1 < range.getFirstCodepoint()) {
+            joinedRanges.add(new Range(firstCodepoint, lastCodepoint));
+            firstCodepoint = range.getFirstCodepoint();
+          }
+          lastCodepoint = Math.max(lastCodepoint, range.getLastCodepoint());
+        }
+        if (firstCodepoint >= 0)
+          joinedRanges.add(new Range(firstCodepoint, lastCodepoint));
+        set = joinedRanges;
+      }
+      RangeSet result = new RangeSet(set);
       set = null;
       return result;
     }
   }
-
-  public static int buildCalls = 0;
 
   public static RangeSet of(Range... ranges) {
     Builder builder = new Builder();
@@ -318,8 +333,9 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   }
 
   public String shortName() {
-    return addedRanges.isEmpty()
+    return ranges.isEmpty()
          ? "$"
-         : new Range(addedRanges.first().getFirstCodepoint()).toString() + (charCount() == 1 ? "" : "...");
+         : new Range(ranges.first().getFirstCodepoint()).toString() + (charCount() == 1 ? "" : "...");
   }
+
 }

@@ -1,14 +1,16 @@
 package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import de.bottlecaps.markup.BlitzOption;
@@ -28,54 +30,50 @@ import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
-public class CombineCharsets extends Copy {
-  /** All (combined) sets that are used in the grammar. */
-  private Map<Term, RangeSet> allRangeSets;
+public class ClassifyCharacters extends Copy {
+  /** All sets that are used in the grammar. */
+  private Set<RangeSet> allSets;
+
   /** Builder for the set of all ranges from all sets. */
   private RangeSet.Builder builder;
-  /** All ranges that are used in the grammar . */
-  private RangeSet allRanges;
-  /** The set of sets using each range. The distinct values of this provide the char classes. */
-  private Map<Range, Set<RangeSet>> rangeToUsingSets = new TreeMap<>();
-  /** The char classes by their using sets. */
-  private Map<Set<RangeSet>, RangeSet> usingSetsToCharclasses;
-  /** The originating rules for each charset in the grammar. */
-  private Map<RangeSet, Set<String>> usingSetToOrigins;
-  /** The characters mentioned in each rule. */
-  private Map<String, RangeSet> originToChars;
 
   private Queue<String> todo;
 
   private Set<String> done;
 
-  public CombineCharsets() {
-  }
-
   public Grammar combine(Grammar g, Set<BlitzOption> options) {
+    List<Long> t = new ArrayList<>();
+    t.add(System.currentTimeMillis());
+
     todo = new LinkedList<>();
     done = new HashSet<>();
-    usingSetToOrigins = new HashMap<>();
-    originToChars = new HashMap<>();
-    allRangeSets = new HashMap<>();
-    builder = new RangeSet.Builder();
+    allSets = new HashSet<>();
+    builder = RangeSet.builder();
     g.setAdditionalNames(new HashMap<>());
 
+    t.add(System.currentTimeMillis());
+
     Rule firstRule = g.getRules().values().iterator().next();
-    done.add(firstRule.getName());
-    visit(firstRule);
-
-
-    while (! todo.isEmpty()) {
+    for (todo.add(firstRule.getName()); ! todo.isEmpty(); ) {
       String name = todo.poll();
       done.add(name);
       visit(g.getRules().get(name));
     }
 
+    t.add(System.currentTimeMillis()); // ---> 80 ms
+
     copy.setAdditionalNames(g.getAdditionalNames());
     PostProcess.process(copy);
 
-    Map<Charset, Set<RangeSet>> charsetToCharclasses = new HashMap<>();
-    collectRanges(charsetToCharclasses, options);
+    t.add(System.currentTimeMillis());
+
+    Set<RangeSet> charClasses = classify(allSets);
+
+    t.add(System.currentTimeMillis());
+
+    HashMap<RangeSet, Set<RangeSet>> charsetToClasses = mapToClasses(allSets, charClasses);
+
+    t.add(System.currentTimeMillis());
 
 //    System.out.println();
 //    System.out.println("number of charClasses: " + usingSetsToCharclasses.size());
@@ -84,83 +82,21 @@ public class CombineCharsets extends Copy {
 //    for (int i = 0; i < charClass.length; ++i)
 //      System.out.println(i + ": " + charClass[i]);
 
-    Grammar result = ReplaceCharsets.process(copy, charsetToCharclasses);
+    Grammar result = ReplaceCharsets.process(copy, charsetToClasses);
+
+    t.add(System.currentTimeMillis());
+
+    if (options.contains(BlitzOption.TIMING))
+      for (int i = 1; i < t.size(); ++i)
+        System.err.println("                                                                   time: " + (t.get(i) - t.get(i - 1)) + " msec");
 
     return result;
-  }
-
-  private void collectRanges(Map<Charset, Set<RangeSet>> charsetToCharclasses, Set<BlitzOption> options) {
-    long t0 = System.currentTimeMillis();
-    allRanges = builder.build().split();
-    long t4 = System.currentTimeMillis();
-    rangeToUsingSets = new TreeMap<>();
-    for (RangeSet rangeSet : new HashSet<>(allRangeSets.values())) {
-      for (Range range : allRanges.split(rangeSet)) {
-        rangeToUsingSets.compute(range, (k, v) -> {
-          if (v == null) v = new HashSet<>();
-          v.add(rangeSet);
-          return v;
-        });
-      }
-    }
-    long t1 = System.currentTimeMillis();
-
-    usingSetsToCharclasses = new HashMap<>();
-    rangeToUsingSets.forEach((range, usingSets) -> {
-      usingSetsToCharclasses.compute(usingSets, (charclass, ranges) -> {
-        Builder builder = new RangeSet.Builder();
-        if (ranges != null)
-          ranges.forEach(builder::add);
-        builder.add(range);
-        return builder.build();
-      });
-    });
-    long t2 = System.currentTimeMillis();
-
-    allRangeSets.forEach((term, set) -> {
-      Set<RangeSet> charclasses = new TreeSet<>();
-      for (Range range : allRanges.split(set))
-        charclasses.add(usingSetsToCharclasses.get(rangeToUsingSets.get(range)));
-      charsetToCharclasses.put((Charset) term, charclasses);
-    });
-    long t3 = System.currentTimeMillis();
-
-    if (options.contains(BlitzOption.TIMING)) {
-      System.err.println("                                                                          time: " + (t4 - t0));
-      System.err.println("                                                                          time: " + (t1 - t4));
-      System.err.println("                                                                          time: " + (t2 - t1));
-      System.err.println("                                                                          time: " + (t3 - t2));
-    }
-  }
-
-  public String smallestUsingNonterminal(Range range) {
-    Set<RangeSet> rangeSet = rangeToUsingSets.get(range);
-    int smallestEnclosingSetSize = Integer.MAX_VALUE;
-    Set<String> originsOfSmallestEnclosingSet = new HashSet<>();
-    for (RangeSet set : rangeSet) {
-      int setSize = set.stream().mapToInt(Range::size).sum();
-      if (setSize <= smallestEnclosingSetSize) {
-        if (setSize < smallestEnclosingSetSize) {
-          smallestEnclosingSetSize = setSize;
-          originsOfSmallestEnclosingSet.clear();
-        }
-        originsOfSmallestEnclosingSet.addAll(usingSetToOrigins.get(set));
-      }
-    }
-    int minSetSize = Integer.MAX_VALUE;
-    String originWithLeastChars = null;
-    for (String name : originsOfSmallestEnclosingSet) {
-      int size = originToChars.get(name).stream().mapToInt(Range::size).sum();
-      if (size < minSetSize)
-        originWithLeastChars = name;
-    }
-    return originWithLeastChars;
   }
 
   @Override
   public void visit(Charset c) {
     super.visit(c);
-    collect(c.getRangeSet().join(), c, c.getRule().getName());
+    collect(c.getRangeSet(), c, c.getRule().getName());
   }
 
   @Override
@@ -213,12 +149,12 @@ public class CombineCharsets extends Copy {
       if (hasDeletedChars) {
         Charset charset = new Charset(true, deletedChars);
         replacement.addAlt(new Alt().addCharset(charset));
-        collect(deletedChars.join(), charset, a.getRule().getName());
+        collect(deletedChars, charset, a.getRule().getName());
       }
       if (hasPreservedChars) {
         Charset charset = new Charset(false, preservedChars);
         replacement.addAlt(new Alt().addCharset(charset));
-        collect(preservedChars.join(), charset, a.getRule().getName());
+        collect(preservedChars, charset, a.getRule().getName());
       }
 
       boolean topLevel = alts.isEmpty();
@@ -303,20 +239,7 @@ public class CombineCharsets extends Copy {
   }
 
   private void collect(RangeSet set, Term origin, String name) {
-    usingSetToOrigins.compute(set, (k, v) -> {
-      if (v == null) v = new HashSet<>();
-      v.add(name);
-      return v;
-    });
-    originToChars.compute(name, (k, v) -> {
-      if (v == null)
-        return set;
-      RangeSet.Builder builder = new RangeSet.Builder();
-      set.forEach(builder::add);
-      v.forEach(builder::add);
-      return builder.build();
-    });
-    allRangeSets.put(origin, set);
+    allSets.add(set);
     set.forEach(builder::add);
   }
 
@@ -417,12 +340,12 @@ public class CombineCharsets extends Copy {
   }
 
   private static class ReplaceCharsets extends Copy {
-    private Map<Charset, Set<RangeSet>> charsetToCharclasses;
+    private Map<RangeSet, Set<RangeSet>> charsetToCharclasses;
 
     private ReplaceCharsets() {
     }
 
-    public static Grammar process(Grammar g, Map<Charset, Set<RangeSet>> charsetToCharclasses) {
+    public static Grammar process(Grammar g, Map<RangeSet, Set<RangeSet>> charsetToCharclasses) {
       ReplaceCharsets rc = new ReplaceCharsets();
       rc.charsetToCharclasses = charsetToCharclasses;
       rc.visit(g);
@@ -433,7 +356,7 @@ public class CombineCharsets extends Copy {
 
     @Override
     public void visit(Charset c) {
-      Set<RangeSet> charClass = charsetToCharclasses.get(c);
+      Set<RangeSet> charClass = charsetToCharclasses.get(c.getRangeSet());
       if (charClass.size() == 1) {
         // c.getRangeSet is equal to charClass
         alts.peek().last().getTerms().add(c.copy());
@@ -454,4 +377,57 @@ public class CombineCharsets extends Copy {
       }
     }
   }
+
+  public static Set<RangeSet> classify(Collection<RangeSet> allRangeSets) {
+    Builder builder = RangeSet.builder();
+    allRangeSets.forEach(builder::addAll);
+    RangeSet[] charClasses = new RangeSet[allRangeSets.size()];
+    int classCount = 1;
+    charClasses[0] = builder.build();
+    for (RangeSet rangeSet : allRangeSets) {
+      RangeSet divisor = rangeSet;
+      int classesToCheck = classCount;
+      for (int i = 0; i < classesToCheck; ++i) {
+        RangeSet intersection = divisor.intersection(charClasses[i]);
+        if (! intersection.isEmpty()) {
+          if (! intersection.equals(charClasses[i])) {
+            if (classCount == charClasses.length)
+              charClasses = Arrays.copyOf(charClasses, charClasses.length << 1);
+            charClasses[classCount++] = intersection;
+            charClasses[i] = charClasses[i].minus(intersection);
+          }
+          divisor = divisor.minus(intersection);
+          if (divisor.isEmpty())
+            break;
+        }
+      }
+    }
+    return new TreeSet<>(Arrays.asList(charClasses).subList(0, classCount));
+  }
+
+  private static HashMap<RangeSet, Set<RangeSet>> mapToClasses(Set<RangeSet> allSets, Set<RangeSet> charClasses) {
+    HashMap<RangeSet, Set<RangeSet>> charsetToClasses = new HashMap<>();
+    allSets.forEach(s -> charsetToClasses.put(s, charClasses(s, charClasses)));
+    return charsetToClasses;
+  }
+
+  public static Set<RangeSet> charClasses(RangeSet characters, Set<RangeSet> charClasses) {
+    Iterator<Range> iterator = characters.iterator();
+    Range firstRange = iterator.next();
+    int firstCodepoint= firstRange.getFirstCodepoint();
+    if (firstCodepoint == firstRange.getLastCodepoint() && ! iterator.hasNext())
+      return Set.of(characters);
+    Set<RangeSet> result = new TreeSet<>();
+    for (RangeSet charClass : charClasses) {
+      if (charClass.containsCodepoint(firstCodepoint)) {
+        result.add(charClass);
+        characters = characters.minus(charClass);
+        if (characters.isEmpty())
+          return result;
+        firstCodepoint= characters.iterator().next().getFirstCodepoint();
+      }
+    }
+    throw new IllegalStateException();
+  }
+
 }

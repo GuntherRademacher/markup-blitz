@@ -4,15 +4,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.character.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
+import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
@@ -20,35 +21,33 @@ import de.bottlecaps.markup.blitz.grammar.Term;
 public class GenerateAdditionalNames extends Visitor {
   private static final Pattern nameCharPattern = Pattern.compile("^([-_.\u00B7\u203F\u2040]|\\p{L}|\\p{Nd}|\\p{Mn})$");
 
-  private Set<String> names;
+  private final Grammar grammar;
+  private final Set<String> names;
   private final Map<Alts, String> nameByRhs;
-  private String additionalNamePrefix;
-  private Grammar grammar;
-  private Function<RangeSet, String> originOf;
+  private final String additionalNamePrefix;
+  private final Map<RangeSet, String> smallestContext;
 
-  public GenerateAdditionalNames(Grammar grammar, Function<RangeSet, String> originOf) {
+  public GenerateAdditionalNames(Grammar grammar) {
     this.grammar = grammar;
-    this.originOf = originOf;
     this.nameByRhs = new HashMap<>();
-  }
 
-  @Override
-  public void visit(Grammar g) {
-    names = new HashSet<String>(g.getRules().keySet());
-    g.getRules().values().forEach(rule -> nameByRhs.put(rule.getAlts(), rule.getName()));
+    this.names = new HashSet<String>(grammar.getRules().keySet());
+    grammar.getRules().values().forEach(rule -> nameByRhs.put(rule.getAlts(), rule.getName()));
 
     for (StringBuilder sb = new StringBuilder();; sb.append("_")) {
       String prefix = sb.toString();
       if (names.stream().allMatch(name -> ! name.startsWith(prefix))) {
-        additionalNamePrefix = prefix;
+        this.additionalNamePrefix = prefix;
         break;
       }
     }
 
     addAdditionalNames(Charset.END, additionalNamePrefix + "end");
-    addAdditionalNames(null, additionalNamePrefix + "start");
+    addAdditionalNames(Term.START, additionalNamePrefix + "start");
 
-    super.visit(g);
+    final var charsetOrigin = new CharsetOrigin();
+    charsetOrigin.visit(grammar);
+    this.smallestContext = charsetOrigin.smallestContext;
   }
 
   @Override
@@ -64,10 +63,16 @@ public class GenerateAdditionalNames extends Visitor {
 
   @Override
   public void visit(Charset c) {
-    String suffix = c.isDeleted()
-        ? "deleted_chars"
-        : "preserved_chars";
-    addAdditionalNames(c, getAdditionalName(originOf.apply(c.getRangeSet()), c, suffix));
+    if (needsProposalForName(c)) {
+      String suffix = c.isDeleted()
+          ? "deleted_chars"
+          : "preserved_chars";
+      String origin = smallestContext.get(c.getRangeSet());
+      if (origin == null)
+        origin =  c.getRule().getName();
+      final var additionalName = getAdditionalName(origin, c, suffix);
+      addAdditionalNames(c, additionalName);
+    }
   }
 
   @Override
@@ -136,6 +141,54 @@ public class GenerateAdditionalNames extends Visitor {
       if (! names.contains(name)) {
         names.add(name);
         return name;
+      }
+    }
+  }
+
+  private boolean needsProposalForName(Charset c) {
+    if (grammar.getAdditionalNames().containsKey(c))
+      return false;
+    RangeSet rangeSet = c.getRangeSet();
+    if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
+      return false;
+    return true;
+  }
+
+  private class CharsetOrigin extends Visitor {
+    Map<RangeSet, String> smallestContext = new HashMap<>();
+    Map<RangeSet, Integer> smallestContextSize = new HashMap<>();
+
+    @Override
+    public void visit(Charset c) {
+      if (needsProposalForName(c)) {
+        if (grammar.getAdditionalNames().containsKey(c))
+          return;
+        final var rangeSet = c.getRangeSet();
+        if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
+          return;
+        Node parent = c.getParent();
+        Alts alts = null;
+        int contextSize;
+        if (parent instanceof Alt && ((Alt) parent).getTerms().size() == 1) {
+          contextSize = 0;
+          alts = (Alts) parent.getParent();
+          for (Alt a : alts.getAlts()) {
+            if (a.getTerms().size() == 1 && a.getTerms().get(0) instanceof Charset) {
+              contextSize += ((Charset) a.getTerms().get(0)).getRangeSet().charCount();
+            }
+          }
+        }
+        else {
+          contextSize = rangeSet.charCount();
+        }
+        Integer minContextSize = smallestContextSize.get(rangeSet);
+        if (minContextSize == null || minContextSize > contextSize) {
+          String name = grammar.getAdditionalNames().containsKey(alts)
+                      ? grammar.getAdditionalNames().get(alts)[0]
+                      : c.getRule().getName();
+          smallestContext.put(rangeSet, name);
+          smallestContextSize.put(rangeSet, contextSize);
+        }
       }
     }
   }

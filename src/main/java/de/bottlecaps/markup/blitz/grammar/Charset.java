@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.bottlecaps.markup.blitz.character.RangeSet;
-import de.bottlecaps.markup.blitz.character.RangeSet.Builder;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
@@ -53,7 +52,7 @@ public class Charset extends Term {
   }
 
   private static RangeSet toRangeSet(boolean exclusion, List<Member> members) {
-    Builder builder = new Builder();
+    RangeSet.Builder builder = RangeSet.builder();
     for (Member member : members) {
       if (member instanceof StringMember) {
         StringMember m = (StringMember) member;
