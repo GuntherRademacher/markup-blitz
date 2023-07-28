@@ -201,7 +201,7 @@ public class Generator {
   private String toString(ReduceArgument reduceArgument) {
     final int nonterminalId = reduceArgument.getNonterminalId();
     Mark[] marks = reduceArgument.getMarks();
-    String insertion = reduceArgument.getInsertion();
+    int[] insertion = reduceArgument.getInsertion();
     return "pop " + marks.length
         + ", id " + nonterminalId
         + ", nonterminal " + nonterminal[nonterminalId]
@@ -209,13 +209,15 @@ public class Generator {
         + (insertion == null ? "" : ", insert " + escapeNonAscii(insertion));
   }
 
-  public static String escapeNonAscii(String input) {
+  private static String escapeNonAscii(int[] codepoints) {
     StringBuilder sb = new StringBuilder("\"");
-    for (char c : input.toCharArray()) {
+    for (int c : codepoints) {
       if (' ' <= c && c <= '~' && c != '"')
         sb.append(c);
-      else
-        sb.append("\\u").append(String.format("%04x", (int) c));
+      else if (c < 0x10000)
+        sb.append(String.format("\\u%04x", c));
+      else if (c < 0x10000)
+        sb.append(String.format("\\u%04x\\u%04x", c >> 16, c & 0xffff));
     }
     sb.append("\"");
     return sb.toString();
@@ -461,9 +463,7 @@ public class Generator {
           if (alts.size() != 1)
             throw new IllegalStateException();
           final int reductionId = alts.get(0).getReductionId();
-          final int code = reduceArguments[reductionId].getNonterminalId() == 0
-                         ? Action.code(Action.Type.ACCEPT, 0)
-                         : Action.code(Action.Type.REDUCE, reductionId);
+          final int code = Action.code(Action.Type.REDUCE, reductionId);
           terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
         }
       });
@@ -512,10 +512,7 @@ public class Generator {
              ? (Alt) node
              : (Alt) (node.getParent());
       if (node instanceof Alt || node instanceof Insertion) {
-        if (reduceArguments[alt.getReductionId()].getNonterminalId() == 0)
-          return new Action(Action.Type.ACCEPT, 0);
-        else
-          return new Action(Action.Type.REDUCE, alt.getReductionId());
+        return new Action(Action.Type.REDUCE, alt.getReductionId());
       }
       State toState;
       if (node instanceof Nonterminal) {
@@ -661,6 +658,7 @@ public class Generator {
   private void parserData() {
     terminalTransitionData = new Map2D(states.size(), terminal.length);
     nonterminalTransitionData = new Map2D(states.size(), nonterminal.length);
+    nonterminalTransitionData.put(new Map2D.Index(0, 0), Action.code(Action.Type.ACCEPT, 0));
     states.keySet().forEach(State::parserData);
   }
 
@@ -670,10 +668,10 @@ public class Generator {
       int code = nonterminalCode.get(rule.getName());
       for (Alt alt : rule.getAlts().getAlts()) {
         List<Mark> marks = new ArrayList<>();
-        String insertion = "";
+        int[] insertion = null;
         for (Term term : alt.getTerms()) {
           if (term instanceof Insertion)
-            insertion += (((Insertion) term).getValue());
+            insertion = (((Insertion) term).getCodepoints());
           else if (term instanceof Nonterminal)
             marks.add(((Nonterminal) term).getMark());
           else if (! (term instanceof Charset))
@@ -685,7 +683,7 @@ public class Generator {
         }
         ReduceArgument reduction = new ReduceArgument(
             marks.toArray(Mark[]::new),
-            insertion.isEmpty() ? null : insertion,
+            insertion,
             code);
         int newId = reductionId.size();
         Integer id = reductionId.putIfAbsent(reduction, newId);

@@ -72,7 +72,7 @@ public class Parser
     public void startAttribute(String name);
     public void endAttribute(String name);
     public void endNonterminal(String name);
-    public void terminal(String content);
+    public void terminal(int content);
   }
 
   public static abstract class Symbol {
@@ -80,15 +80,15 @@ public class Parser
   }
 
   public class Terminal extends Symbol {
-    public String content;
+    public int codepoint;
 
     public Terminal(int codepoint) {
-      content = Character.toString(codepoint);
+      this.codepoint = codepoint;
     }
 
     @Override
     public void send(EventHandler e) {
-      e.terminal(content);
+      e.terminal(codepoint);
     }
   }
 
@@ -223,26 +223,44 @@ public class Parser
     }
 
     @Override
-    public void terminal(String content) {
-      if (! content.isEmpty()) {
-        if (attributeLevel > 0) {
-          writeOutput(content
-              .replace("&", "&amp;")
-              .replace("<", "&lt;")
-              .replace(">", "&gt;")
-              .replace("\"", "&quot;")
-              .replace("\r", "&#xA;"));
-        }
-        else {
-          if (delayedTag != null) {
-            writeOutput(">");
-            delayedTag = null;
+    public void terminal(int codepoint) {
+      if (attributeLevel > 0) {
+        switch (codepoint) {
+        case '&': writeOutput("&amp;"); break;
+        case '<': writeOutput("&lt;"); break;
+        case '>': writeOutput("&gt;"); break;
+        case '"': writeOutput("&quot;"); break;
+        case '\n': writeOutput("\n"); break;
+        default:
+          if (codepoint >= ' ') {
+            writeOutput(Character.toString(codepoint));
           }
-          writeOutput(content
-                           .replace("&", "&amp;")
-                           .replace("<", "&lt;")
-                           .replace(">", "&gt;")
-                           .replace("\r", "&#xA;"));
+          else {
+            writeOutput("&x");
+            writeOutput(Integer.toString(codepoint, 16).toUpperCase());
+            writeOutput(";");
+          }
+        }
+      }
+      else {
+        if (delayedTag != null) {
+          writeOutput(">");
+          delayedTag = null;
+        }
+        switch (codepoint) {
+        case '&': writeOutput("&amp;"); break;
+        case '<': writeOutput("&lt;"); break;
+        case '>': writeOutput("&gt;"); break;
+        case '\n': writeOutput("\n"); break;
+        default:
+          if (codepoint >= ' ') {
+            writeOutput(Character.toString(codepoint));
+          }
+          else {
+            writeOutput("&#x");
+            writeOutput(Integer.toString(codepoint, 16).toUpperCase());
+            writeOutput(";");
+          }
         }
       }
     }
@@ -313,6 +331,13 @@ public class Parser
         }
       }
 
+      int[] insertion = reduceArgument.getInsertion();
+      if (insertion != null) {
+        if (children == null)
+          children = new ArrayList<>();
+        Arrays.stream(insertion).mapToObj(Terminal::new).forEach(children::add);
+      }
+
       push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()],
           children == null ? new Symbol[0] : children.toArray(Symbol[]::new)
       ));
@@ -324,9 +349,7 @@ public class Parser
     }
 
     public void serialize(EventHandler e) {
-      for (int i = 0; i <= top; ++i) {
-        stack[i].send(e);
-      }
+      ((Nonterminal) stack[0]).children[0].send(e);
     }
 
     public void push(Symbol s)

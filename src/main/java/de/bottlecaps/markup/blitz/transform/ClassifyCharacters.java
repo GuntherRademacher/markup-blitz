@@ -185,20 +185,11 @@ public class ClassifyCharacters extends Copy {
 
   private List<Charset> literalToCharsets(Literal l) {
     List<Charset> charsets = new ArrayList<>();
-    if (l.isHex()) {
-      int c = Integer.parseInt(l.getValue().substring(1), 16);
-      RangeSet rangeSet = RangeSet.builder().add(c).build();
+    for (int codepoint : l.getCodepoints()) {
+      RangeSet rangeSet = RangeSet.builder().add(codepoint).build();
       Charset charset = new Charset(l.isDeleted(), rangeSet);
       collect(rangeSet, charset, l.getRule().getName());
       charsets.add(charset);
-    }
-    else {
-      l.getValue().codePoints().forEach(codepoint -> {
-        RangeSet rangeSet = RangeSet.builder().add(codepoint).build();
-        Charset charset = new Charset(l.isDeleted(), rangeSet);
-        collect(rangeSet, charset, l.getRule().getName());
-        charsets.add(charset);
-      });
     }
     return charsets;
   }
@@ -302,21 +293,14 @@ public class ClassifyCharacters extends Copy {
     @Override
     public void visit(Literal l) {
       if (rangeSet != null) {
-        if (l.isHex()) {
-          rangeSet = rangeSet.union(RangeSet.builder().add(new Range(Integer.parseInt(l.getValue().substring(1), 16))).build());
+        int[] codepoints = l.getCodepoints();
+        if (codepoints.length == 1) {
+          rangeSet = rangeSet.union(RangeSet.builder().add(codepoints[0]).build());
           isPreserved = isPreserved && ! l.isDeleted();
           isDeleted = isDeleted && l.isDeleted();
         }
         else {
-          int[] codepoints = l.getValue().codePoints().toArray();
-          if (codepoints.length == 1) {
-            rangeSet = rangeSet.union(RangeSet.builder().add(codepoints[0]).build());
-            isPreserved = isPreserved && ! l.isDeleted();
-            isDeleted = isDeleted && l.isDeleted();
-          }
-          else {
-            rangeSet = null;
-          }
+          rangeSet = null;
         }
       }
     }

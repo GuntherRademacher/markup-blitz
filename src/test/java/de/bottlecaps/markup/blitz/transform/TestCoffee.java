@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.nineml.coffeefilter.InvisibleXml;
 import org.nineml.coffeefilter.InvisibleXmlDocument;
 import org.nineml.coffeefilter.InvisibleXmlParser;
+import org.nineml.coffeefilter.ParserOptions;
 import org.nineml.coffeegrinder.parser.GearleyResult;
 
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
 
-@Disabled
 public class TestCoffee {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
@@ -42,6 +42,7 @@ public class TestCoffee {
   }
 
   @Test
+  @Disabled
   public void testIxmlResource() throws Exception {
     String originalResult = runCoffee(ixmlIxmlResourceContent, ixmlIxmlResourceContent);
 
@@ -61,6 +62,9 @@ public class TestCoffee {
 
     String equivalentResult = runCoffee(bnf.toString(), jsonResourceContent);
     assertEquals(originalResult, equivalentResult);
+
+    String expectedResult = "<map><member><key>string</key><value><string>Hello, World!</string></value></member><member><key>number</key><value><number>42</number></value></member><member><key>boolean</key><value><boolean>true</boolean></value></member><member><key>nullValue</key><value><null/></value></member><member><key>arrayEmpty</key><value><array/></value></member><member><key>arraySingle</key><value><array><number>1</number></array></value></member><member><key>arrayMultiple</key><value><array><number>1</number><number>2</number></array></value></member><member><key>object</key><value><map><member><key>property</key><value><string>value</string></value></member></map></value></member><member><key>escapedString</key><value><string>This string contains escape sequences: \" \\ / \n &#xD; &#x9;</string></value></member><member><key>unicodeString</key><value><string><unicode code=\"20AC\"/></string></value></member></map>";
+    assertEquals(expectedResult.replace("&#x9;", "\t"), originalResult);
   }
 
   @Test
@@ -75,7 +79,10 @@ public class TestCoffee {
   }
 
   private String runCoffee(String grammar, String input) throws Exception {
-    final InvisibleXmlParser parser = new InvisibleXml().getParserFromIxml(grammar);
+    ParserOptions options = new ParserOptions();
+//    options.setPrettyPrint(true);
+    InvisibleXml invisibleXml = new InvisibleXml(options);
+    final InvisibleXmlParser parser = invisibleXml.getParserFromIxml(grammar);
     if (! parser.constructed()) {
       final Exception ex = parser.getException();
       if (ex != null) throw ex;

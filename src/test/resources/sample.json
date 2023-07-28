@@ -9,6 +9,6 @@
   "object": {
     "property": "value"
   },
-  "escapedString": "This string contains escape sequences: \\\" \\\\ \\/ \\b \\f \\n \\r \\t",
+  "escapedString": "This string contains escape sequences: \" \\ \/ \n \r \t",
   "unicodeString": "\u20AC"
 }

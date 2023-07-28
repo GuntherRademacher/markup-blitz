@@ -18,7 +18,7 @@ public enum Error {
   D04("Attempt to serialize as XML any characters that are not permitted in XML."),
   D05("Attempt to serialize an attribute as the root node of an XML document."),
   D06("The parse tree does not contain exactly one top-level element."),
-  D07("An attribute named “xmlns” appears on an element."),
+  D07("An attribute named \"xmlns\" appears on an element."),
   ;
 
   Error(String string) {

@@ -7,8 +7,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.nineml:coffeefilter:3.0.0a'
-    testImplementation 'org.nineml:coffeegrinder:3.0.0a'
+    testImplementation 'org.nineml:coffeefilter:2.2.3'
+    testImplementation 'org.nineml:coffeegrinder:2.2.2'
 }
 
 testing {	

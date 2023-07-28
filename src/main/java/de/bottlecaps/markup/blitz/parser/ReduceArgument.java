@@ -8,11 +8,11 @@ public class ReduceArgument {
   /** Disposition of removed stack entries. */
   private final Mark marks[];
   /** Text to add by the end. */
-  private final String insertion;
+  private final int[] insertion;
   /** Nonterminal to create. */
   private final int nonterminalId;
 
-  public ReduceArgument(Mark[] mark, String insertion, int nonterminalCode) {
+  public ReduceArgument(Mark[] mark, int[] insertion, int nonterminalCode) {
     this.marks = mark;
     this.insertion = insertion;
     this.nonterminalId = nonterminalCode;
@@ -21,7 +21,7 @@ public class ReduceArgument {
   public Mark[] getMarks() {
     return marks;
   }
-  public String getInsertion() {
+  public int[] getInsertion() {
     return insertion;
   }
   public int getNonterminalId() {

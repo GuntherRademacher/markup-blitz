@@ -1,28 +1,36 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import java.util.Arrays;
+
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Literal extends Term {
-  protected final boolean deleted;
-  protected final String value;
-  protected final boolean isHex;
+  private final boolean deleted;
+  private final String value;
+  private final boolean isHex;
+  private int[] codepoints;
+  private final int hashCode;
 
   public Literal(boolean deleted, String value, boolean isHex) {
     this.deleted = deleted;
     this.value = value;
     this.isHex = isHex;
+    this.codepoints = isHex
+                    ? new int[] {Integer.parseInt(value.substring(1), 16)}
+                    : value.codePoints().toArray();
+    final int prime = 31;
+    int h = 1;
+    h = prime * h + Arrays.hashCode(codepoints);
+    h = prime * h + (deleted ? 1231 : 1237);
+    this.hashCode = h;
   }
 
   public boolean isDeleted() {
     return deleted;
   }
 
-  public String getValue() {
-    return value;
-  }
-
-  public boolean isHex() {
-    return isHex;
+  public int[] getCodepoints() {
+    return codepoints;
   }
 
   @Override
@@ -39,30 +47,19 @@ public class Literal extends Term {
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (deleted ? 1231 : 1237);
-    result = prime * result + (isHex ? 1231 : 1237);
-    result = prime * result + ((value == null) ? 0 : value.hashCode());
-    return result;
+    return hashCode;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
       return true;
-    if (!(obj instanceof Literal))
+    if (! (obj instanceof Literal))
       return false;
     Literal other = (Literal) obj;
     if (deleted != other.deleted)
       return false;
-    if (isHex != other.isHex)
-      return false;
-    if (value == null) {
-      if (other.value != null)
-        return false;
-    }
-    else if (!value.equals(other.value))
+    if (! Arrays.equals(codepoints, other.codepoints))
       return false;
     return true;
   }
