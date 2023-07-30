@@ -172,10 +172,27 @@ public class ClassifyCharacters extends Copy {
   @Override
   public void visit(Alt alt) {
     alts.peek().addAlt(new Alt());
-    for (Term term : alt.getTerms()) {
+    final var terms = alt.getTerms();
+    for (int t = 0; t < terms.size(); ++t) {
+      Term term = terms.get(t);
       if (term instanceof Literal) {
         List<Charset> charsets = literalToCharsets((Literal) term);
         alts.peek().last().getTerms().addAll(charsets);
+      }
+      else if (term instanceof Insertion && term.getNext() instanceof Insertion) {
+        Insertion i = (Insertion) term;
+        int[] ic = i.getCodepoints();
+        while (i.getNext() instanceof Insertion) {
+          ++t;
+          Insertion n = (Insertion) i.getNext();
+          int[] nc = n.getCodepoints();
+          int[] cc = Arrays.copyOf(ic, ic.length + nc.length);
+          System.arraycopy(nc, 0, cc, ic.length, nc.length);
+          i = n;
+          ic = cc;
+        }
+        Insertion combinedInsertion = new Insertion(ic);
+        alts.peek().last().getTerms().add(combinedInsertion);
       }
       else {
         term.accept(this);

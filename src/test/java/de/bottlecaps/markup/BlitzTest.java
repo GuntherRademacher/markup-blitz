@@ -64,6 +64,18 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testInsertion() {
+    Parser parser = Blitz.generate(
+        "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
+    String result = parser.parse(
+        "cfim",
+        BlitzOption.INDENT);
+    assertEquals(
+          "<S>abcdeghijklm</S>",
+        result);
+  }
+
+  @Test
   public void testDiary() {
     Parser parser = Blitz.generate(
           "diary: entry+.\n"

@@ -13,6 +13,7 @@ import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
+import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
@@ -70,9 +71,15 @@ public class GenerateAdditionalNames extends Visitor {
       String origin = smallestContext.get(c.getRangeSet());
       if (origin == null)
         origin =  c.getRule().getName();
-      final var additionalName = getAdditionalName(origin, c, suffix);
+      String additionalName = getAdditionalName(origin, c, suffix);
       addAdditionalNames(c, additionalName);
     }
+  }
+
+  @Override
+  public void visit(Insertion i) {
+    String additionalName = getAdditionalName(i.getRule().getName(), i, "insertion");
+    addAdditionalNames(i, additionalName);
   }
 
   @Override

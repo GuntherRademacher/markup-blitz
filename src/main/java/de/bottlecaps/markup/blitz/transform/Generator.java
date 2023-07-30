@@ -594,7 +594,7 @@ public class Generator {
       changed = false;
       for (Rule r : grammar.getRules().values()) {
         for (Alt a : r.getAlts().getAlts()) {
-          if (a.getTerms().isEmpty()) {
+          if (a.getTerms().isEmpty() || a.getTerms().get(0) instanceof Insertion) {
             if (initial) {
               changed = true;
               first.put(a, TokenSet.of((Integer) null));

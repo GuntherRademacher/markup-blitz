@@ -1,7 +1,9 @@
 package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.character.Range;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Insertion extends Term {
@@ -10,16 +12,25 @@ public class Insertion extends Term {
   private int[] codepoints;
   private final int hashCode;
 
+  public Insertion(int[] codepoints) {
+    this(null, false, codepoints);
+  }
+
   public Insertion(String value, boolean isHex) {
-    this.value = value;
-    this.isHex = isHex;
-    this.codepoints = isHex
-        ? new int[] {Integer.parseInt(value.substring(1), 16)}
-        : value.codePoints().toArray();
+    this(value, isHex,
+         isHex
+       ? new int[] {Integer.parseInt(value.substring(1), 16)}
+       : value.codePoints().toArray());
+  }
+
+  private Insertion(String value, boolean isHex, int[] codepoints) {
+    this.codepoints = codepoints;
     final int prime = 31;
     int h = 1;
     h = prime * h + Arrays.hashCode(codepoints);
     this.hashCode = h;
+    this.value = value;
+    this.isHex = isHex;
   }
 
   public int[] getCodepoints() {
@@ -33,8 +44,17 @@ public class Insertion extends Term {
 
   @Override
   public String toString() {
-    return "+"
-         + (isHex ? value : "'" + value.replace("'", "''") + "'");
+    if (isHex)
+      return "+" + value;
+    return Arrays.stream(codepoints).mapToObj(codepoint -> {
+        if (codepoint == '\'')
+          return "+''''";
+        if (Range.isAscii(codepoint))
+          return "+'" + (char) codepoint + "'";
+        return "+#" + Integer.toHexString(codepoint);
+      })
+      .collect(Collectors.joining(", "))
+      .replace("', +'", "");
   }
 
   @Override

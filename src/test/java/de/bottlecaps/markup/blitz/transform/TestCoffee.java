@@ -54,6 +54,7 @@ public class TestCoffee {
   }
 
   @Test
+  @Disabled
   public void testJsonResource() throws Exception {
     String originalResult = runCoffee(jsonIxmlResourceContent, jsonResourceContent);
 

@@ -144,11 +144,6 @@ public class BNF extends Visitor {
   }
 
   @Override
-  public void visit(Insertion i) {
-    alts.peek().last().getTerms().add(i.copy());
-  }
-
-  @Override
   public void visit(Control c) {
     super.visit(c);
     Term separator = c.getSeparator() == null
@@ -253,4 +248,26 @@ public class BNF extends Visitor {
       }
     }
   }
+
+  @Override
+  public void visit(Insertion i) {
+    if (i.getNext() == null) {
+      alts.peek().last().getTerms().add(i.copy());
+    }
+    else {
+      String name = grammar.getAdditionalNames().get(i)[0];
+      Nonterminal nonterminal = new Nonterminal(Mark.DELETE, name);
+      alts.peek().last().getTerms().add(nonterminal);
+      if (! additionalRules.contains(name)) {
+        Alts alts = new Alts();
+        Alt alt = new Alt();
+        alt.getTerms().add(i);
+        alts.addAlt(alt);
+        Rule additionalRule = new Rule(Mark.NONE, name, alts);
+        additionalRules.add(additionalRule.getName());
+        justAdded.offer(additionalRule);
+      }
+    }
+  }
+
 }
