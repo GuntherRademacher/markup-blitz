@@ -45,8 +45,14 @@ public class Blitz {
     String grammar = args[i];
     String input = args[i + 1];
 
-    Parser parser = generate(urlContent(url(grammar)), options.toArray(BlitzOption[]::new));
-    String result = parser.parse(urlContent(url(input)));
+    String grammarString = grammar.startsWith("!")
+                         ? grammar.substring(1)
+                         : urlContent(url(grammar));
+    Parser parser = generate(grammarString, options.toArray(BlitzOption[]::new));
+    String inputString = input.startsWith("!")
+                       ? input.substring(1)
+                       : urlContent(url(input));
+    String result = parser.parse(inputString);
     System.out.print("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
     if (options.contains(BlitzOption.INDENT))
       System.out.println();
@@ -62,11 +68,11 @@ public class Blitz {
     System.err.println("  <INPUT>            the input (file name or URL).");
     System.err.println();
     System.err.println("  Options:");
-    System.err.println("    -v,     --verbose   print intermediate results (to standard output).");
-    System.err.println("            --timing    print timing information (to standard output).");
-    System.err.println("    -i,     --indent    generate resulting xml with indentation.");
-    System.err.println("            --trace     print parser trace (to standard error).");
-    System.err.println("    -?, -h, --help      print this information.");
+    System.err.println("    --verbose, -v    print intermediate results (to standard output).");
+    System.err.println("    --timing         print timing information (to standard output).");
+    System.err.println("    --indent, -i     generate resulting xml with indentation.");
+    System.err.println("    --trace          print parser trace (to standard error).");
+    System.err.println("    --help, -h, -?   print this information.");
     System.err.println();
     System.err.println();
     System.exit(exitCode);

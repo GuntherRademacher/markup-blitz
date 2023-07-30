@@ -2,6 +2,7 @@ package de.bottlecaps.markup.blitz.transform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
@@ -138,7 +139,14 @@ public class Generator {
         System.out.println("\nstate " + state.id + ":\n" + state);
     }
 
-    final var bmpMapEnd = 0xD800;
+    final BitSet[] expectedTokens = new BitSet[ci.states.size()];
+    for (State state : ci.states.keySet()) {
+      expectedTokens[state.id] = new BitSet(ci.terminalCode.size());
+      state.terminalTransitions.keySet().forEach(expectedTokens[state.id]::set);
+      state.reductions.keySet().forEach(expectedTokens[state.id]::set);
+    }
+
+    final int bmpMapEnd = 0xD800;
     Function<Integer, TileIterator> tokenMapIterator =
         bits -> TileIterator.of(ci.terminalCodeByRange, bmpMapEnd, bits, 0);
     CompressedMap bmpMap = new CompressedMap(tokenMapIterator, 3);
@@ -167,7 +175,8 @@ public class Generator {
         ci.reduceArguments,
         ci.nonterminal,
         ci.terminal,
-        ci.forks);
+        ci.forks,
+        expectedTokens);
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
