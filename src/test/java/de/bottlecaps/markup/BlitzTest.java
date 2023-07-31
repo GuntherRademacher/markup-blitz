@@ -2,11 +2,58 @@ package de.bottlecaps.markup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class BlitzTest extends TestBase {
+
+  @Test
+  public void testEmpty() {
+    Parser parser = Blitz.generate("S: .");
+    String result = parser.parse("");
+    assertEquals("<S/>", result);
+  }
+
+  @Test
+  public void testInsertion() {
+    Parser parser = Blitz.generate(
+        "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
+    String result = parser.parse(
+        "cfim",
+        BlitzOption.INDENT);
+    assertEquals(
+          "<S>abcdeghijklm</S>",
+        result);
+  }
+
+  @Test
+  @Disabled
+  public void testAmbiguousInsertion() {
+    Parser parser = Blitz.generate(
+        "S:'a', +'a'+.");
+    String result = parser.parse(
+        "a",
+        BlitzOption.TRACE);
+    assertEquals(
+          "",
+        result);
+  }
+
+  @Test
+  public void testAmbiguity1() {
+    Parser parser = Blitz.generate("S: 'a', 'b'+; 'a'+, 'b'.");
+    String result = parser.parse("ab");
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">ab</S>", result);
+  }
+
+  @Test
+  public void testAmbiguity2() {
+    Parser parser = Blitz.generate("S: 'a', 'b'+, 'c'; 'a'+, 'b', 'c'.");
+    String result = parser.parse("abc");
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">abc</S>", result);
+  }
 
   @Test
   public void testIxml() {
@@ -16,18 +63,18 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
-  public void testAddress() {
-    Parser parser = Blitz.generate(resourceContent("address.ixml"));
-    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT);
-    assertEquals(resourceContent("address.xml"), xml);
-  }
-
-  @Test
   public void testJson() {
     Parser parser = Blitz.generate(resourceContent("json.ixml")); // , BlitzOption.TIMING, BlitzOption.TRACE, BlitzOption.VERBOSE);
     String result = parser.parse(resourceContent("sample.json"));
     String expectedResult = resourceContent("sample.json.xml");
     assertEquals(expectedResult, result);
+  }
+
+  @Test
+  public void testAddress() {
+    Parser parser = Blitz.generate(resourceContent("address.ixml"));
+    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT);
+    assertEquals(resourceContent("address.xml"), xml);
   }
 
   @Test
@@ -60,18 +107,6 @@ public class BlitzTest extends TestBase {
           "<date month=\"February\">\n"
         + "   <year>2022</year>\n"
         + "</date>",
-        result);
-  }
-
-  @Test
-  public void testInsertion() {
-    Parser parser = Blitz.generate(
-        "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
-    String result = parser.parse(
-        "cfim",
-        BlitzOption.INDENT);
-    assertEquals(
-          "<S>abcdeghijklm</S>",
         result);
   }
 

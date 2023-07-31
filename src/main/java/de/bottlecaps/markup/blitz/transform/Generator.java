@@ -188,6 +188,8 @@ public class Generator {
 
   private int[] supplementaryMap(final int firstValue) {
     Range firstKey = terminalCodeByRange.floorKey(new Range(firstValue));
+    if (firstKey == null)
+      return new int[0];
     if (firstValue > firstKey.getLastCodepoint()) {
       firstKey = terminalCodeByRange.higherKey(firstKey);
       if (firstKey == null)
@@ -586,7 +588,7 @@ public class Generator {
   }
 
   private TokenSet first(Node node, TokenSet lookahead) {
-    if (node == null)
+    if (node == null || node instanceof Insertion)
       return lookahead;
     TokenSet tokens = first.get(node);
     if (! tokens.contains(null))
@@ -633,7 +635,7 @@ public class Generator {
                   }
                 }
                 if (hasNull) {
-                  if (i + 1 == terms.size()) {
+                  if (i + 1 == terms.size() || terms.get(i + 1) instanceof Insertion) {
                     tokens.add(null);
                   }
                   else {

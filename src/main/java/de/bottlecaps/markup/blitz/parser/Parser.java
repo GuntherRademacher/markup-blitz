@@ -581,29 +581,11 @@ public class Parser
     PriorityQueue<ParsingThread> threads = thread.open(0, eventHandler, target);
     for (;;) {
       thread = threads.poll();
-      if (thread.accepted) {
-        while (! threads.isEmpty()) {
-          if (! threads.peek().equals(thread))
-            throw new IllegalStateException();
-          if (trace)
-            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-          thread = threads.poll();
-          thread.isAmbiguous = true;
-        }
-        if (thread.deferredEvent != null) {
-          thread.deferredEvent.release(eventHandler);
-          thread.deferredEvent = null;
-        }
-        return thread;
-      }
-
-      if (! threads.isEmpty()) {
-        while (threads.peek().equals(thread)) {
-          thread.isAmbiguous = true;
-          if (trace)
-            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-          thread = threads.poll();
-        }
+      while (! threads.isEmpty() && threads.peek().equals(thread)) {
+        if (trace)
+          writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
+        thread = threads.poll();
+        thread.isAmbiguous = true;
       }
 
       if (thread.deferredEvent != null && threads.isEmpty()) {
@@ -611,22 +593,26 @@ public class Parser
         thread.deferredEvent = null;
       }
 
+      if (thread.accepted) {
+        if (! threads.isEmpty())
+          throw new IllegalStateException();
+        return thread;
+      }
+
       int status;
       for (;;) {
-        if ((status = thread.parse()) != PARSING) break;
+        status = thread.parse();
+        if (status != PARSING) break;
         if (! threads.isEmpty()) break;
       }
 
-      if (status != ERROR) {
+      if (status != ERROR)
         threads.offer(thread);
-      }
-      else if (threads.isEmpty()) {
+      else if (threads.isEmpty())
         throw new ParseException(thread.b1,
                                  thread.e1,
                                  thread.state,
-                                 thread.l1
-                                );
-      }
+                                 thread.l1);
     }
   }
 

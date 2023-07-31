@@ -3,6 +3,7 @@ package de.bottlecaps.markup.blitz.transform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -380,6 +381,8 @@ public class ClassifyCharacters extends Copy {
   }
 
   public static Set<RangeSet> classify(Collection<RangeSet> allRangeSets) {
+    if (allRangeSets.isEmpty())
+      return Collections.emptySet();
     Builder builder = RangeSet.builder();
     allRangeSets.forEach(builder::addAll);
     RangeSet[] charClasses = new RangeSet[allRangeSets.size()];
