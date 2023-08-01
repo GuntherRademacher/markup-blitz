@@ -256,8 +256,10 @@ public class ClassifyCharacters extends Copy {
     private boolean isDeleted;
     private boolean isPreserved;
     private RangeSet rangeSet;
+    private Set<String> active;
 
     private CharsetCollector() {
+      active = new HashSet<>();
     }
 
     public static Charset collect(Node node) {
@@ -325,6 +327,11 @@ public class ClassifyCharacters extends Copy {
 
     @Override
     public void visit(Nonterminal n) {
+      if (active.contains(n.getName())) {
+        rangeSet = null;
+        return;
+      }
+      active.add(n.getName());
       if (rangeSet != null) {
         if (n.getEffectiveMark() != Mark.DELETE) {
           rangeSet = null;
@@ -333,6 +340,7 @@ public class ClassifyCharacters extends Copy {
           n.getGrammar().getRules().get(n.getName()).getAlts().accept(this);
         }
       }
+      active.remove(n.getName());
     }
 
     @Override

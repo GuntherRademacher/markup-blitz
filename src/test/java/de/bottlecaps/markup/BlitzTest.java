@@ -17,6 +17,11 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testInfinite() {
+    Blitz.generate("s: -s.");
+  }
+
+  @Test
   public void testInsertion() {
     Parser parser = Blitz.generate(
         "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");

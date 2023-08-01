@@ -27,3 +27,11 @@ tasks.withType(JavaCompile) {
     options.fork = true
     options.forkOptions.jvmArgs += ['-Xss4m']
 }
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'de.bottlecaps.markup.Blitz'
+        )
+    }
+}

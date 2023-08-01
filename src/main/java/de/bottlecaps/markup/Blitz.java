@@ -60,7 +60,7 @@ public class Blitz {
   }
 
   private static void usage(int exitCode) {
-    System.err.println("Usage: java " + Blitz.class.getName() + " [<OPTION>...] <GRAMMAR> <INPUT>");
+    System.err.println("Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>");
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();

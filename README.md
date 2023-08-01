@@ -1,12 +1,14 @@
 ![Markup Blitz][logo]
 
-Markup Blitz is a Java implementation of Invisible XML as defined on <span style="font-family: monospace">https://invisiblexml.org/</span>
+Markup Blitz is a [parser generator][parser-generator] implemented in Java. It takes a [context-free grammar][CFG], generates a [parser][parser] for it, and uses the parser to convert input into a [parse tree][parse-tree], provided that the input conforms to the grammar.
 
 The algorithms used are
 * [LALR(1)][LALR] for parser table construction, and
 * [GLR][GLR] for dynamic conflict resolution.
 
-Markup Blitz also uses concepts from [REx Parser Generator][REx].
+It also uses concepts from [REx Parser Generator][REx].
+
+Markup Blitz is an implementation of [Invisible XML][IXML] (ixml). Please see the ixml specification for details on grammar notation and parse-tree serialization.
 
 ## Building Markup Blitz
 
@@ -15,7 +17,7 @@ Use JDK 11 or higher. For building Markup Blitz, use these commands:
 ```sh
 git clone https://github.com/GuntherRademacher/markup-blitz.git
 cd markup-blitz 
-gradlew clean build
+gradlew clean jar
 ```
 
 This creates `build\libs\markup-blitz.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
@@ -29,7 +31,7 @@ The project can be imported into Eclipse as a Gradle project.
 Markup Blitz can be run from command line to process some input according to an Invisible XML grammar:
 
 ```sh
-Usage: java de.bottlecaps.markup.Blitz [<OPTION>...] <GRAMMAR> <INPUT>
+Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
 
   compile an Invisible XML grammar, and parse input with the resulting parser.
 
@@ -58,3 +60,8 @@ Markup Blitz is provided under the [Apache 2 License][ASL].
 [LALR]: https://en.wikipedia.org/wiki/LALR_parser
 [GLR]: https://en.wikipedia.org/wiki/GLR_parser
 [rex-parser-benchmark]: https://github.com/GuntherRademacher/rex-parser-benchmark
+[IXML]: https://invisiblexml.org/
+[CFG]: https://en.wikipedia.org/wiki/Context-free_grammar
+[parser]: https://en.wikipedia.org/wiki/Parsing#Parser
+[parse-tree]: https://en.wikipedia.org/wiki/Parse_tree
+[parser-generator]: https://en.wikipedia.org/wiki/Compiler-compiler
