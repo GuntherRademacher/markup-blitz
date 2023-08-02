@@ -34,7 +34,7 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
-  @Disabled
+  @Disabled // runs out of memory
   public void testAmbiguousInsertion() {
     Parser parser = Blitz.generate(
         "S:'a', +'a'+.");
@@ -42,7 +42,7 @@ public class BlitzTest extends TestBase {
         "a",
         BlitzOption.TRACE);
     assertEquals(
-          "",
+        "",
         result);
   }
 
@@ -58,6 +58,38 @@ public class BlitzTest extends TestBase {
     Parser parser = Blitz.generate("S: 'a', 'b'+, 'c'; 'a'+, 'b', 'c'.");
     String result = parser.parse("abc");
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">abc</S>", result);
+  }
+
+  @Test
+  public void testCss() {
+    Parser parser = Blitz.generate(
+          "     css = S, rule+.\n"
+        + "    rule = selector, block.\n"
+        + "   block = -\"{\", S, property**(-\";\", S), -\"}\", S.\n"
+        + "property =  @name, S, -\":\", S, value | empty.\n"
+        + "selector = name, S.\n"
+        + "    name = letter+.\n"
+        + " -letter = [\"a\"-\"z\" | \"-\"].\n"
+        + "   digit = [\"0\"-\"9\"].\n"
+        + "   value = (@name | @number), S.\n"
+        + "  number = digit+.\n"
+        + "  -empty = .\n"
+        + "      -S = -[\" \" | #a]*.");
+    String result = parser.parse(
+        "p { }",
+        BlitzOption.INDENT);
+    String expectedResult =
+        "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
+        + "   <rule>\n"
+        + "      <selector>\n"
+        + "         <name>p</name>\n"
+        + "      </selector>\n"
+        + "      <block>\n"
+        + "         <property/>\n"
+        + "      </block>\n"
+        + "   </rule>\n"
+        + "</css>";
+    assertEquals(expectedResult, result);
   }
 
   @Test
@@ -345,6 +377,186 @@ public class BlitzTest extends TestBase {
         + "   </sum>\n"
         + "</expression>",
         result);
+  }
+
+  @Test
+  public void testFrege() {
+    Parser parser = Blitz.generate(
+        resourceContent("frege.ixml"),
+        BlitzOption.TIMING, BlitzOption.INDENT);
+    assertEquals(
+          "<formula>\n"
+        + "   <maybe>\n"
+        + "      <conditional>\n"
+        + "         <consequent>\n"
+        + "            <leaf>\n"
+        + "               <var>Α</var>\n"
+        + "            </leaf>\n"
+        + "         </consequent>\n"
+        + "         <antecedent>\n"
+        + "            <leaf>\n"
+        + "               <var>Β</var>\n"
+        + "            </leaf>\n"
+        + "         </antecedent>\n"
+        + "      </conditional>\n"
+        + "   </maybe>\n"
+        + "</formula>",
+        parser.parse("Alpha if Beta"));
+    assertEquals(
+          "<formula>\n"
+          + "   <maybe>\n"
+          + "      <leaf>\n"
+          + "         <fa>\n"
+          + "            <functor>\n"
+          + "               <var>Ψ</var>\n"
+          + "            </functor>\n"
+          + "            <arg>\n"
+          + "               <var>Α</var>\n"
+          + "            </arg>\n"
+          + "            <arg>\n"
+          + "               <var>Β</var>\n"
+          + "            </arg>\n"
+          + "         </fa>\n"
+          + "      </leaf>\n"
+          + "   </maybe>\n"
+          + "</formula>",
+        parser.parse("Psi(Alpha, Beta)"));
+    assertEquals(
+            "<inference>\n"
+          + "   <premise>\n"
+          + "      <formula>\n"
+          + "         <yes>\n"
+          + "            <conditional>\n"
+          + "               <consequent>\n"
+          + "                  <leaf>\n"
+          + "                     <var>Α</var>\n"
+          + "                  </leaf>\n"
+          + "               </consequent>\n"
+          + "               <antecedent>\n"
+          + "                  <leaf>\n"
+          + "                     <var>Β</var>\n"
+          + "                  </leaf>\n"
+          + "               </antecedent>\n"
+          + "            </conditional>\n"
+          + "         </yes>\n"
+          + "      </formula>\n"
+          + "   </premise>\n"
+          + "   <premise>\n"
+          + "      <formula>\n"
+          + "         <yes>\n"
+          + "            <leaf>\n"
+          + "               <var>Β</var>\n"
+          + "            </leaf>\n"
+          + "         </yes>\n"
+          + "      </formula>\n"
+          + "   </premise>\n"
+          + "   <infstep>\n"
+          + "      <conclusion>\n"
+          + "         <formula>\n"
+          + "            <yes>\n"
+          + "               <leaf>\n"
+          + "                  <var>Α</var>\n"
+          + "               </leaf>\n"
+          + "            </yes>\n"
+          + "         </formula>\n"
+          + "      </conclusion>\n"
+          + "   </infstep>\n"
+          + "</inference>",
+        parser.parse(
+            "we have: yes Alpha if Beta\n"
+          + "    and: yes Beta\n"
+          + "from which we infer: yes Alpha."));
+    assertEquals(
+          "<inference>\n"
+        + "   <premise>\n"
+        + "      <formula>\n"
+        + "         <yes>\n"
+        + "            <conditional>\n"
+        + "               <consequent>\n"
+        + "                  <leaf>\n"
+        + "                     <var>Α</var>\n"
+        + "                  </leaf>\n"
+        + "               </consequent>\n"
+        + "               <antecedent>\n"
+        + "                  <leaf>\n"
+        + "                     <var>Β</var>\n"
+        + "                  </leaf>\n"
+        + "               </antecedent>\n"
+        + "            </conditional>\n"
+        + "         </yes>\n"
+        + "      </formula>\n"
+        + "   </premise>\n"
+        + "   <infstep>\n"
+        + "      <premise-ref-ant>\n"
+        + "         <ref>XX</ref>\n"
+        + "      </premise-ref-ant>\n"
+        + "      <conclusion>\n"
+        + "         <formula>\n"
+        + "            <yes>\n"
+        + "               <leaf>\n"
+        + "                  <var>Α</var>\n"
+        + "               </leaf>\n"
+        + "            </yes>\n"
+        + "         </formula>\n"
+        + "      </conclusion>\n"
+        + "   </infstep>\n"
+        + "</inference>",
+      parser.parse(
+            "we have: yes Alpha if Beta,\n"
+          + "from which via (XX)::\n"
+          + "we infer: yes Alpha."));
+    assertEquals(
+          "<formula>\n"
+        + "   <maybe>\n"
+        + "      <not>\n"
+        + "         <univ bound-var=\"𝔡\">\n"
+        + "            <not>\n"
+        + "               <univ bound-var=\"𝔞\">\n"
+        + "                  <leaf>\n"
+        + "                     <fa>\n"
+        + "                        <functor>\n"
+        + "                           <var>Φ</var>\n"
+        + "                        </functor>\n"
+        + "                        <arg>\n"
+        + "                           <bound-var>𝔞</bound-var>\n"
+        + "                        </arg>\n"
+        + "                        <arg>\n"
+        + "                           <bound-var>𝔡</bound-var>\n"
+        + "                        </arg>\n"
+        + "                     </fa>\n"
+        + "                  </leaf>\n"
+        + "               </univ>\n"
+        + "            </not>\n"
+        + "         </univ>\n"
+        + "      </not>\n"
+        + "   </maybe>\n"
+        + "</formula>",
+      parser.parse(
+          "not all fd satisfy not all fa satisfy Phi(fa, fd)"));
+//    assertEquals(
+//        "",
+//      parser.parse(
+//          ""));
+    assertEquals(
+          "<formula>\n"
+        + "   <maybe>\n"
+        + "      <conditional>\n"
+        + "         <consequent>\n"
+        + "            <univ bound-var=\"𝔞\">\n"
+        + "               <leaf>\n"
+        + "                  <var>Α</var>\n"
+        + "               </leaf>\n"
+        + "            </univ>\n"
+        + "         </consequent>\n"
+        + "         <antecedent>\n"
+        + "            <leaf>\n"
+        + "               <var>Β</var>\n"
+        + "            </leaf>\n"
+        + "         </antecedent>\n"
+        + "      </conditional>\n"
+        + "   </maybe>\n"
+        + "</formula>",
+        parser.parse("all fa satisfy Alpha if Beta"));
   }
 
 //  @Test

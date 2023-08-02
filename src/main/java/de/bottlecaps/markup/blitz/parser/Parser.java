@@ -943,7 +943,7 @@ public class Parser
   {
     List<String> expected = new ArrayList<>();
     BitSet tokens = expectedTokens[tokenSetId];
-    for (int i = tokens.nextSetBit(0); i >= 0; i = tokens.nextSetBit(i+1)) {
+    for (int i = tokens.nextSetBit(0); i >= 0; i = tokens.nextSetBit(i + 1)) {
       expected.add(terminal[i].shortName());
     }
     return expected.toArray(String[]::new);

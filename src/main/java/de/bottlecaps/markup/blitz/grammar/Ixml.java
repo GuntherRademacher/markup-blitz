@@ -1,4 +1,4 @@
-// This file was generated on Mon Jul 17, 2023 21:45 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Wed Aug 2, 2023 13:49 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -653,7 +653,7 @@ public class Ixml
       case 17:
         {
                                                             // line 65 "ixml.ebnf"
-                                                            nameBuilder.append(input.charAt(b0));
+                                                            nameBuilder.append(input.subSequence(b0, e0));
                                                             // line 658 "Ixml.java"
         }
         break;
@@ -702,7 +702,7 @@ public class Ixml
       case 24:
         {
                                                             // line 88 "ixml.ebnf"
-                                                            stringBuilder.append(input.charAt(b0));
+                                                            stringBuilder.append(input.subSequence(b0, e0));
                                                             // line 707 "Ixml.java"
         }
         break;
@@ -788,7 +788,7 @@ public class Ixml
       case 36:
         {
                                                             // line 121 "ixml.ebnf"
-                                                            clazz += input.charAt(b0);
+                                                            clazz += input.subSequence(b0, e0);
                                                             // line 793 "Ixml.java"
         }
         break;
@@ -809,7 +809,7 @@ public class Ixml
       case 39:
         {
                                                             // line 130 "ixml.ebnf"
-                                                            clazz = Character.toString(input.charAt(b0));
+                                                            clazz = input.subSequence(b0, e0).toString();
                                                             // line 814 "Ixml.java"
         }
         break;

@@ -1,0 +1,787 @@
+{ Gottlob Frege, Begriffsschrift, eine der arithmetisschen
+nachgebildete Formelsprache des reinen Denkens (Halle a.S.:
+Verlag von Louis Nebert, 1879. }
+
+{ Revisions:
+  2023-04-18 : CMSMcQ : allow page breaks in inferences.
+  2023-04-05 : CMSMcQ : move on to Part III.
+  2023-04-05 : CMSMcQ : move on to Part II.
+                        . allow braces for parenthesized propositions
+                        . support formula numbers
+                        . unhide conclusion/formula
+                        . allow tables of substitutions
+  2023-04-01 : CMSMcQ : add italic caps (*F)
+  2023-03-31 : CMSMcQ : tweaks (make functor an element)
+  2023-03-29 : CMSMcQ : tweaks (hiding, Greek, Fraktur)
+  2023-03-28 : CMSMcQ : everything in Part I is now here
+  2023-03-27 : CMSMcQ : started again from scratch
+  2020-06-23 : CMSMcQ : made standalone file
+  2020-06-03/---06:  CMSMcQ : sketched a grammar in work log
+}
+
+{ Preliminary notes:
+
+  The grammar works mostly in the order of Frege's presentation, and
+  top down.
+
+  We follow the basic principle that no nonterminal except the
+  outermost one starts or ends with whitespace.
+}
+
+
+{ ****************************************************************
+  Top level
+  ****************************************************************}
+  
+{ What we are transcribing -- an inline expression that needs special
+  attention, or a typographic display -- can be any of several things:
+
+  - a formula expressing a proposition, either with an affirmative
+    judgement (nonterminal 'yes') or without (nonterminal 'maybe'),
+
+  - the declaration of a new notation, or 
+
+  - an inference (one or more premises, and one or more inference 
+    steps, or
+
+  - a basic formula without a content stroke (perhaps not strictly
+    to be regarded as a full formula in Frege's notation, but in
+    need of transcription).
+
+  If there are other kinds of expressions, I've missed them so far.
+
+  After any of these, we allow an optional end-mark.  
+
+}
+
+-begriffsschrift: s, 
+                  (formula
+                  ; inference
+                  ; notation-declaration
+                  ; mention
+                  ),
+                  s, (end-mark, s)?.
+
+
+{ ****************************************************************
+  Formulas
+  ****************************************************************}
+
+{ A formula is one sequence of basic statements with a logical
+  superstructure given by content strokes, conditional strokes,
+  negation strokes, and possibly an affirmation stroke.
+
+  As mentioned in §6 but not shown in detail until §14, formulas can
+  be numbered (with a label on the right), and when used as a premise
+  they can be (and in practice always are) numbered with a label on
+  the left, to show where the formula was first given. Call these
+  right-labels and left-labels.
+
+  Only one label ever appears, but we don't bother trying to enforce
+  that.  If two labels appear, there will be two @n attributes and the
+  parse will blow up on its own.
+
+  For that matter, only judgements carry numbers, so unless the
+  formula's child is 'yes', it won't in practice get a right-label.
+  But that, too, we will not trouble to enforce.
+
+}
+
+formula: (left-label, s)?, (yes; maybe), (s, right-label)?.
+
+{ A right-label of the form (=nn) assigns a number nn to this formula;
+  it occurs when the formula is a theorem. }
+
+-right-label: -'(', s, -'=', s, @n, s, -')'.
+
+{ A left-label of the form (nn=) identifies a fully written out
+  premise of an inference as a theorem given earlier.  Left-labels do
+  not appear in Frege's presentation of inference steps in Part I, but
+  they appear on all fully written out premises in Parts II and III.
+
+  Note that left-hand labels may have tables of substitutions, which
+  are defined below with inferences.
+
+}
+
+-left-label: -'(', s, @n, s, (substitutions, s)?, -'=', s, -')'.
+
+{ In left- and right-labels, the number becomes an @n attribute on the
+  formula. }
+
+@n: ['0'-'9']+.
+
+{ ................................................................
+  Propositions
+}
+
+{ §2 The content stroke (Inhaltsstrich). }
+
+maybe:  (-'maybe', s)?, proposition.
+
+
+{ §2 The judgement stroke (Urtheilsstrich). }
+
+yes:  -"yes", s, proposition.
+
+{ Frege speaks of content which may or may not be affirmed; in effect,
+  we would speak of sentences to which a truth value may be attached.
+  I think the usual word for this is 'proposition'.
+
+  A proposition can be a basic proposition (leaf), or a conditional
+  expression, or a negation, or a universal quantification.  For
+  technical reasons (operator priorities, associativity) we
+  distinguish the set of all propositions from the set of 'all
+  propositions except unparenthesized conditionals'.
+
+}
+
+-prop-no-ifs:  leaf; not; univ; analytic; parenthesized-prop.
+-proposition: prop-no-ifs; conditional.
+-parenthesized-prop: -'(', s, proposition, s, -')'
+                   ; -'{', s, proposition, s, -'}'.
+
+{ The simplest binding story I can tell is roughly this:
+
+  The 'if' operator is left-associative.  So "a if b if c" = ((a if b)
+  if c).
+
+  This allows a very simple transcription of formulas with all
+  branches on the top or main content stroke, and allows the simple
+  rule that parentheses are needed only when the graphic structure is
+  more complicated (for conditionals not on the main content stroke
+  and not on the main content stroke for the sub-expression), or
+  equivalently: parens are needed for conditionals in the antecedent,
+  but not for conditionals in the consequent.
+
+  A very few glances at the book show that when conditionals nest,
+  they nest in the consequent far more often than in the antecedent,
+  so this rule coincidentally reduces the need for parentheses.
+
+  For negation and universal quantification, right-association is
+  natural.  But should "not Alpha if Beta" mean ((not Alpha) if Beta)
+  or (not (Alpha if Beta))?  By analogy with other languages, negation
+  is made to bind very tightly: we choose the first interpretation.
+  So we say that the argument of 'not' cannot contain an
+  unparenthesized 'if'.
+
+  For universal quantification, the opposite rule is tempting: unless
+  otherwise indicated by parentheses, assume that the expression is in
+  prenex normal form.  That would make "all ka satisfy P(ka) if b"
+  parse as (all ka satisfy (P(ka) if b)), instead of ((all ka satisfy
+  P(ka)) if b).
+
+  But I think the rule will be simpler to remember if both unary
+  operators obey the same rule: no unparenthesized conditionals in the
+  argument.
+
+  So "all ka satisy P(ka) if b" should parse as a conditional with a
+  universal quantification in the consequent, not as a universal
+  quantification over a conditional.  Preliminary counts suggest that
+  the quantification may be slightly more common than the conditional,
+  but both forms are common, as are cases where a quantifier governs a
+  conditional which contains a quantifier.
+
+  So we want a non-terminal that means "any proposition except
+  a conditional'.  That is prop-no-ifs.
+
+}
+
+
+{ ................................................................
+  Basic propositions (leaves)
+}
+
+{ The expressions on the right side of a Begriffsschrift formula
+  are basic propositions.  We call them leaves, because they are
+  leaves on the parse tree.
+
+  They are not necessarily atomic by most lights, but they are
+  normally free of negation, conjunction, and other purely logical
+  operators.
+
+  For the moment, we distinguish four kinds of basic propositions:
+  expressions (variables and function applications), equivalence
+  statements, introduction of new notation (a special kind of
+  equivalence statement), and jargon (material in some format
+  not defined here).
+
+}
+
+leaf: expr; equivalence; jargon; -new-notation; ad-hoc.
+
+{ In addition, we define one ad-hoc kind of leaf, to handle
+  some otherwise ill-formed formulas.
+}
+
+ad-hoc: nil.
+nil: -'nil'.
+
+
+{ A 'mention' formula is a basic statement with no content stroke.
+  The name reflects the fact that these formulas appear (§10, §24)
+  as objects of metalinguistic discussion, typically in sentences
+  of the form "[formula] denotes ..." or "the abbreviated form 
+  [formula] can always be replaced by the full form [formula]".
+
+  The keyword 'expr' used here is intended to suggest reading a
+  formula like "expr a" as "the expression 'a'".
+}
+
+mention: -'expr', s, leaf.
+
+{ ................................................................
+  Expressions 
+}
+
+{ Expressions are used for basic statements, function arguments,
+  either side of an equivalence, and the left-hand side of a
+  substitution.
+
+  The most frequent form of expression in the book is a single-letter
+  variable: upper-case Greek, lower-case italic Roman, later also
+  lower-case Greek and upper-case italic.  These are often used as
+  basic statements; today we would call them propositional variables.
+
+  Bound variables are syntactically distinct from variables with
+  implicit universal quantification (bound variables are Fraktur,
+  others italic). We carry that distinction into the syntax here, just 
+  in case we ever need it.  
+
+  Bound variables do not, as far as I know, ever show up as basic
+  statements, but I don't see anything in Frege's explanations that
+  would rule it out.  He says explicitly that a variable explicitly
+  bound at the root of the expression (a bound-var) is equivalent to
+  an implicitly bound variable (an instance of italic or Italic).
+
+  Some basic statements have internal structure which we need to
+  capture (either to be able to process the logical formulas usefully
+  or for purely typographic reasons).  So what we call leaves are not,
+  strictly speaking, always leaves in OUR parse tree.
+
+}
+
+-expr: var; bound-var; fa.
+
+{ Details of variables are banished down to the 'Low-level details'
+  section at the bottom of the grammar. }
+  
+var:  Greek-letter; greek-letter; italic; Italic.
+
+{ In the general case, the leaf expressions may come from any notation
+  developed by a particular discipline.  To allow such formulas
+  without changing this grammar, we provide a sort of escape hatch,
+  using brackets ⦑ ... ⦒ (U+2991, U+2992, left / right angle bracket
+  with dot).  For brevity, we'll call the specialized language inside
+  the brackets 'jargon'. }
+
+jargon: #2991, ~[#2991; #2992]*, #2992.
+
+
+{ ................................................................
+  Conditionals
+}
+
+{ §5 Conditionals are left-associative.  Since the consequent is
+  always given first and the antecedent second, we could hide those
+  nonterminals and just rely on the position of the child to know its
+  role.  But it feels slightly less error-prone to keep the names;
+  it makes a transform that shifts into conventional order easier
+  to write and read.
+
+}
+
+conditional: consequent, s, -'if', s, antecedent.
+consequent: proposition.
+antecedent: prop-no-ifs.
+
+
+{ ****************************************************************
+  Inferences
+  ****************************************************************}
+
+{ §6 Inferences.  In the simple case we have multiple premises
+  and a conclusion.  More often, one of the premises is omitted.
+  (Oddly, never both premises, I do not understand why not.)
+
+  There may be more than one inference step.
+}
+
+inference:  premises, sep,
+            infstep++sep.
+
+-premises:  -'we have:', s, premise++(sep, -'and:', s).
+
+premise:  formula.
+
+conclusion: formula.
+
+{ An inference step may also refer to further premises by number.
+  These are NOT given explicitly, only be reference.}
+
+infstep: -'from which', s,
+         (-'via', s, premise-references, s)?, 
+         -'we infer:', s,
+         (pagebreak, s)?,
+         conclusion.
+
+{ Page breaks sometimes occur after the inference line;
+we encode them just after the "we infer:", but n.b.
+the replacement table for the premise ref is printed after
+the page break, though transcribed before it. }
+
+pagebreak: -'|p', s, @n, s, -'|'.
+
+{ ................................................................
+  References to premises
+}
+
+{ References may refer to the first premise of Frege's modus ponens
+  (the conditional) or to the second (the hypothesis).  I'll call
+  these 'con' for the conditional and 'ant' for the hypothesis or
+  antecedent.  If there are standard names, I don't know what they
+  are.
+
+  As far as I can see, 102 is the only formula that actually uses
+  multiple premises by reference in a single inference step.  It uses
+  no substitutions.  In Frege's book, then, a premise reference
+  can EITHER have multiple references without substitutions or a 
+  single reference with optional substitutions.
+
+}
+
+-premise-references: premise-ref-con; premise-ref-ant.
+premise-ref-con:  -'(', s, ref++comma, s, -'):'.
+premise-ref-ant:  -'(', s, ref++comma, s, -')::'.
+
+ref: 'X'+; @n, (s, substitutions)?.
+
+{ ................................................................
+  Substitution tables
+}
+
+{ For premise references, a substitution table may be specified. }
+
+substitutions: -'[', s, -'replacing', s, subst++sep, s, -']'.
+
+{ A single substitution has left- and right-hand sides separated by
+  'with'.  To make substitution tables easier to read and write, each
+  substitution must be enclosed in parentheses.  I don't know good
+  names for the two parts, so we are stuck with awkward ones.
+
+    - oldterm, newterm
+    - del, ins / delete, insert / delendum, inserendum
+    - tollendum, ponendum / take, give / pull, push
+
+  The Biblical echoes dispose me right now to take and give.  One hand
+  gives and the other takes away.
+
+}
+
+subst: -'(', s, taken, s, -'with', s, given, s, -')'.
+
+{ A quick survey suggests that 'taken' is always an expression
+  (variable or function application), while 'given' can be arbitrarily
+  complex. }
+
+taken:  expr.
+given:  proposition.
+
+
+{ ****************************************************************
+  Formulas (cont'd)
+  ****************************************************************}
+
+{ ................................................................
+  Negation
+}
+
+{ §7 Negation }
+
+not: -'not', s, prop-no-ifs.
+
+
+{ §8 Equivalence sign.  
+
+  It looks as if we are going to need to parse the leaves.  Frege
+  refers to "Inhaltsgleichheit", which for the moment I am going to
+  render as "equivalence".  In Part I, at least, the only use of
+  equivalences is for variable symbols.  But in Part II, things get
+  more complicated.  So we allow equivalences between parenthesized 
+  propositions on the left and variables on the right.  In this case,
+  Frege normally brackets the entire equivalence.
+
+  For now (we are at the end of Part II), we do not allow
+  parenthesized propositions in the right hand side, and we require
+  outer brackets.  Both of those restrictions feel a little ad-hoc,
+  so they may be relaxed later.
+
+}
+
+equivalence: simple-equiv; bracketed-equiv.
+
+-simple-equiv: expr, s, equiv-sign, s, expr.
+-bracketed-equiv: -'[', s,
+                  parenthesized-prop, s, equiv-sign, s, expr,
+                  s, -']'.
+
+equiv-sign: -'≡'; -'equiv'; -'EQUIV'; -'=='.
+
+
+{ ................................................................
+  Functions and argument / function application
+}
+
+{ §10 Function and argument.
+
+  Frege does not distinguish, in notation or prose, between what I
+  would call "function" and "function application".  The nonterminal
+  'fa' can be thought of as an abbreviation for 'function application'
+  or for 'function and argument'.  
+
+}
+
+fa: functor, s, -'(', s, arguments, s, -')'.
+
+{ It would feel natural to make functor an attribute, but I want the
+  distinction between var and bound-var to be visible, to simplify the
+  task of deciding whether to italicize or not. }
+
+functor: var; bound-var.
+
+-arguments: arg++comma.
+
+arg: expr.
+
+
+{ ................................................................
+  Universal quantification
+}
+
+{ §11  Universal quantification. }
+
+univ:  -'all', s, @bound-var, s, -'satisfy', s, prop-no-ifs.
+
+bound-var: fraktur; Fraktur.
+
+
+{ ****************************************************************
+  Notations
+  ****************************************************************}
+
+{ §24 Elaboration of equivalence as a method of introducing a new
+  notation.  In §8, Frege mentions that one reason for specifying an
+  equivalence is to establish a short form to abbreviate what would
+  otherwise be tedious to write out.  In §24 he gives more details. 
+
+  1 In place of the affirmation stroke there is a double stroke, which
+    Frege explains as signaling a double nature of the statement
+    (synthetic on first appearance, analytic in reappearances).
+
+  2 The proposition is an equivalence, with standard notation on the
+    left and a new notation on the right.
+
+  For purposes of data capture, we transcribe the new notation as a
+  function application, in which the functor is a multi-character
+  name.  For the notations used by Frege in the book, we define
+  specific functors here.  As a gesture towards generality, we also
+  define a generic new-notation syntax (functors beginning with
+  underscore).
+
+}
+
+notation-declaration: -'let us denote:', s, proposition, sep,
+                      -'with the expression:', s, new-notation, s,
+                      right-label?.
+
+{ When the notation declaration is actually used as a premise, it
+  becomes an analytic statement and a normal kind of proposition. It
+  will never be a conclusion or an axiom, only a premise. }
+
+analytic: proposition, s, equiv-sign, s, new-notation.
+
+{ The new notation can be known or unknown. }
+
+new-notation: known-notation; unknown-notation.
+
+{ A known notation is one Frege introduces. (We know it because we
+  have read ahead in the book.)  We define these here for 
+  convenience: better syntax checking, and the opportunity for
+  custom XML representations. }
+
+-known-notation: is-inherited
+               ; follows
+               ; follows-or-self
+               ; unambiguous.
+
+{ The first notation Frege defines means 'property F is 
+  inherited in the f-series', where F is a unary predicate
+  and f is a binary predicate such that f(x, y) means 
+  that applying procedure f to x yields y.  He also wants 
+  two dummy arguments with Greek letters, and from his
+  examples it appears that a fifth argument is needed in 
+  order to specify the order of the two greek arguments in
+  the call to f().  It's possible that there are typos in
+  those examples, since the order of arguments never
+  varies otherwise. }
+  
+is-inherited: -'inherited(', s,
+              property, comma,
+              function, comma,
+              dummy-var, comma,
+              dummy-var, comma,
+              order-argument, s,
+              -')'.
+
+{ Frege generally uses an uppercase letter for the property, and a
+  lowercase letter for the function. But variations occur. }
+
+property: Italic; Greek-letter; Fraktur; conditional;
+          follows; follows-or-self.
+
+function:  var.
+
+{ Frege explains that the small greek letters are dummy variables (but
+  I cannot say I understand the explanation very well. }
+  
+dummy-var: greek-letter.
+
+{ If a greek letter is used for the order argument, it means that that
+  is the letter given first in the call to the binary function; the
+  other dummy variable comes second.  If a number is used, it means
+  the first/second dummy variable is given first.  }
+  
+order-argument: greek-letter; '1'; '2'.
+
+
+{ Frege describes the second notation as meaning 'y follows x in the
+f-series'.  
+
+I think it may be clearer to say that (x,y) is in the transitive
+closure of relation f.  The conventional English term for the relation
+defined here is apparently to say that y is the f-ancestor of x, which
+like "ancestral" uses Frege's genealogical metaphor backwards.  }
+
+follows: -'follows-in-seq(', s,
+         (var | ^bound-var), comma,
+         (var | ^bound-var), comma,
+         function, comma,
+         dummy-var, comma,
+         dummy-var, s,
+         -')'.
+
+{ The second notation means 'y follows x in the f-series, or is the
+  same as y'. }
+
+follows-or-self: -'follows-or-same(', s,
+         (var | ^bound-var), comma,
+         (var | ^bound-var), comma,
+         function, comma,
+         dummy-var, comma,
+         dummy-var, s,
+         -')'.
+
+{ The fourth notation means 'f is unambiguous', i.e. in modern terms f
+  is a function. }
+
+unambiguous: -'unambiguous(', s,
+             function, comma,
+             dummy-var, comma,
+             dummy-var, s,
+             -')'.
+
+
+{ As a nod towards generality, and to enable this grammar to
+  be used with other new notations, we also define a rule 
+  for 'unknown' notations. For historical reasons, I'll use
+  the name 'blort' to denote an unknown notation.
+}
+
+-unknown-notation: blort.
+
+{ In kB, a blort is written like a function call in a conventional
+  programming language: it has (what looks like) a function name and
+  then zero or more arguments wrapped as a group in parentheses.  The
+  one constraint is that the function name has to begin with an
+  underscore.  For example: _foo(arg1, arg2, delta, alpha).
+
+  For now we allow all the same kinds of arguments as in 'fa', and
+  also lower-case Greek.  If more is needed, rework will be needed.
+
+}
+  
+blort: @name, -'(', s, blarg**comma, -')'.
+
+@name:  '_', [L; N; '-_.']+.
+
+{ A blarg is (of course) an argument for a blort. Frege uses small
+  Greek letters for these, as well as italics. I don't think he uses
+  any upper-case Greek, but I won't rule it out. }
+  
+blarg:  expr; dummy-var.
+
+
+{ ****************************************************************
+  Low-level details
+  ****************************************************************}
+
+{ ................................................................
+  Whitespace, separators
+}
+
+{ Whitespace is allowed in many places }
+
+-s : whitespace*.
+-ss: whitespace+.
+-whitespace: -[#9; #A; #D; Z].
+
+{ A 'separator' is just a place where a comma may or must occur.
+  Whitespace is not allowed before the comma.  There are rules. }
+
+-comma: -',', s.
+-sep: ss; (-',', s).
+
+-end-mark: -".".
+
+{ ................................................................
+  Variables: Greek letters
+}
+
+{ Upper-case Greek letters can be entered directly, but may also be
+  spelled out. }
+  
+-Greek-letter: [#391 - #03A9] { 'Α'-'Ω' }
+            ; -'Alpha', + #0391 {'Α'}
+            ; -'Beta', + #0392 {'Β'}
+            ; -'Gamma', + #0393 {'Γ'}
+            ; -'Delta', + #0394 {'Δ'}
+            ; -'Epsilon', + #0395 {'Ε'}
+            ; -'Zeta', + #0396 {'Ζ'}
+            ; -'Eta', + #0397 {'Η'}
+            ; -'Theta', + #0398 {'Θ'}
+            ; -'Iota', + #0399 {'Ι'}
+            ; -'Kappa', + #039A {'Κ'}
+            ; -'Lamda', + #039B {'Λ'}
+            ; -'Lambda', + #039B {'Λ'}
+            ; -'Mu', + #039C {'Μ'}
+            ; -'Nu', + #039D {'Ν'}
+            ; -'Xi', + #039E {'Ξ'}
+            ; -'Omicron', + #039F {'Ο'}
+            ; -'Pi', + #03A0 {'Π'}
+            ; -'Rho', + #03A1 {'Ρ'}
+            ; -'Sigma', + #03A3 {'Σ'}
+            ; -'Tau', + #03A4 {'Τ'}
+            ; -'Upsilon', + #03A5 {'Υ'}
+            ; -'Phi', + #03A6 {'Φ'}
+            ; -'Chi', + #03A7 {'Χ'}
+            ; -'Psi', + #03A8 {'Ψ'}
+            ; -'Omega', + #03A9 {'Ω'}
+            .
+
+{ Lower-case greek letters are allowed as arguments
+  in blorts defined in a notation declaration.  With
+  luck, it will be clear what they mean. }
+  
+-greek-letter: [#03B1 - #03C9] { 'α'-'ω' }
+            ; -'alpha', + #03B1 {'α'}
+            ; -'beta', + #03B2 {'β'}
+            ; -'gamma', + #03B3 {'γ'}
+            ; -'delta', + #03B4 {'δ'}
+            ; -'epsilon', + #03B5 {'ε'}
+            ; -'zeta', + #03B6 {'ζ'}
+            ; -'eta', + #03B7 {'η'}
+            ; -'theta', + #03B8 {'θ'}
+            ; -'iota', + #03B9 {'ι'}
+            ; -'kappa', + #03BA {'κ'}
+            ; -'lamda', + #03BB {'λ'}
+            ; -'lambda', + #03BB {'λ'}
+            ; -'mu', + #03BC {'μ'}
+            ; -'nu', + #03BD {'ν'}
+            ; -'xi', + #03BE {'ξ'}
+            ; -'omicron', + #03BF {'ο'}
+            ; -'pi', + #03C0 {'π'}
+            ; -'rho', + #03C1 {'ρ'}
+            ; -'final-sigma', + #03C2 {'ς'}
+            ; -'sigma', + #03C3 {'σ'}
+            ; -'tau', + #03C4 {'τ'}
+            ; -'upsilon', + #03C5 {'υ'}
+            ; -'phi', + #03C6 {'φ'}
+            ; -'chi', + #03C7 {'χ'}
+            ; -'psi', + #03C8 {'ψ'}
+            ; -'omega', + #03C9 {'ω'}
+            .
+
+{ ................................................................
+  Variables: Latin letters (italics)
+}
+
+-italic: (-'*')?, ['a'-'z'].
+-Italic: (-'*')?, ['A'-'Z'].
+
+{ ................................................................
+  Variables: Fraktur
+}
+
+{ I would prefer to use encoded literals for all of the following,
+  but at the moment they exercise a bug in one ixml parser.  So
+  for the letters I actually use in test cases, we need to use
+  quoted literals instead.  This affects characters outside the
+  basic multilingual plane of UCS. }
+  
+-fraktur: [#1D51E - #1D537]
+        ; -'fa', + '𝔞' {#1D51E}
+        ; -'fb', + #1D51F
+        ; -'fc', + #1d520
+        ; -'fd', + '𝔡' {#1d521}
+        ; -'fe', + '𝔢' {#1d522}
+        ; -'ff', + #1d523
+        ; -'fg', + #1d524
+        ; -'fh', + #1d525
+        ; -'fi', + #1d526
+        ; -'fj', + #1D527
+        ; -'fk', + #1D528
+        ; -'fl', + #1D529
+        ; -'fm', + #1d52A
+        ; -'fn', + #1d52B
+        ; -'fo', + #1d52C
+        ; -'fp', + #1d52D
+        ; -'fq', + #1d52E
+        ; -'fr', + #1d52F
+        ; -'fs', + #1d530
+        ; -'ft', + #1d531
+        ; -'fu', + #1d532
+        ; -'fv', + #1d533
+        ; -'fw', + #1d534
+        ; -'fx', + #1d535
+        ; -'fy', + #1d536
+        ; -'fz', + #1d537
+        .
+
+-Fraktur: [#1d504 - #1d51d] { not all letters are present! }
+        ; -'FA', + #1D504 {'𝔄'}
+        ; -'FB', + #1D505 {'𝔅'}
+        ; -'FC', + #1D506 {𝔆}
+        ; -'FD', + #1D507 {𝔇}
+        ; -'FE', + #1D508 {𝔈}
+        ; -'FF', + "𝔉" {#1D509} {𝔉}
+        ; -'FG', + #1D50A {𝔊}
+        ; -'FH', + #1D50B {𝔈}
+        ; -'FI', + #1D50C {𝔌}
+        ; -'FJ', + #1D50D {𝔍}
+        ; -'FK', + #1D50E {𝔎}
+        ; -'FL', + #1D50F {𝔏}
+        ; -'FM', + #1D510 {𝔐}
+        ; -'FN', + #1D511 {𝔑}
+        ; -'FO', + #1D512 {𝔒}
+        ; -'FP', + #1D513 {𝔓}
+        ; -'FQ', + #1D514 {𝔔}
+        ; -'FR', + #1D515 {𝔕}
+        ; -'FS', + #1D516 {𝔖}
+        ; -'FT', + #1D517 {𝔗}
+        ; -'FU', + #1D518 {𝔘}
+        ; -'FV', + #1D519 {𝔙}
+        ; -'FW', + #1D51A {𝔚}
+        ; -'FX', + #1D51B {𝔛}
+        ; -'FY', + #1D51C {𝔜}
+        ; -'FZ', + #1D51D {𝔝}
+        .

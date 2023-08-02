@@ -76,13 +76,6 @@ public class ClassifyCharacters extends Copy {
 
     t.add(System.currentTimeMillis());
 
-//    System.out.println();
-//    System.out.println("number of charClasses: " + usingSetsToCharclasses.size());
-//    System.out.println("----------------------");
-//    RangeSet[] charClass = usingSetsToCharclasses.values().stream().sorted().toArray(RangeSet[]::new);
-//    for (int i = 0; i < charClass.length; ++i)
-//      System.out.println(i + ": " + charClass[i]);
-
     Grammar result = ReplaceCharsets.process(copy, charsetToClasses);
 
     t.add(System.currentTimeMillis());

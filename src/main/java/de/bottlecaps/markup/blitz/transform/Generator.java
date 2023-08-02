@@ -42,6 +42,8 @@ import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 
 public class Generator {
+  private static final int EPSILON = -1;
+
   private Grammar grammar;
 
   private Map<String, Integer> nonterminalCode;
@@ -85,13 +87,21 @@ public class Generator {
     }
 
     ci.new SymbolCodeAssigner().visit(g);
+
+    if (options.contains(BlitzOption.VERBOSE)) {
+      System.out.println();
+      System.out.println("Number of charClasses: " + ci.terminalCode.size());
+      System.out.println("----------------------");
+      ci.terminalCode.forEach((k, v) -> System.out.println(v + ": " + k));
+    }
+
     ci.reduceArguments = ci.reduceArguments();
     ci.collectFirst();
 
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
     Integer endToken = ci.terminalCode.get(Charset.END.getRangeSet());
     State initialState = ci.new State();
-    initialState.put(startNode, TokenSet.of(endToken));
+    initialState.put(startNode, new TokenSet(endToken));
     initialState.id = 0;
     ci.states.put(initialState, initialState);
     ci.statesTodo.add(initialState);
@@ -287,8 +297,9 @@ public class Generator {
             }
             TokenSet closureLookahead = closure.get(closureItemNode);
             if (closureLookahead != null) {
-              if (closureLookahead.addAll(lookahead)) {
+              if (! closureLookahead.containsAll(lookahead)) {
                 // existing node, new lookahead
+                closureLookahead.addAll(lookahead);
                 if (closureItemNode instanceof Nonterminal)
                   todo.add(Map.entry(closureItemNode, lookahead));
               }
@@ -325,8 +336,8 @@ public class Generator {
             Alt alt = node instanceof Alt
                     ? (Alt) node
                     : (Alt) node.getParent();
-            for (int code : lookahead)
-              reductions.compute(code, (k, v) -> {
+            for (int token = lookahead.nextToken(EPSILON); token >= EPSILON; token = lookahead.nextToken(token + 1))
+              reductions.compute(token, (k, v) -> {
                 if (v == null)
                   v = new ArrayList<>();
                 v.add(alt);
@@ -360,7 +371,7 @@ public class Generator {
                 if (tokenSet == null)
                   v.put(next, new TokenSet(lookahead));
                 else
-                  tokenSet.addAll(lookahead);
+                  tokenSet.addAll(lookahead); // TODO: create addAll method without contains check
               }
               return v;
             });
@@ -385,7 +396,9 @@ public class Generator {
               Integer code = e.getKey();
               transitions.put(code, state);
               for (Map.Entry<Node, TokenSet> k : newState.kernel.entrySet()) {
-                if (state.kernel.get(k.getKey()).addAll(k.getValue())) {
+                TokenSet lookahead = state.kernel.get(k.getKey());
+                if (! lookahead.containsAll(k.getValue())) {
+                  lookahead.addAll(k.getValue());
                   statesTodo.add(state);
                 }
               }
@@ -559,11 +572,11 @@ public class Generator {
       if (alt == node)
         sb.append(" ").append(".");
       sb.append(" | {");
-      sb.append(lookahead.stream()
-        .map(token -> {
-          return toString(token);
-        })
-        .collect(Collectors.joining(", ")));
+      String delimiter = "";
+      for (int token = lookahead.nextToken(EPSILON); token >= EPSILON; token = lookahead.nextToken(token + 1)) {
+        sb.append(delimiter).append(toString(token));
+        delimiter = ", ";
+      }
       sb.append("}] ");
       if (nonterminalTransitions != null &&
           terminalTransitions != null
@@ -591,11 +604,11 @@ public class Generator {
     if (node == null || node instanceof Insertion)
       return lookahead;
     TokenSet tokens = first.get(node);
-    if (! tokens.contains(null))
+    if (! tokens.contains(EPSILON))
       return tokens;
     TokenSet nonNullTokens = new TokenSet();
     nonNullTokens.addAll(tokens);
-    nonNullTokens.remove(null);
+    nonNullTokens.remove(EPSILON);
     nonNullTokens.addAll(lookahead);
     return nonNullTokens;
   }
@@ -608,7 +621,7 @@ public class Generator {
           if (a.getTerms().isEmpty() || a.getTerms().get(0) instanceof Insertion) {
             if (initial) {
               changed = true;
-              first.put(a, TokenSet.of((Integer) null));
+              first.put(a, new TokenSet(EPSILON));
             }
           }
           else {
@@ -618,27 +631,17 @@ public class Generator {
               if (t instanceof Charset) {
                 if (initial) {
                   changed = true;
-                  first.put(t, TokenSet.of(terminalCode.get(((Charset) t).getRangeSet())));
+                  first.put(t, new TokenSet(terminalCode.get(((Charset) t).getRangeSet())));
                 }
               }
               else if (t instanceof Nonterminal) {
                 Rule rule = grammar.getRules().get(((Nonterminal) t).getName());
-                TokenSet tokenSet = first.get(rule);
-                boolean hasNull = false;
+                TokenSet firstOfRule = first.get(rule);
                 TokenSet tokens = new TokenSet();
-                if (tokenSet != null) {
-                  for (Integer token : tokenSet) {
-                    if (token == null)
-                      hasNull = true;
-                    else
-                      tokens.add(token);
-                  }
-                }
-                if (hasNull) {
-                  if (i + 1 == terms.size() || terms.get(i + 1) instanceof Insertion) {
-                    tokens.add(null);
-                  }
-                  else {
+                if (firstOfRule != null) {
+                  tokens.addAll(firstOfRule);
+                  if (tokens.contains(EPSILON) && i + 1 != terms.size() && ! (terms.get(i + 1) instanceof Insertion)) {
+                    tokens.remove(EPSILON);
                     TokenSet f = first.get(terms.get(i + 1));
                     tokens.addAll(f);
                   }
@@ -649,7 +652,10 @@ public class Generator {
                 }
                 else {
                   TokenSet f = first.get(t);
-                  changed = f.addAll(tokens) || changed;
+                  if (! f.containsAll(tokens)) {
+                    f.addAll(tokens);
+                    changed = true;
+                  }
                 }
               }
             }

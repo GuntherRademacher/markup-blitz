@@ -62,8 +62,8 @@
   nonterminal::= mark name s                                <?java alts.peek().last().addNonterminal(mark, nameBuilder.toString());?>
 
          name::=                                            <?java nameBuilder.setLength(0);?> 
-                 namestart                                  <?java nameBuilder.append(input.charAt(b0));?>
-                           ( namefollower                   <?java nameBuilder.append(input.charAt(b0));?>
+                 namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
+                           ( namefollower                   <?java nameBuilder.append(input.subSequence(b0, e0));?>
                                           )*
     namestart::= namestart^token
                | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
@@ -85,9 +85,9 @@
       literal::= string                                     <?java alts.peek().last().addString(deleted, stringBuilder.toString());?>
                | hex                                        <?java alts.peek().last().addCodepoint(deleted, codepoint);?>
        string::=                                            <?java stringBuilder.setLength(0);?>
-                 ( '"' ( ( dchar | '"' '"' )                <?java stringBuilder.append(input.charAt(b0));?>
+                 ( '"' ( ( dchar | '"' '"' )                <?java stringBuilder.append(input.subSequence(b0, e0));?>
                                              )+ '"'
-                 | "'" ( ( schar | "'" "'" )                <?java stringBuilder.append(input.charAt(b0));?>
+                 | "'" ( ( schar | "'" "'" )                <?java stringBuilder.append(input.subSequence(b0, e0));?>
                                              )+ "'"
                  )
           hex::= '#'                                        <?java hexBegin = b0;?>
@@ -118,7 +118,7 @@
                | "'" ( schar | "'" "'" )                    <?java codepoint = input.subSequence(b0, e0).toString();?>
                                          "'"
                | hex
-        class::= capital ( letter                           <?java clazz += input.charAt(b0);?>
+        class::= capital ( letter                           <?java clazz += input.subSequence(b0, e0);?>
                                   )?
     insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
                                 | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
@@ -127,7 +127,7 @@
                  | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
                  | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
                  | 'V' | 'W' | 'X' | 'Y' | 'Z'
-                 )                                          <?java clazz = Character.toString(input.charAt(b0));?>
+                 )                                          <?java clazz = input.subSequence(b0, e0).toString();?>
 
 <?TOKENS?>
 
