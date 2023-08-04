@@ -66,5 +66,5 @@
        -class: code.
         @code: capital, letter?.
      -capital: ['A'-'Z'].
-      -letter: ['a'-'z'].
+      -letter: ['A'-'Z'; 'a'-'z'].
     insertion: -'+', s, (string; -'#', hex), s.

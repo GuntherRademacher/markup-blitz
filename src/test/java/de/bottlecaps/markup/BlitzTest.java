@@ -1,6 +1,9 @@
 package de.bottlecaps.markup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,11 @@ public class BlitzTest extends TestBase {
     Parser parser = Blitz.generate("S: .");
     String result = parser.parse("");
     assertEquals("<S/>", result);
+  }
+
+  @Test
+  public void testEmptyCharset() {
+    Blitz.generate("S: [], 'a'.");
   }
 
   @Test
@@ -78,7 +86,7 @@ public class BlitzTest extends TestBase {
     String result = parser.parse(
         "p { }",
         BlitzOption.INDENT);
-    String expectedResult =
+    Set<String> expectedResults = Set.of(
         "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
         + "   <rule>\n"
         + "      <selector>\n"
@@ -88,8 +96,17 @@ public class BlitzTest extends TestBase {
         + "         <property/>\n"
         + "      </block>\n"
         + "   </rule>\n"
-        + "</css>";
-    assertEquals(expectedResult, result);
+        + "</css>",
+          "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
+        + "   <rule>\n"
+        + "      <selector>\n"
+        + "         <name>p</name>\n"
+        + "      </selector>\n"
+        + "      <block/>\n"
+        + "   </rule>\n"
+        + "</css>");
+    assertTrue(expectedResults.contains(result),
+        "unexpected result: " + result);
   }
 
   @Test
@@ -383,7 +400,7 @@ public class BlitzTest extends TestBase {
   public void testFrege() {
     Parser parser = Blitz.generate(
         resourceContent("frege.ixml"),
-        BlitzOption.TIMING, BlitzOption.INDENT);
+        BlitzOption.INDENT);
     assertEquals(
           "<formula>\n"
         + "   <maybe>\n"

@@ -3,7 +3,7 @@ package de.bottlecaps.markup.blitz.grammar;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import de.bottlecaps.markup.blitz.character.Range;
+import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Insertion extends Term {

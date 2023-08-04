@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 
-import de.bottlecaps.markup.blitz.character.Range;
+import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.transform.Map2D.Index;
 
 public interface TileIterator {

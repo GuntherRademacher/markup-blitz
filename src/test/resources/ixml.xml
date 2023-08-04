@@ -535,6 +535,7 @@
    <rule mark="-" name="letter">
       <alt>
          <inclusion>
+            <member from="A" to="Z"/>
             <member from="a" to="z"/>
          </inclusion>
       </alt>

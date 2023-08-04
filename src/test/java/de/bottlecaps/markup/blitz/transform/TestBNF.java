@@ -15,7 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -300,7 +300,9 @@ public class TestBNF {
           + "         code: -capital, -_code_option.\n"
           + "      capital: ['A'-'F'];\n"
           + "               ['G'-'Z'].\n"
-          + "       letter: ['a'-'d'; 'f'];\n"
+          + "       letter: ['A'-'F'];\n"
+          + "               ['G'-'Z'];\n"
+          + "               ['a'-'d'; 'f'];\n"
           + "               ['e'];\n"
           + "               ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; 'w'; 'y'-'z'];\n"
           + "               ['i'];\n"

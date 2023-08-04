@@ -15,7 +15,7 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzOption;
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
 

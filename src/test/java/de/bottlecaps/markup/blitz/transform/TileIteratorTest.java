@@ -11,13 +11,18 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import de.bottlecaps.markup.TestBase;
-import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 
 public class TileIteratorTest extends TestBase {
   private Random random;
@@ -117,10 +122,24 @@ public class TileIteratorTest extends TestBase {
     testRangeSet(RangeSet.ALPHABET);
   }
 
+  @ParameterizedTest
+  @MethodSource
+  public void testUnicodeClass(String className) {
+    testRangeSet(UnicodeCategory.codepointsByCode.get(className));
+  }
+
   @Test
-  public void testUnicodeClasses() {
-    for (RangeSet rangeSet : RangeSet.unicodeClasses.values())
-    testRangeSet(rangeSet);
+  public void testUnicodeClassCs() {
+    testRangeSet(UnicodeCategory.forCode("Cs"));
+  }
+
+  @Test
+  public void testUnicodeClassCn() {
+    testRangeSet(UnicodeCategory.forCode("Cn"));
+  }
+
+  public static Stream<Arguments> testUnicodeClass() {
+    return UnicodeCategory.codepointsByCode.keySet().stream().map(Arguments::of);
   }
 
   private void testRangeSet(RangeSet rangeSet) {

@@ -913,7 +913,7 @@
         dchar::= [^"#xa#xd]
         schar::= [^'#xa#xd]
      hexdigit::= [0-9a-fA-F]
-       letter::= [a-z]
+       letter::= [A-Za-z]
 
           eof::= $
 

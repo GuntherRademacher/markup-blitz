@@ -1,6 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import de.bottlecaps.markup.blitz.character.Range;
+import de.bottlecaps.markup.blitz.codepoints.Range;
 
 public class RangeMember extends Member {
   private final Range range;

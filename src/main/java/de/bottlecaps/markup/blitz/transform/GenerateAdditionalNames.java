@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;

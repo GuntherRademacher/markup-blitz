@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.bottlecaps.markup.BlitzOption;
-import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -474,7 +474,9 @@ public class Generator {
       nonterminalTransitions.forEach((nonterminalId, state) -> {
         final int code;
         if (state.isLr0ReduceState()) {
-          int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
+          Node node = state.kernel.keySet().iterator().next();
+          Alt alt = (Alt)  (node instanceof Alt ? node : node.getParent());
+          int argument = alt.getReductionId();
           code = Action.code(Action.Type.SHIFT_REDUCE, argument);
         }
         else {

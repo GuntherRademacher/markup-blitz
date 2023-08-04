@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz.character;
+package de.bottlecaps.markup.blitz.codepoints;
 
 public class Range implements Comparable<Range> {
   private final int firstCodepoint;

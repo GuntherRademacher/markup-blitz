@@ -21,8 +21,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 
 public class CompressedMapTest {
   private Random random;
@@ -62,7 +63,7 @@ public class CompressedMapTest {
   }
 
   static Stream<Arguments> testUnicodeClassesArgs() {
-    return RangeSet.unicodeClasses.entrySet().stream()
+    return UnicodeCategory.codepointsByCode.entrySet().stream()
       .map(e -> Arguments.of(Named.of(e.getKey(), e.getValue())));
   }
 

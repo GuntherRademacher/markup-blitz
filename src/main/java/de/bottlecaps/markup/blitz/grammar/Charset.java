@@ -3,7 +3,8 @@ package de.bottlecaps.markup.blitz.grammar;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.bottlecaps.markup.blitz.character.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
@@ -70,7 +71,7 @@ public class Charset extends Term {
         builder.add(((RangeMember) member).getRange());
       }
       else if (member instanceof ClassMember) {
-        RangeSet.of(((ClassMember) member).getValue()).forEach(builder::add);
+        UnicodeCategory.forCode(((ClassMember) member).getValue()).forEach(builder::add);
       }
       else {
         throw new IllegalStateException();

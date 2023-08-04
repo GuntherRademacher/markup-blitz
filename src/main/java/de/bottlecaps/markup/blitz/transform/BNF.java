@@ -114,7 +114,7 @@ public class BNF extends Visitor {
         alts.peek().last().addAlts(nested);
       }
     }
-    else {
+    else if (alts.size() != 1) {
       String name = names[0];
       Alts pop = alts.pop();
       Nonterminal nonterminal = new Nonterminal(Mark.DELETE, name);

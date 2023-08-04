@@ -15,9 +15,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import de.bottlecaps.markup.BlitzOption;
-import de.bottlecaps.markup.blitz.character.Range;
-import de.bottlecaps.markup.blitz.character.RangeSet;
-import de.bottlecaps.markup.blitz.character.RangeSet.Builder;
+import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -360,7 +360,7 @@ public class ClassifyCharacters extends Copy {
     @Override
     public void visit(Charset c) {
       Set<RangeSet> charClass = charsetToCharclasses.get(c.getRangeSet());
-      if (charClass.size() == 1) {
+      if (charClass.size() <= 1) {
         // c.getRangeSet is equal to charClass
         alts.peek().last().getTerms().add(c.copy());
       }
@@ -417,6 +417,8 @@ public class ClassifyCharacters extends Copy {
   }
 
   public static Set<RangeSet> charClasses(RangeSet characters, Set<RangeSet> charClasses) {
+    if (characters.isEmpty())
+      return Collections.emptySet();
     Iterator<Range> iterator = characters.iterator();
     Range firstRange = iterator.next();
     int firstCodepoint= firstRange.getFirstCodepoint();
