@@ -35,12 +35,9 @@ public class ClassifyCharacters extends Copy {
   /** All sets that are used in the grammar. */
   private Set<RangeSet> allSets;
 
-  /** Builder for the set of all ranges from all sets. */
-  private RangeSet.Builder builder;
-
   private Queue<String> todo;
-
   private Set<String> done;
+  private CharsetCollector charsetCollector;
 
   public Grammar combine(Grammar g, Set<BlitzOption> options) {
     List<Long> t = new ArrayList<>();
@@ -48,20 +45,22 @@ public class ClassifyCharacters extends Copy {
 
     todo = new LinkedList<>();
     done = new HashSet<>();
+    charsetCollector = new CharsetCollector();
+
     allSets = new HashSet<>();
-    builder = RangeSet.builder();
     g.setAdditionalNames(new HashMap<>());
 
     t.add(System.currentTimeMillis());
 
-    Rule firstRule = g.getRules().values().iterator().next();
-    for (todo.add(firstRule.getName()); ! todo.isEmpty(); ) {
+    String firstRuleName = g.getRules().values().iterator().next().getName();
+    todo.add(firstRuleName);
+    done.add(firstRuleName);
+    while (! todo.isEmpty()) {
       String name = todo.poll();
-      done.add(name);
       visit(g.getRules().get(name));
     }
 
-    t.add(System.currentTimeMillis()); // ---> 80 ms
+    t.add(System.currentTimeMillis()); // ---> 25 ms
 
     copy.setAdditionalNames(g.getAdditionalNames());
     PostProcess.process(copy);
@@ -90,20 +89,22 @@ public class ClassifyCharacters extends Copy {
   @Override
   public void visit(Charset c) {
     super.visit(c);
-    collect(c.getRangeSet(), c, c.getRule().getName());
+    allSets.add(c.getRangeSet());
   }
 
   @Override
   public void visit(Nonterminal n) {
-    Charset charset = CharsetCollector.collect(n);
+    Charset charset = charsetCollector.collectCharset(n);
     if (charset != null) {
       alts.peek().last().getTerms().add(charset);
-      collect(charset.getRangeSet(), charset, n.getName());
+      allSets.add(charset.getRangeSet());
       n.getGrammar().getAdditionalNames().put(charset, new String[] {n.getName()});
     }
     else {
-      if (! done.contains(n.getName()))
+      if (! done.contains(n.getName())) {
+        done.add(n.getName());
         todo.offer(n.getName());
+      }
       super.visit(n);
     }
   }
@@ -116,7 +117,7 @@ public class ClassifyCharacters extends Copy {
     RangeSet preservedChars = RangeSet.EMPTY;
     Alts other = new Alts();
     for (Alt alt : a.getAlts()) {
-      Charset charset = CharsetCollector.collect(alt);
+      Charset charset = charsetCollector.collectCharset(alt);
       if (charset == null) {
         other.addAlt(alt);
       }
@@ -143,12 +144,12 @@ public class ClassifyCharacters extends Copy {
       if (hasDeletedChars) {
         Charset charset = new Charset(true, deletedChars);
         replacement.addAlt(new Alt().addCharset(charset));
-        collect(deletedChars, charset, a.getRule().getName());
+        allSets.add(deletedChars);
       }
       if (hasPreservedChars) {
         Charset charset = new Charset(false, preservedChars);
         replacement.addAlt(new Alt().addCharset(charset));
-        collect(preservedChars, charset, a.getRule().getName());
+        allSets.add(preservedChars);
       }
 
       boolean topLevel = alts.isEmpty();
@@ -199,7 +200,7 @@ public class ClassifyCharacters extends Copy {
     for (int codepoint : l.getCodepoints()) {
       RangeSet rangeSet = RangeSet.builder().add(codepoint).build();
       Charset charset = new Charset(l.isDeleted(), rangeSet);
-      collect(rangeSet, charset, l.getRule().getName());
+      allSets.add(rangeSet);
       charsets.add(charset);
     }
     return charsets;
@@ -240,30 +241,23 @@ public class ClassifyCharacters extends Copy {
     alts.peek().last().getTerms().add(new Control(c.getOccurrence(), term, separator));
   }
 
-  private void collect(RangeSet set, Term origin, String name) {
-    allSets.add(set);
-    set.forEach(builder::add);
-  }
-
   private static class CharsetCollector extends Visitor {
     private boolean isDeleted;
     private boolean isPreserved;
     private RangeSet rangeSet;
-    private Set<String> active;
+    private Set<String> active = new HashSet<>();
 
-    private CharsetCollector() {
-      active = new HashSet<>();
-    }
+    public Charset collectCharset(Node node) {
+      isDeleted = true;
+      isPreserved = true;
+      rangeSet = RangeSet.EMPTY;
+      active.clear();
 
-    public static Charset collect(Node node) {
-      CharsetCollector cc = new CharsetCollector();
-      cc.rangeSet = RangeSet.EMPTY;
-      cc.isDeleted = true;
-      cc.isPreserved = true;
-      node.accept(cc);
-      if (cc.rangeSet == null || cc.isPreserved == cc.isDeleted)
-        return null;
-      return new Charset(cc.isDeleted, cc.rangeSet);
+      node.accept(this);
+      Charset charset = rangeSet == null || isPreserved == isDeleted
+                      ? null
+                      : new Charset(isDeleted, rangeSet);
+      return charset;
     }
 
     @Override
