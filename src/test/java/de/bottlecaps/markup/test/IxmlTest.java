@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,20 +19,33 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.basex.core.Context;
+import org.basex.io.IO;
+import org.basex.query.QueryProcessor;
+import org.basex.query.value.node.DBNode;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.TestBase;
+import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class IxmlTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlCorrectPath = "ixml/tests/correct";
+  private static final String ixmlResource = "ixml.ixml";
+  private static Parser ixmlParser;
+
+  @BeforeAll
+  public static void beforeAll() throws URISyntaxException, IOException {
+    ixmlParser = Blitz.generate(resourceContent(ixmlResource));
+  }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource
-  public void testCorrect(String name, String ixmlGrammar, String xmlGrammar, String input, List<String> expectedResults) {
+  public void testCorrect(String name, String ixmlGrammar, String expectedXmlGrammar, String input, List<String> expectedOutputs) throws Exception {
 //    System.out.println(
 //           "name: " + name
 //        + ", ixmlGrammar: " + (ixmlGrammar == null ? "no" : "yes")
@@ -38,8 +53,36 @@ public class IxmlTest extends TestBase {
 //        + ", input: " + (input == null ? "no" : "yes")
 //        + ", expectedResult: " + (expectedResults == null || expectedResults.isEmpty() ? "no" : "yes"));
 
+    if (expectedXmlGrammar != null) {
+      String actualXmlGrammar = ixmlParser.parse(ixmlGrammar);
+      assertTrue(deepEqual(expectedXmlGrammar, actualXmlGrammar));
+    }
+
     assertNotNull(ixmlGrammar);
-    Blitz.generate(ixmlGrammar);
+    Parser parser = Blitz.generate(ixmlGrammar);
+
+    if (input != null) {
+      String actualOutput = parser.parse(input);
+      if (expectedOutputs != null) {
+        switch (expectedOutputs.size()) {
+        case 0:
+          break;
+        case 1:
+          assertTrue(deepEqual(expectedOutputs.get(0), actualOutput));
+          break;
+        default:
+          boolean succeeded = false;
+          for (String expectedOutput : expectedOutputs)
+            if (deepEqual(expectedOutput, actualOutput)) {
+              succeeded = true;
+              break;
+            }
+          if (! succeeded)
+            fail("unexpected output for testcase " + name + ":\n" + actualOutput);
+          break;
+        }
+      }
+    }
   }
 
   public static Stream<Arguments> testCorrect() throws Exception {
@@ -124,5 +167,18 @@ public class IxmlTest extends TestBase {
                   .map(TestBase::fileContent)
                   .collect(Collectors.toList()));
         });
+  }
+
+  private boolean deepEqual(String xml1, String xml2) throws Exception {
+    String query =
+          "declare variable $xml1 external;\n"
+        + "declare variable $xml2 external;\n"
+        + "deep-equal($xml1, $xml2)";
+    try (QueryProcessor proc = new QueryProcessor(query, new Context())) {
+
+      proc.variable("xml1", new DBNode(IO.get(xml1)));
+      proc.variable("xml2", new DBNode(IO.get(xml1)));
+      return (boolean) proc.value().toJava();
+    }
   }
 }

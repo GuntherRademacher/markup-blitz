@@ -22,6 +22,7 @@ import de.bottlecaps.markup.blitz.transform.Generator;
 public class Blitz {
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+    System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
 
     Set<BlitzOption> options = new HashSet<>();
     int i = 0;

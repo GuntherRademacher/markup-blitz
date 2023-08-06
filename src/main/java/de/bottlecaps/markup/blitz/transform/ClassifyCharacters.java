@@ -379,7 +379,7 @@ public class ClassifyCharacters extends Copy {
     if (allRangeSets.isEmpty())
       return Collections.emptySet();
     Builder builder = RangeSet.builder();
-    allRangeSets.forEach(builder::addAll);
+    allRangeSets.forEach(builder::add);
     RangeSet[] charClasses = new RangeSet[allRangeSets.size()];
     int classCount = 1;
     charClasses[0] = builder.build();

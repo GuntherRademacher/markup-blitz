@@ -11,7 +11,7 @@ import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet> {
-  private static final int MAX_VALID_CODEPOINT = 0x10fffd;
+  public static final int MAX_VALID_CODEPOINT = 0x10fffd;
 
   private final NavigableSet<Range> ranges;
 
@@ -213,8 +213,13 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
       return this;
     }
 
-    public Builder addAll(Collection<Range> ranges) {
+    public Builder add(Collection<Range> ranges) {
       set.addAll(ranges);
+      return this;
+    }
+
+    public Builder add(RangeSet rangeSet) {
+      set.addAll(rangeSet.ranges);
       return this;
     }
 

@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz.character;
+package de.bottlecaps.markup.blitz.codepoints;
 
 import static de.bottlecaps.markup.blitz.codepoints.RangeSet.builder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,9 +32,9 @@ public class ClassifyCharactersTest {
 
     // verify that allRangeSets and expectedCharClasses cover the same characters
     Builder allCharsFromAllRangeSetsBuilder = RangeSet.builder();
-    allRangeSets.forEach(allCharsFromAllRangeSetsBuilder::addAll);
+    allRangeSets.forEach(allCharsFromAllRangeSetsBuilder::add);
     Builder allCharsFromeExpectedCharClassesBuilder = RangeSet.builder();
-    expectedCharClasses.forEach(allCharsFromeExpectedCharClassesBuilder::addAll);
+    expectedCharClasses.forEach(allCharsFromeExpectedCharClassesBuilder::add);
     assertEquals(allCharsFromAllRangeSetsBuilder.build(), allCharsFromeExpectedCharClassesBuilder.build());
 
     // test classify method
@@ -50,7 +50,7 @@ public class ClassifyCharactersTest {
 
       // verify that union of charclasses equals original charset
       Builder builder = RangeSet.builder();
-      charClasses.forEach(builder::addAll);
+      charClasses.forEach(builder::add);
       assertEquals(characters, builder.build());
     }
   }

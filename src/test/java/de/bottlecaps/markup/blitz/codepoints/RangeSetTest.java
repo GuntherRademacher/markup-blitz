@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz.character;
+package de.bottlecaps.markup.blitz.codepoints;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -294,10 +294,10 @@ public class RangeSetTest extends TestBase {
   public void testIntersect() {
     final int bits = 8;
     for (int i = 0; i < 1 << bits; ++i) {
-      RangeSet lhs = RangeSet.builder().addAll(transformIntegerToBitRanges(i)).build();
+      RangeSet lhs = RangeSet.builder().add(transformIntegerToBitRanges(i)).build();
       for (int j = 0; j < 1 << bits; ++j) {
-        RangeSet expected = RangeSet.builder().addAll(transformIntegerToBitRanges(i & j)).build();
-        RangeSet rhs = RangeSet.builder().addAll(transformIntegerToBitRanges(j)).build();
+        RangeSet expected = RangeSet.builder().add(transformIntegerToBitRanges(i & j)).build();
+        RangeSet rhs = RangeSet.builder().add(transformIntegerToBitRanges(j)).build();
         RangeSet intersection = lhs.intersection(rhs);
         assertEquals(expected , intersection, lhs + " intersect " + rhs + " returns " + intersection);
       }
@@ -308,10 +308,10 @@ public class RangeSetTest extends TestBase {
   public void testUnion() {
     final int bits = 8;
     for (int i = 0; i < 1 << bits; ++i) {
-      RangeSet lhs = RangeSet.builder().addAll(transformIntegerToBitRanges(i)).build();
+      RangeSet lhs = RangeSet.builder().add(transformIntegerToBitRanges(i)).build();
       for (int j = 0; j < 1 << bits; ++j) {
-        RangeSet expected = RangeSet.builder().addAll(transformIntegerToBitRanges(i | j)).build();
-        RangeSet rhs = RangeSet.builder().addAll(transformIntegerToBitRanges(j)).build();
+        RangeSet expected = RangeSet.builder().add(transformIntegerToBitRanges(i | j)).build();
+        RangeSet rhs = RangeSet.builder().add(transformIntegerToBitRanges(j)).build();
         RangeSet union = lhs.union(rhs);
         assertEquals(expected , union, lhs + " union " + rhs + " returns " + union);
       }
@@ -322,10 +322,10 @@ public class RangeSetTest extends TestBase {
   public void testMinus() {
     final int bits = 8;
     for (int i = 0; i < 1 << bits; ++i) {
-      RangeSet lhs = RangeSet.builder().addAll(transformIntegerToBitRanges(i)).build();
+      RangeSet lhs = RangeSet.builder().add(transformIntegerToBitRanges(i)).build();
       for (int j = 0; j < 1 << bits; ++j) {
-        RangeSet expected1 = RangeSet.builder().addAll(transformIntegerToBitRanges(i & ~j)).build();
-        RangeSet rhs = RangeSet.builder().addAll(transformIntegerToBitRanges(j)).build();
+        RangeSet expected1 = RangeSet.builder().add(transformIntegerToBitRanges(i & ~j)).build();
+        RangeSet rhs = RangeSet.builder().add(transformIntegerToBitRanges(j)).build();
         RangeSet minus = lhs.minus(rhs);
         assertEquals(expected1 , minus, lhs + " minus " + rhs + " returns " + minus);
       }

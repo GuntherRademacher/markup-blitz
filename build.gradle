@@ -4,11 +4,15 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://files.basex.org/maven/'
+    }
 }
 
 dependencies {
-    testImplementation 'org.nineml:coffeefilter:2.2.3'
-    testImplementation 'org.nineml:coffeegrinder:2.2.2'
+    testImplementation 'org.nineml:coffeefilter:3.2.0'
+    testImplementation 'org.nineml:coffeegrinder:3.2.0'
+    testImplementation 'org.basex:basex:10.8-SNAPSHOT'
 }
 
 testing {	
