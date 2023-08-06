@@ -128,16 +128,6 @@ public class TileIteratorTest extends TestBase {
     testRangeSet(UnicodeCategory.codepointsByCode.get(className));
   }
 
-  @Test
-  public void testUnicodeClassCs() {
-    testRangeSet(UnicodeCategory.forCode("Cs"));
-  }
-
-  @Test
-  public void testUnicodeClassCn() {
-    testRangeSet(UnicodeCategory.forCode("Cn"));
-  }
-
   public static Stream<Arguments> testUnicodeClass() {
     return UnicodeCategory.codepointsByCode.keySet().stream().map(Arguments::of);
   }
