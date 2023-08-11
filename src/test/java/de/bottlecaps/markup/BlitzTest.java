@@ -576,6 +576,55 @@ public class BlitzTest extends TestBase {
         parser.parse("all fa satisfy Alpha if Beta"));
   }
 
+  @Test
+  public void testInsertSeparatorAlternate() {
+    Parser parser = Blitz.generate(
+        "S: [L]++(+':';+'=').");
+    String result = parser.parse(
+        "abc",
+        BlitzOption.INDENT);
+    Set<String> expectedResults = Set.of(
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b=c</S>",
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b:c</S>"
+        );
+    assertTrue(expectedResults.contains(result),
+        "unexpected result: " + result);
+  }
+
+  @Test
+  public void testCombinedLexicographicalAndNumericSortingCriteria() {
+    Parser parser = Blitz.generate(
+        "word : a,(space,b)?,(space, c)?;\n"
+      + "             b.\n"
+      + "a : [L]+.\n"
+      + "c : [L]+.\n"
+      + "b : -numeric.\n"
+      + "numeric : [Nd]+.\n"
+      + "-space : -[\" \"]*.",
+      BlitzOption.VERBOSE);
+    assertEquals(
+        "<word><a>Chapter</a><b>10</b><c>a</c></word>",
+        parser.parse("Chapter 10 a"));
+    assertEquals(
+        "<word><a>Chapter</a><b>1</b><c>B</c></word>",
+        parser.parse("Chapter 1B"));
+    assertEquals(
+        "<word><a>Chapter</a><b>1</b><c>B</c></word>",
+        parser.parse("Chapter 1 B"));
+    assertEquals(
+        "<word><a>Chapter</a><b>2</b><c>A</c></word>",
+        parser.parse("Chapter 2A"));
+    assertEquals(
+        "<word><a>Chapter</a><b>1</b><c>A</c></word>",
+        parser.parse("Chapter 1A"));
+    assertEquals(
+        "<word><a>Chapter</a><b>0</b></word>",
+        parser.parse("Chapter0"));
+    assertEquals(
+        "<word><b>1</b></word>",
+        parser.parse("1"));
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = Blitz.generate(

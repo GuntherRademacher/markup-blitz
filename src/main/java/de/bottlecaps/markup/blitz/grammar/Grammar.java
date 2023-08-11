@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.Errors;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public final class Grammar extends Node {
@@ -28,7 +29,12 @@ public final class Grammar extends Node {
   }
 
   public void addRule(Rule rule) {
-    rules.put(rule.getName(), rule);
+    Rule oldRule = rules.put(rule.getName(), rule);
+    if (oldRule != null) {
+      System.err.println("attempt to replace\n" + oldRule);
+      System.err.println("by\n" + rule);
+      Errors.S03.thro(rule.getName());
+    }
   }
 
   @Override
@@ -41,7 +47,7 @@ public final class Grammar extends Node {
   public Grammar copy() {
     Grammar grammar = new Grammar();
     for (Rule rule : rules.values())
-      grammar.getRules().put(rule.getName(), rule.copy());
+      grammar.addRule(rule.copy());
     return grammar;
   }
 

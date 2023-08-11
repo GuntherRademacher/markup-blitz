@@ -1,6 +1,8 @@
 package de.bottlecaps.markup.blitz;
 
-public enum Error {
+import de.bottlecaps.markup.BlitzException;
+
+public enum Errors {
   S01("Two rules are not separated by at least one whitespace character or comment."),
   S02("A nonterminal name is not defined by a rule in the grammar."),
   S03("The grammar contains more than one rule for a given nonterminal name."),
@@ -21,7 +23,16 @@ public enum Error {
   D07("An attribute named \"xmlns\" appears on an element."),
   ;
 
-  Error(String string) {
-    // TODO Auto-generated constructor stub
+  private String text;
+
+  Errors(String text) {
+    this.text = text;
+  }
+
+  public void thro(String... args) {
+    String msg = args.length == 0
+        ? text
+        : text.replaceFirst("\\.$", ": ") + String.join(", ", args) + ".";
+    throw new BlitzException("[" + name() + "] " + msg);
   }
 }
