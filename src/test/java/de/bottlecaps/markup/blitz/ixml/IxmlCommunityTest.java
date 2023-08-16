@@ -1,37 +1,89 @@
 package de.bottlecaps.markup.blitz.ixml;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
 
+import de.bottlecaps.markup.Blitz;
+import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.test.IxmlTest;
 
+@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
   private static File ixmlFolder;
+  private static XMLInputFactory xmlInputFactory;
+
+  public static enum Catalog {
+    ambiguous("tests/ambiguous/test-catalog.xml"),
+    chars("tests/chars/test-catalog.xml"),
+    correct("tests/correct/test-catalog.xml"),
+    error("tests/error/test-catalog.xml"),
+    grammar_misc_insertion("tests/grammar-misc/insertion-tests.xml"),
+    grammar_misc_prolog("tests/grammar-misc/prolog-tests.xml"),
+    grammar_misc("tests/grammar-misc/test-catalog.xml"),
+    ixml("tests/ixml/test-catalog.xml"),
+    misc_001_020("tests/misc/misc-001-020-catalog.xml"),
+    misc_021_040("tests/misc/misc-021-040-catalog.xml"),
+    misc_041_060("tests/misc/misc-041-060-catalog.xml"),
+    parse("tests/parse/test-catalog.xml"),
+    performance_a_star_doubling("tests/performance/a-star/doubling-test-catalog.xml"),
+    performance_a_star_tenfold("tests/performance/a-star/tenfold-test-catalog.xml"),
+    performance_evens_and_odds("tests/performance/evens-and-odds/test-catalog.xml"),
+    syntax_catalog_as_grammar("tests/syntax/catalog-as-grammar-tests.xml"),
+    syntax_catalog_as_instance_tests_ixml("tests/syntax/catalog-as-instance-tests-ixml.xml"),
+    syntax_catalog_as_instance_tests_xml("tests/syntax/catalog-as-instance-tests-xml.xml"),
+    syntax_catalog_of_correct_tests("tests/syntax/catalog-of-correct-tests.xml"),
+    ;
+
+    private final String path;
+
+    private Catalog(String path) {
+      this.path = path;
+    }
+  };
 
   @BeforeAll
   public static void beforeAll() throws Exception {
+    xmlInputFactory = XMLInputFactory.newInstance();
     String thisPath = "/" + IxmlTest.class.getName().replace(".", "/") + ".class";
     URL thisResource = IxmlTest.class.getResource(thisPath);
     assertNotNull(thisResource);
@@ -49,12 +101,6 @@ public class IxmlCommunityTest extends TestBase {
         + "because this folder does not exist: " + ixmlFolder + "\n"
         + "For running this test, please make sure that the " + ixmlProject + " project is\n"
         + "available in the same location as the " + thisProject + " project.");
-  }
-
-  @Test
-  public void testBug() throws Exception {
-    TestCatalog testCatalog = new TestCatalog(new File("test-catalog2.xml"));
-    testCatalog.getTestCases();
   }
 
   @ParameterizedTest(name = "{0}")
@@ -78,7 +124,7 @@ public class IxmlCommunityTest extends TestBase {
   @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.error)
   public void error(String name, TestCase testCase) {
-    test(testCase);
+
   }
 
   @ParameterizedTest(name = "{0}")
@@ -165,41 +211,87 @@ public class IxmlCommunityTest extends TestBase {
     test(testCase);
   }
 
-  private void test(TestCase testCase) {
-    System.out.println(testCase);
+  @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.syntax_catalog_of_correct_tests)
+  public void syntax_catalog_of_correct_tests_xml(String name, TestCase testCase) {
+    test(testCase);
   }
 
-  public static enum Catalog {
-    ambiguous("tests/ambiguous/test-catalog.xml"),
-    chars("tests/chars/test-catalog.xml"),
-    correct("tests/correct/test-catalog.xml"),
-    error("tests/error/test-catalog.xml"),
-    grammar_misc_insertion("tests/grammar-misc/insertion-tests.xml"),
-    grammar_misc_prolog("tests/grammar-misc/prolog-tests.xml"),
-    grammar_misc("tests/grammar-misc/test-catalog.xml"),
-    ixml("tests/ixml/test-catalog.xml"),
-    misc_001_020("tests/misc/misc-001-020-catalog.xml"),
-    misc_021_040("tests/misc/misc-021-040-catalog.xml"),
-    misc_041_060("tests/misc/misc-041-060-catalog.xml"),
-    parse("tests/parse/test-catalog.xml"),
-    performance_a_star_doubling("tests/performance/a-star/doubling-test-catalog.xml"),
-    performance_a_star_tenfold("tests/performance/a-star/tenfold-test-catalog.xml"),
-    performance_evens_and_odds("tests/performance/evens-and-odds/test-catalog.xml"),
-    syntax_catalog_as_grammar("tests/syntax/catalog-as-grammar-tests.xml"),
-    syntax_catalog_as_instance_tests_ixml("tests/syntax/catalog-as-instance-tests-ixml.xml"),
-    syntax_catalog_as_instance_tests_xml("tests/syntax/catalog-as-instance-tests-xml.xml"),
-    ;
+  @ParameterizedTest(name = "{0}")
+  @MethodSource
+  public void other(String name, TestCase testCase) {
+    test(testCase);
+  }
 
-    private String path;
-
-    private Catalog(String path) {
-      this.path = path;
+  public static Stream<Arguments> other() throws IOException {
+    URI baseUri = ixmlFolder.toURI();
+    Set<String> testCatalogs = Files.walk(ixmlFolder.toPath())
+      .filter(path -> path.getFileName().toString().endsWith(".xml"))
+      .map(Path::toFile)
+      .filter(xmlFile -> isTestCatalog(xmlFile))
+      .map(xmlFile -> baseUri.relativize(xmlFile.toURI()))
+      .map(URI::toString)
+      .collect(Collectors.toSet());
+    for (Catalog catalog : Catalog.values()) {
+      assertTrue(testCatalogs.contains(catalog.path), "Missing test-catalog: " + catalog);
+      testCatalogs.remove(catalog.path);
     }
+    assertFalse(testCatalogs.isEmpty(), "No addtional test catalogs found, not even the empty ones.");
+    List<TestCase> testCases = testCatalogs.stream()
+      .map(catalogPath -> new TestCatalog(ixmlFolder, catalogPath))
+      .filter(catalog -> ! catalog.getTestCases().isEmpty())
+      .map(catalog -> {
+        System.err.println("Running test cases from yet unknown test-catalog " + catalog.getPath() + ".");
+        return catalog.getTestCases();
+      })
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+    assumeFalse(testCases.isEmpty(), "Nothing to test here, because new unknown test catalogs were found.");
+    return testCases.stream()
+        .map(testCase -> Arguments.of(testCase.getName(), testCase));
+  }
 
-    public String getPath() {
-      return path;
+
+//@Test
+//public void testBug() throws Exception {
+//  TestCatalog testCatalog = new TestCatalog(new File("."), "test-catalog2.xml");
+//  testCatalog.getTestCases();
+//}
+
+  private void test(TestCase testCase) {
+    try {
+      Blitz.generate(testCase.getGrammar());
     }
-  };
+    catch (BlitzException e) {
+      assertTrue(testCase.isGrammarTest());
+    }
+  }
+
+  private static boolean isTestCatalog(File xmlFile) {
+    try (FileInputStream fileInputStream = new FileInputStream(xmlFile)) {
+      XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
+      try {
+        while (reader.hasNext()) {
+          int event = reader.next();
+          if (event == XMLStreamConstants.START_ELEMENT) {
+            QName rootElementName = reader.getName();
+            return TestCatalog.namespace.equals(rootElementName.getNamespaceURI())
+                && "test-catalog".equals(rootElementName.getLocalPart());
+          }
+        }
+      }
+      catch (XMLStreamException e) {
+        return false;
+      }
+      finally {
+        reader.close();
+      }
+      return false;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
 
   @Documented
   @Target(ElementType.METHOD)
@@ -218,10 +310,12 @@ public class IxmlCommunityTest extends TestBase {
     }
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
-      TestCatalog testCatalog = new TestCatalog(new File(ixmlFolder, catalog.getPath()));
-      return testCatalog.getTestCases().stream()
-        .map(testCase -> Arguments.of(testCase.getName(), testCase));
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+      return new TestCatalog(ixmlFolder, catalog.path)
+          .getTestCases()
+          .stream()
+          .map(testCase -> Arguments.of(testCase.getName(), testCase));
     }
   }
+
 }

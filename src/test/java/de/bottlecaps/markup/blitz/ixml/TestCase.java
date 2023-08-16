@@ -191,6 +191,10 @@ public class TestCase extends TestBase{
     return isXmlGrammar;
   }
 
+  public boolean isGrammarTest() {
+    return isGrammarTest;
+  }
+
   public String getInput() {
     return input;
   }
