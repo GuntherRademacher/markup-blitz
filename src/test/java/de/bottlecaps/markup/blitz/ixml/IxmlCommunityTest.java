@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.ixml;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,7 +32,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -45,7 +45,7 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.test.IxmlTest;
 
-@Disabled
+//@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
@@ -259,11 +259,16 @@ public class IxmlCommunityTest extends TestBase {
 //}
 
   private void test(TestCase testCase) {
+    assumeFalse(testCase.isXmlGrammar());
     try {
       Blitz.generate(testCase.getGrammar());
     }
     catch (BlitzException e) {
-      assertTrue(testCase.isGrammarTest());
+      assertEquals(TestCase.Assertion.assert_not_a_grammar, testCase.getAssertion());
+      Set<String> expected = testCase.getErrorCodes();
+      if (! expected.isEmpty()
+       && ! expected.stream().anyMatch(c -> e.getMessage().startsWith("[" + c + "] ")))
+          assertEquals(expected, e.getMessage());
     }
   }
 

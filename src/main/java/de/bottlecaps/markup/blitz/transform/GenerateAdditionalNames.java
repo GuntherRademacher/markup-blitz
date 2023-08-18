@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
@@ -156,7 +156,7 @@ public class GenerateAdditionalNames extends Visitor {
     if (grammar.getAdditionalNames().containsKey(c))
       return false;
     RangeSet rangeSet = c.getRangeSet();
-    if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
+    if (rangeSet.isSingleton() && Codepoint.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
       return false;
     return true;
   }
@@ -171,7 +171,7 @@ public class GenerateAdditionalNames extends Visitor {
         if (grammar.getAdditionalNames().containsKey(c))
           return;
         final var rangeSet = c.getRangeSet();
-        if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
+        if (rangeSet.isSingleton() && Codepoint.isAscii(rangeSet.iterator().next().getFirstCodepoint()))
           return;
         Node parent = c.getParent();
         Alts alts = null;

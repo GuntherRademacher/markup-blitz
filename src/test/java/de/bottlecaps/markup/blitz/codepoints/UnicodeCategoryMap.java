@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
 
 public class UnicodeCategoryMap {
+
   public static void main(String[] args) throws Exception {
     // also see http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
     String unicodeDataUrl = "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt";
@@ -37,13 +38,13 @@ public class UnicodeCategoryMap {
             BufferedReader reader = new BufferedReader(inputStreamReader)) {
           for (String line; (line = reader.readLine()) != null;) {
             String[] fields = line.split(";");
-            int codepoint = Integer.parseInt(fields[0], 16);
+            int codepoint = Codepoint.of(fields[0]);
             String name = fields[1];
             String categoryName = fields[2];
             if (name.endsWith(", First>")) {
               String lastLine = reader.readLine();
               String[] lastFields = lastLine.split(";");
-              int lastCodepoint = Integer.parseInt(lastFields[0], 16);
+              int lastCodepoint = Codepoint.of(lastFields[0]);
               String lastName = lastFields[1];
               String lastCategoryName = lastFields[2];
               if (! lastName.endsWith(", Last>")

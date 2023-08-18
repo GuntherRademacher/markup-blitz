@@ -57,7 +57,7 @@ public class ClassifyCharacters extends Copy {
     done.add(firstRuleName);
     while (! todo.isEmpty()) {
       String name = todo.poll();
-      visit(g.getRules().get(name));
+      visit(g.getRule(name));
     }
 
     t.add(System.currentTimeMillis()); // ---> 25 ms
@@ -324,7 +324,7 @@ public class ClassifyCharacters extends Copy {
           rangeSet = null;
         }
         else {
-          n.getGrammar().getRules().get(n.getName()).getAlts().accept(this);
+          n.getGrammar().getRule(n.getName()).getAlts().accept(this);
         }
       }
       active.remove(n.getName());

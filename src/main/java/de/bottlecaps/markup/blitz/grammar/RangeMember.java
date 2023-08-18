@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 
 public class RangeMember extends Member {
@@ -18,7 +19,7 @@ public class RangeMember extends Member {
   }
 
   private static int codepoint(String value) {
-    return isHex(value) ? Integer.parseInt(value.substring(1), 16) : value.codePointAt(0);
+    return isHex(value) ? Codepoint.of(value.substring(1)) : value.codePointAt(0);
   }
 
   private static boolean isHex(String value) {

@@ -20,6 +20,13 @@ public final class Grammar extends Node {
     return rules;
   }
 
+  public Rule getRule(String name) {
+    Rule r = rules.get(name);
+    if (r == null)
+      Errors.S02.thro(name);
+    return r;
+  }
+
   public Map<Term, String[]> getAdditionalNames() {
     return additionalNames;
   }
@@ -30,11 +37,8 @@ public final class Grammar extends Node {
 
   public void addRule(Rule rule) {
     Rule oldRule = rules.put(rule.getName(), rule);
-    if (oldRule != null) {
-      System.err.println("attempt to replace\n" + oldRule);
-      System.err.println("by\n" + rule);
+    if (oldRule != null)
       Errors.S03.thro(rule.getName());
-    }
   }
 
   @Override
@@ -79,4 +83,5 @@ public final class Grammar extends Node {
       return false;
     return true;
   }
+
 }

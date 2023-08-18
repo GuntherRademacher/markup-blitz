@@ -3,7 +3,7 @@ package de.bottlecaps.markup.blitz.grammar;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Insertion extends Term {
@@ -19,7 +19,7 @@ public class Insertion extends Term {
   public Insertion(String value, boolean isHex) {
     this(value, isHex,
          isHex
-       ? new int[] {Integer.parseInt(value.substring(1), 16)}
+       ? new int[] {Codepoint.of(value.substring(1))}
        : value.codePoints().toArray());
   }
 
@@ -49,7 +49,7 @@ public class Insertion extends Term {
     return Arrays.stream(codepoints).mapToObj(codepoint -> {
         if (codepoint == '\'')
           return "+''''";
-        if (Range.isAscii(codepoint))
+        if (Codepoint.isAscii(codepoint))
           return "+'" + (char) codepoint + "'";
         return "+#" + Integer.toHexString(codepoint);
       })

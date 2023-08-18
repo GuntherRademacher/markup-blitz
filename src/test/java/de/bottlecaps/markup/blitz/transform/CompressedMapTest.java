@@ -53,7 +53,7 @@ public class CompressedMapTest {
 
   @Test
   public void testAlphabet() {
-    testRangeSet(RangeSet.ALPHABET);
+    testRangeSet(UnicodeCategory.ALPHABET);
   }
 
   @ParameterizedTest

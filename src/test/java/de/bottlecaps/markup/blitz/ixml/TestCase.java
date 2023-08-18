@@ -134,9 +134,7 @@ public class TestCase extends TestBase{
                     .getAttributes()
                     .getNamedItemNS(null, "error-code");
                 assertNotNull(errorCodeAttr, "missing error-code attribute in assert-dynamic-error in test case " + name);
-                errorCodes = Arrays.stream(errorCodeAttr
-                    .getTextContent()
-                    .split(" "))
+                errorCodes = Arrays.stream(errorCodeAttr.getTextContent().split(" "))
                     .collect(Collectors.toSet());
                 break;
               case "assert-not-a-grammar":
@@ -146,9 +144,8 @@ public class TestCase extends TestBase{
                     .getAttributes()
                     .getNamedItemNS(null, "error-code");
                 assertNotNull(errorCodeAttr, "missing error-code attribute in assert-not-a-grammr in test case " + name);
-                errorCodes = Arrays.stream(errorCodeAttr
-                    .getTextContent()
-                    .split(" "))
+                errorCodes = Arrays.stream(errorCodeAttr.getTextContent().split(" "))
+                    .filter(code -> ! "none".equals(code))
                     .collect(Collectors.toSet());
                 break;
               }
@@ -207,7 +204,7 @@ public class TestCase extends TestBase{
     return assertion;
   }
 
-  public Set<String> getDynamicErrors() {
+  public Set<String> getErrorCodes() {
     return errorCodes;
   }
 
@@ -222,7 +219,7 @@ public class TestCase extends TestBase{
          + "      grammar: " + grammar.replace("\n", indentation) + "\n"
          + " isXmlGrammar: " + isXmlGrammar + "\n"
          + "    assertion: " + assertion + "\n"
-         + "dynamicErrors: " + errorCodes + "\n"
+         + "   errorCodes: " + errorCodes + "\n"
          + "        input: " + (input == null ? "" : input.replace("\n", indentation) + "\n"
          + "       output: " + outputs.toString().replace("\n", indentation) + "\n");
   }

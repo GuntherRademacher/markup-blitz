@@ -5,15 +5,50 @@ import static de.bottlecaps.markup.blitz.codepoints.RangeSet.builder;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import de.bottlecaps.markup.blitz.Errors;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
 
 public class UnicodeCategory {
+  private static final int MAX_VALID_CODEPOINT = 0x10fffd;
 
   public static RangeSet forCode(String unicodeCharClassName) {
     RangeSet unicodeCharClass = codepointsByCode.get(unicodeCharClassName);
     if (unicodeCharClass == null)
-      throw new IllegalArgumentException("Unknown unicode category: " + unicodeCharClassName);
+      Errors.S10.thro(unicodeCharClassName);
     return unicodeCharClass;
+  }
+
+  public static boolean isSurrogate(int codepoint) {
+    return codepoint >= 0xd800 && codepoint <= 0xdfff;
+  }
+
+  public static final RangeSet ALPHABET;
+  static {
+    RangeSet unicodeRange = builder()
+        .add(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT)
+        .build();
+    RangeSet nonCharacters = builder()
+        .add(0xd800, 0xdfff)
+        .add(0xfdd0, 0xfdef)
+        .add(0xfffe, 0xffff)
+        .add(0x1fffe, 0x1ffff)
+        .add(0x2fffe, 0x2ffff)
+        .add(0x3fffe, 0x3ffff)
+        .add(0x4fffe, 0x4ffff)
+        .add(0x5fffe, 0x5ffff)
+        .add(0x6fffe, 0x6ffff)
+        .add(0x7fffe, 0x7ffff)
+        .add(0x8fffe, 0x8ffff)
+        .add(0x9fffe, 0x9ffff)
+        .add(0xafffe, 0xaffff)
+        .add(0xbfffe, 0xbffff)
+        .add(0xcfffe, 0xcffff)
+        .add(0xdfffe, 0xdffff)
+        .add(0xefffe, 0xeffff)
+        .add(0xffffe, 0xfffff)
+        .add(0x10fffe, 0x10ffff)
+        .build();
+    ALPHABET = unicodeRange.minus(nonCharacters);
   }
 
   public static final Map<String, RangeSet> codepointsByCode = new ConcurrentHashMap<>();
@@ -52,7 +87,7 @@ public class UnicodeCategory {
     Builder allOfTheAbove = builder();
     codepointsByCode.values().forEach(allOfTheAbove::add);
     codepointsByCode.put("Cn",
-        builder().add(Character.MIN_CODE_POINT, RangeSet.MAX_VALID_CODEPOINT).build()
+        builder().add(Character.MIN_CODE_POINT, MAX_VALID_CODEPOINT).build()
         .minus(allOfTheAbove.build()));
 
     // Categories with single letter names

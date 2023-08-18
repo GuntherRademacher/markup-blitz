@@ -2,6 +2,7 @@ package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.Arrays;
 
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Literal extends Term {
@@ -16,7 +17,7 @@ public class Literal extends Term {
     this.value = value;
     this.isHex = isHex;
     this.codepoints = isHex
-                    ? new int[] {Integer.parseInt(value.substring(1), 16)}
+                    ? new int[] {Codepoint.of(value.substring(1))}
                     : value.codePoints().toArray();
     final int prime = 31;
     int h = 1;

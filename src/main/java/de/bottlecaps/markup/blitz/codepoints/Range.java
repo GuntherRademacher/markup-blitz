@@ -35,23 +35,14 @@ public class Range implements Comparable<Range> {
   @Override
   public String toString() {
     return firstCodepoint == lastCodepoint
-        ? toString(firstCodepoint)
-        : toString(firstCodepoint) + "-" + toString(lastCodepoint);
-  }
-
-  private String toString(int codepoint) {
-    if (codepoint == '\'')
-      return "\"'\"";
-    else if (isAscii(codepoint))
-      return "'" + (char) codepoint + "'";
-    else
-      return "#" + Integer.toHexString(codepoint);
+        ? Codepoint.toString(firstCodepoint)
+        : Codepoint.toString(firstCodepoint) + "-" + Codepoint.toString(lastCodepoint);
   }
 
   public String toJava() {
     return ".add("
-        + toJava(firstCodepoint)
-        + (firstCodepoint == lastCodepoint ? "" : (", " + toJava(lastCodepoint)))
+        + Codepoint.toJava(firstCodepoint)
+        + (firstCodepoint == lastCodepoint ? "" : (", " + Codepoint.toJava(lastCodepoint)))
         + ")";
   }
 
@@ -61,33 +52,18 @@ public class Range implements Comparable<Range> {
     if (size() > 1 && "[^-]".indexOf(lastCodepoint) >= 0)
       return new Range(firstCodepoint, lastCodepoint - 1).toREx() + " | " + new Range(lastCodepoint).toREx();
     if (size() == 1)
-      return ! isAscii(firstCodepoint)
+      return ! Codepoint.isAscii(firstCodepoint)
           ? "#x" + Integer.toHexString(firstCodepoint)
           : firstCodepoint == '\''
               ? "\"" + (char) firstCodepoint + "\""
               : "'" + (char) firstCodepoint + "'";
-    if (isAscii(firstCodepoint) && isAscii(lastCodepoint))
+    if (Codepoint.isAscii(firstCodepoint) && Codepoint.isAscii(lastCodepoint))
       return "[" + (char) firstCodepoint
            + "-" + (char) lastCodepoint
            + "]";
     return "[#x" + Integer.toHexString(firstCodepoint)
          + "-#x" + Integer.toHexString(lastCodepoint)
          + "]";
-  }
-
-  private String toJava(int codepoint) {
-    if (codepoint == '\'')
-      return "'\\''";
-    else if (codepoint == '\\')
-      return "'\\\\'";
-    else if (isAscii(codepoint))
-      return "'" + (char) codepoint + "'";
-    else
-      return "0x" + Integer.toHexString(codepoint);
-  }
-
-  public static boolean isAscii(int codepoint) {
-    return codepoint >= ' ' && codepoint <= '~';
   }
 
   @Override

@@ -22,7 +22,7 @@ public class Nonterminal extends Term {
   public Mark getEffectiveMark() {
     if (mark != Mark.NONE)
       return mark;
-    Rule definition = grammar.getRules().get(name);
+    Rule definition = grammar.getRule(name);
     return definition.getMark() == Mark.NONE
         ? Mark.NODE
         : definition.getMark();

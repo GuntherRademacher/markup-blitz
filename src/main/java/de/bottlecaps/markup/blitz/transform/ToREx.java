@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
@@ -67,7 +68,7 @@ public class ToREx extends Visitor {
   public void visit(Charset c) {
     sb.append(" ");
     RangeSet rangeSet = c.getRangeSet();
-    if (rangeSet.isSingleton() && Range.isAscii(rangeSet.iterator().next().getFirstCodepoint())) {
+    if (rangeSet.isSingleton() && Codepoint.isAscii(rangeSet.iterator().next().getFirstCodepoint())) {
       sb.append(rangeSet.iterator().next().toREx());
     }
     else {

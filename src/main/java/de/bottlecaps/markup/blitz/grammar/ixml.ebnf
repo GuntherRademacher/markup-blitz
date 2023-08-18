@@ -1,5 +1,7 @@
          ixml::=                                            <?java grammar = new Grammar();?>
-                 s prolog? rule ( RS rule )* s eof
+                 s prolog? rule ( rs rule )* s eof
+           rs::=                                            <?java de.bottlecaps.markup.blitz.Errors.S01.thro();?>
+               | RS
 
             s::= ( whitespace | comment )*
            RS::= ( whitespace | comment )+           
@@ -128,6 +130,9 @@
                  | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
                  | 'V' | 'W' | 'X' | 'Y' | 'Z'
                  )                                          <?java clazz = input.subSequence(b0, e0).toString();?>
+
+        dchar::= dchar^token                                <?java if (0 <= "\r\n".indexOf(input.charAt(b0))) de.bottlecaps.markup.blitz.Errors.S11.thro();?>
+        schar::= schar^token                                <?java if (0 <= "\r\n".indexOf(input.charAt(b0))) de.bottlecaps.markup.blitz.Errors.S11.thro();?>
 
 <?TOKENS?>
 
@@ -910,8 +915,8 @@
                | [#x1D242-#x1D244]
                | [#xE0100-#xE01EF]
 
-        dchar::= [^"#xa#xd]
-        schar::= [^'#xa#xd]
+        dchar::= [^"]
+        schar::= [^']
      hexdigit::= [0-9a-fA-F]
        letter::= [A-Za-z]
 
@@ -948,7 +953,7 @@ namefollower^token << '.' 'x'
                                                                   }
                                                                   catch (ParseException pe)
                                                                   {
-                                                                    throw new RuntimeException("Failed to process grammar:\n" + parser.getErrorMessage(pe), pe);
+                                                                    throw new de.bottlecaps.markup.BlitzException("Failed to process grammar:\n" + parser.getErrorMessage(pe), pe);
                                                                   }
                                                                   de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                   return parser.grammar;

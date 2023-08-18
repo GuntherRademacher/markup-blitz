@@ -119,7 +119,7 @@ public class TileIteratorTest extends TestBase {
 
   @Test
   public void testAlphabet() {
-    testRangeSet(RangeSet.ALPHABET);
+    testRangeSet(UnicodeCategory.ALPHABET);
   }
 
   @ParameterizedTest

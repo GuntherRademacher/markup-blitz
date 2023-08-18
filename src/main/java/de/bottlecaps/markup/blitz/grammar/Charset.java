@@ -3,6 +3,7 @@ package de.bottlecaps.markup.blitz.grammar;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.transform.Visitor;
@@ -59,7 +60,7 @@ public class Charset extends Term {
         StringMember m = (StringMember) member;
         String value = m.getValue();
         if (m.isHex()) {
-          int codepoint = Integer.parseInt(value.substring(1), 16);
+          int codepoint = Codepoint.of(value.substring(1));
           builder.add(codepoint);
         }
         else {
@@ -78,7 +79,7 @@ public class Charset extends Term {
       }
     }
     return exclusion
-         ? RangeSet.ALPHABET.minus(builder.build())
+         ? UnicodeCategory.ALPHABET.minus(builder.build())
          : builder.build();
   }
 

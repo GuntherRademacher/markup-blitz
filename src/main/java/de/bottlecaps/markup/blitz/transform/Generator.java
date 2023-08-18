@@ -287,7 +287,7 @@ public class Generator {
           Node next = node.getNext();
           if (next != null)
             lookahead = first(next, lookahead);
-          for (Alt alt : node.getGrammar().getRules().get(((Nonterminal) node).getName()).getAlts().getAlts()) {
+          for (Alt alt : node.getGrammar().getRule(((Nonterminal) node).getName()).getAlts().getAlts()) {
             Node closureItemNode;
             if (alt.getTerms().isEmpty()) {
               closureItemNode = alt;
@@ -637,7 +637,7 @@ public class Generator {
                 }
               }
               else if (t instanceof Nonterminal) {
-                Rule rule = grammar.getRules().get(((Nonterminal) t).getName());
+                Rule rule = grammar.getRule(((Nonterminal) t).getName());
                 TokenSet firstOfRule = first.get(rule);
                 TokenSet tokens = new TokenSet();
                 if (firstOfRule != null) {
