@@ -8,12 +8,18 @@ import de.bottlecaps.markup.blitz.Errors;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public final class Grammar extends Node {
+  private final String version;
   private final Map<String, Rule> rules;
   // metadata
   private Map<Term, String[]> additionalNames;
 
-  public Grammar() {
+  public Grammar(String version) {
+    this.version = version;
     this.rules = new LinkedHashMap<>();
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public Map<String, Rule> getRules() {
@@ -49,7 +55,7 @@ public final class Grammar extends Node {
   @SuppressWarnings("unchecked")
   @Override
   public Grammar copy() {
-    Grammar grammar = new Grammar();
+    Grammar grammar = new Grammar(version);
     for (Rule rule : rules.values())
       grammar.addRule(rule.copy());
     return grammar;
@@ -57,7 +63,8 @@ public final class Grammar extends Node {
 
   @Override
   public String toString() {
-    return rules.values().stream().map(Rule::toString).collect(Collectors.joining("\n"));
+    return (version == null ? "" : "ixml version '" + version.replace("'", "''") + "'\n")
+         + rules.values().stream().map(Rule::toString).collect(Collectors.joining("\n"));
   }
 
   @Override
@@ -65,6 +72,7 @@ public final class Grammar extends Node {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((rules == null) ? 0 : rules.hashCode());
+    result = prime * result + ((version == null) ? 0 : version.hashCode());
     return result;
   }
 
@@ -80,6 +88,12 @@ public final class Grammar extends Node {
         return false;
     }
     else if (!rules.equals(other.rules))
+      return false;
+    if (version == null) {
+      if (other.version != null)
+        return false;
+    }
+    else if (!version.equals(other.version))
       return false;
     return true;
   }

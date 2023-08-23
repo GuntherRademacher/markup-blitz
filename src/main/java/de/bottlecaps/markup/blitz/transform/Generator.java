@@ -186,7 +186,8 @@ public class Generator {
         ci.nonterminal,
         ci.terminal,
         ci.forks,
-        expectedTokens);
+        expectedTokens,
+        ci.grammar.getVersion() != null && ! ci.grammar.getVersion().equals("1.0"));
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
@@ -227,7 +228,7 @@ public class Generator {
         + ", id " + nonterminalId
         + ", nonterminal " + nonterminal[nonterminalId]
         + (marks.length == 0 ? "" : ", marks " + Arrays.stream(marks).map(Mark::toString).collect(Collectors.joining()))
-        + (insertion == null ? "" : ", insert " + escapeNonAscii(insertion));
+        + (insertion == null ? "" : ", insert " + new Insertion(insertion));
   }
 
   private static String escapeNonAscii(int[] codepoints) {

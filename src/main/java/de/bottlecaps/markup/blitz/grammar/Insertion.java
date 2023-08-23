@@ -12,7 +12,7 @@ public class Insertion extends Term {
   private int[] codepoints;
   private final int hashCode;
 
-  public Insertion(int[] codepoints) {
+  public Insertion(int...codepoints) {
     this(null, false, codepoints);
   }
 
@@ -23,7 +23,7 @@ public class Insertion extends Term {
        : value.codePoints().toArray());
   }
 
-  private Insertion(String value, boolean isHex, int[] codepoints) {
+  private Insertion(String value, boolean isHex, int... codepoints) {
     this.codepoints = codepoints;
     final int prime = 31;
     int h = 1;

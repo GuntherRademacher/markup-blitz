@@ -1,5 +1,5 @@
-         ixml::=                                            <?java grammar = new Grammar();?>
-                 s prolog? rule ( rs rule )* s eof
+         ixml::= s prolog?                                  <?java if (grammar == null) grammar = new Grammar(null);?>
+                           rule ( rs rule )* s eof
            rs::=                                            <?java de.bottlecaps.markup.blitz.Errors.S01.thro();?>
                | RS
 
@@ -8,7 +8,9 @@
       comment::= '{' ( cchar | comment )* '}'
 
        prolog::= version s
-      version::= 'i' 'x' 'm' 'l' RS 'v' 'e' 'r' 's' 'i' 'o' 'n' RS string s '.'
+      version::= 'i' 'x' 'm' 'l' RS 'v' 'e' 'r' 's' 'i' 'o' 'n' RS string
+                                                            <?java grammar = new Grammar(stringBuilder.toString());?>
+                 s '.'
 
          rule::= mark name                                  <?java
                                                                alts.push(new Alts());

@@ -6,9 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,8 +19,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
+import org.w3c.dom.ls.LSSerializer;
 
 import de.bottlecaps.markup.TestBase;
+import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 
 public class TestCase extends TestBase{
   private String name;
@@ -29,7 +34,7 @@ public class TestCase extends TestBase{
   private Assertion assertion;
   private Set<String> errorCodes;
   private String input;
-  private Collection<String> outputs;
+  private List<String> outputs;
 
   public TestCase(Element element, File folder) {
     isGrammarTest = "grammar-test".equals(element.getLocalName());
@@ -110,8 +115,10 @@ public class TestCase extends TestBase{
                 if (assertion == null)
                   assertion = Assertion.assert_xml;
                 else
-                  assertEquals(Assertion.assert_xml, assertion, "contradicting assertions");
-                outputs.add(resultChildNode.getTextContent());
+                  assertEquals(Assertion.assert_xml, assertion, "contradicting assertions in test case '" + name);
+                assertion = Assertion.assert_xml;
+                Element xmlContent = XmlGrammarInput.singletonChildElement((Element) resultChildNode);
+                outputs.add(elementToString(xmlContent));
                 break;
               case "assert-xml-ref": {
                   if (assertion == null)
@@ -196,7 +203,7 @@ public class TestCase extends TestBase{
     return input;
   }
 
-  public Collection<String> getOutputs() {
+  public List<String> getOutputs() {
     return outputs;
   }
 
@@ -230,4 +237,16 @@ public class TestCase extends TestBase{
     assert_not_a_grammar,
     assert_dynamic_error,
   }
+
+  public static String elementToString(Element element) {
+    DOMImplementationLS domImplementation = (DOMImplementationLS) element.getOwnerDocument().getImplementation();
+    LSOutput lsOutput =  domImplementation.createLSOutput();
+    lsOutput.setEncoding("UTF-8");
+    Writer stringWriter = new StringWriter();
+    lsOutput.setCharacterStream(stringWriter);
+    LSSerializer lsSerializer = domImplementation.createLSSerializer();
+    lsSerializer.write(element, lsOutput);
+    return stringWriter.toString();
+  }
+
 }

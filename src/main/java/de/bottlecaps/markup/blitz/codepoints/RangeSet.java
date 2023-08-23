@@ -11,6 +11,8 @@ import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet> {
+  public static final RangeSet EOF = builder().add(Integer.MAX_VALUE).build();
+
   private final NavigableSet<Range> ranges;
 
   private RangeSet(NavigableSet<Range> ranges) {
@@ -113,9 +115,11 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
 
   @Override
   public String toString() {
-    return ranges.stream()
-      .map(Range::toString)
-      .collect(Collectors.joining("; ", "[", "]"));
+    return this == EOF
+        ? shortName()
+        : ranges.stream()
+          .map(Range::toString)
+          .collect(Collectors.joining("; ", "[", "]"));
   }
 
   public String toJava() {
@@ -269,9 +273,11 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
   public static final RangeSet EMPTY = builder().build();
 
   public String shortName() {
-    return ranges.isEmpty()
+    return this == EOF
          ? "$"
-         : new Range(ranges.first().getFirstCodepoint()).toString() + (charCount() == 1 ? "" : "...");
+         : ranges.isEmpty()
+           ? "[]"
+           : new Range(ranges.first().getFirstCodepoint()).toString() + (charCount() == 1 ? "" : "...");
   }
 
 }

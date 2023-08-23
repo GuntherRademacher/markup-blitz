@@ -451,6 +451,18 @@ public class TestBNF {
   }
 
   @Test
+  public void testPropertiesOfInsertionSeparator() {
+    Grammar grammar = parse("S: [L]+++','.");
+    PropertiesChecker.process(BNF.process(grammar));
+  }
+
+  @Test
+  public void testPropertiesOfInsertionSequenceSeparator() {
+    Grammar grammar = parse("S: [L]++ (+\":\", +\"=\").");
+    PropertiesChecker.process(BNF.process(grammar));
+  }
+
+  @Test
   public void testDragonBookP262() {
     String ebnf =
           "S: C, C.\n"
@@ -530,7 +542,7 @@ public class TestBNF {
       super.visit(i);
       Alt alt = (Alt) i.getParent();
       List<Term> terms = alt.getTerms();
-      assertTrue(terms.get(terms.size() - 1) == i);
+      assertEquals(terms.get(terms.size() - 1), i, "insertion not at end of alternative");
     }
 
     @Override

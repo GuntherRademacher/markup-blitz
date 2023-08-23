@@ -50,7 +50,7 @@ public class BNF extends Visitor {
 
     if (timing)
       t0 = System.currentTimeMillis();
-    ClassifyCharacters cc = new ClassifyCharacters();
+    ClassifyCharacters cc = new ClassifyCharacters(new Grammar(g.getVersion()));
     Grammar grammar = cc.combine(g, options);
 
     if (timing)
@@ -77,7 +77,7 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Grammar g) {
-    copy = new Grammar();
+    copy = new Grammar(g.getVersion());
     super.visit(g);
     if (isolateCharsets)
       for (Rule rule; (rule = charsets.poll()) != null; )
@@ -263,7 +263,7 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Insertion i) {
-    if (i.getNext() == null) {
+    if (i.getNext() == null && i.getParent() instanceof Alt) {
       alts.peek().last().getTerms().add(i.copy());
     }
     else {

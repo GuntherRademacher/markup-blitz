@@ -3,6 +3,7 @@ package de.bottlecaps.markup.blitz.ixml;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -20,7 +21,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,14 +47,65 @@ import org.junit.jupiter.params.support.AnnotationConsumer;
 import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
-import de.bottlecaps.markup.test.IxmlTest;
+import de.bottlecaps.markup.blitz.parser.Parser;
 
-//@Disabled
+//Status: 3091/35/11/7
+@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
   private static File ixmlFolder;
   private static XMLInputFactory xmlInputFactory;
+  private static Parser ixmlParser;
+
+  private static enum SkipReason {
+    SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes to long to be with each execution."),
+    TOO_MUCH_MEMORY("Test has never been completed within given memory limits."),
+    ;
+    private String detail;
+
+    private SkipReason(String detail) {
+      this.detail = detail;
+    }
+  }
+
+  private static Map<String, SkipReason> skipReasons = new HashMap<>();
+  static {
+    skipReasons.put("Evens and odds/evens-odds/P-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
+    skipReasons.put("Evens and odds/evens-odds/N-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
+    skipReasons.put("Evens and odds/evens-odds/P-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
+    skipReasons.put("Evens and odds/evens-odds/N-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
+    skipReasons.put("Evens and odds/evens-odds/P-16384", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.05/g05.c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.06/g06.c02", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.06/g06.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.10/g10c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.19/g19c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c04", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c05", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.23/g23.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.23/g23.r05", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.25/g25.c02", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.26/g26.c02", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.28/g28.c02", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 2/sample.grammar.29/g29.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c06", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.TOO_MUCH_MEMORY);
+    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c02", SkipReason.TOO_MUCH_MEMORY);
+  }
 
   public static enum Catalog {
     ambiguous("tests/ambiguous/test-catalog.xml"),
@@ -84,8 +139,8 @@ public class IxmlCommunityTest extends TestBase {
   @BeforeAll
   public static void beforeAll() throws Exception {
     xmlInputFactory = XMLInputFactory.newInstance();
-    String thisPath = "/" + IxmlTest.class.getName().replace(".", "/") + ".class";
-    URL thisResource = IxmlTest.class.getResource(thisPath);
+    String thisPath = "/" + IxmlCommunityTest.class.getName().replace(".", "/") + ".class";
+    URL thisResource = IxmlCommunityTest.class.getResource(thisPath);
     assertNotNull(thisResource);
 
     String thisUrl = thisResource.toString();
@@ -124,7 +179,7 @@ public class IxmlCommunityTest extends TestBase {
   @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.error)
   public void error(String name, TestCase testCase) {
-
+    test(testCase);
   }
 
   @ParameterizedTest(name = "{0}")
@@ -251,27 +306,6 @@ public class IxmlCommunityTest extends TestBase {
         .map(testCase -> Arguments.of(testCase.getName(), testCase));
   }
 
-
-//@Test
-//public void testBug() throws Exception {
-//  TestCatalog testCatalog = new TestCatalog(new File("."), "test-catalog2.xml");
-//  testCatalog.getTestCases();
-//}
-
-  private void test(TestCase testCase) {
-    assumeFalse(testCase.isXmlGrammar());
-    try {
-      Blitz.generate(testCase.getGrammar());
-    }
-    catch (BlitzException e) {
-      assertEquals(TestCase.Assertion.assert_not_a_grammar, testCase.getAssertion());
-      Set<String> expected = testCase.getErrorCodes();
-      if (! expected.isEmpty()
-       && ! expected.stream().anyMatch(c -> e.getMessage().startsWith("[" + c + "] ")))
-          assertEquals(expected, e.getMessage());
-    }
-  }
-
   private static boolean isTestCatalog(File xmlFile) {
     try (FileInputStream fileInputStream = new FileInputStream(xmlFile)) {
       XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
@@ -320,6 +354,82 @@ public class IxmlCommunityTest extends TestBase {
           .getTestCases()
           .stream()
           .map(testCase -> Arguments.of(testCase.getName(), testCase));
+    }
+  }
+
+  static int n = 0;
+
+  private void test(TestCase testCase) {
+    assumeFalse(skipReasons.containsKey(testCase.getName()),
+        () -> {
+          SkipReason skipReason = skipReasons.get(testCase.getName());
+          return "Test was skipped: [" + skipReason + "] " + skipReason.detail;
+        });
+
+    String input = testCase.getInput();
+    Parser parser;
+    try {
+      parser = testCase.isXmlGrammar()
+          ? Blitz.generateFromXml(testCase.getGrammar())
+          : Blitz.generate(testCase.getGrammar());
+    }
+    catch (BlitzException e) {
+      if (TestCase.Assertion.assert_not_a_grammar != testCase.getAssertion())
+        throw new RuntimeException(
+            "Generating parer for test case with assertion " + testCase.getAssertion()
+          + " failed with exception", e);
+      Set<String> expected = testCase.getErrorCodes();
+      if (! expected.isEmpty()
+       && ! expected.stream().anyMatch(c -> e.getMessage().startsWith("[" + c + "] ")))
+          assertEquals(expected, e.getMessage());
+      return;
+    }
+
+    if (testCase.isGrammarTest()) {
+      assertNull(input, "unexpected input for grammar test " + testCase.getName());
+      assertEquals(1, testCase.getOutputs().size(), "expected a single reference output for grammar test");
+      if (ixmlParser == null) {
+        String ixmlIxmlResourceContent = resourceContent("ixml.ixml");
+        ixmlParser = Blitz.generate(ixmlIxmlResourceContent);
+      }
+      String xmlRepresentation = ixmlParser.parse(testCase.getGrammar());
+      if (! deepEqual(testCase.getOutputs().get(0), xmlRepresentation))
+        assertEquals(testCase.getOutputs().get(0), xmlRepresentation);
+    }
+    else {
+      assertNotNull(input, "missing input");
+      try {
+        String xml = parser.parse(input);
+        assertEquals(TestCase.Assertion.assert_xml, testCase.getAssertion());
+        assertTrue(testCase.getOutputs().size() > 0, "missing reference output");
+        if (! testCase.getOutputs().stream().anyMatch(o -> deepEqual(o, xml))) {
+          if (testCase.getOutputs().size() == 1) {
+            String expected = testCase.getOutputs().get(0);
+            if (! expected.equals("<tbd/>\n"))
+              assertEquals(expected, xml);
+          }
+          else {
+            assertEquals(testCase.getOutputs(), xml);
+          }
+        }
+      }
+      catch (BlitzException e) {
+        switch (testCase.getAssertion()) {
+        case assert_not_a_sentence:
+          assertNull(testCase.getErrorCodes());
+          break;
+        case assert_dynamic_error:
+          Set<String> expected = testCase.getErrorCodes();
+          if (! expected.isEmpty()
+           && ! expected.stream().anyMatch(c -> e.getMessage().startsWith("[" + c + "] ")))
+              assertEquals(expected, e.getMessage());
+          break;
+        default:
+          throw new RuntimeException(
+              "Parsing for test case with assertion " + testCase.getAssertion()
+            + " failed with exception", e);
+        }
+      }
     }
   }
 

@@ -15,13 +15,14 @@ import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class Copy extends Visitor {
   protected final Stack<Alts> alts = new Stack<>();
-  protected final Grammar copy = new Grammar();
+  protected final Grammar copy;
 
-  protected Copy() {
+  protected Copy(Grammar g) {
+    this.copy = g;
   }
 
   public static Grammar process(Grammar g) {
-    Copy c = new Copy();
+    Copy c = new Copy(new Grammar(g.getVersion()));
     c.visit(g);
     PostProcess.process(c.copy);
     return  c.copy;

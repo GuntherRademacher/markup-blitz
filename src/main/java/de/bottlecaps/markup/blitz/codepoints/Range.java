@@ -1,5 +1,7 @@
 package de.bottlecaps.markup.blitz.codepoints;
 
+import de.bottlecaps.markup.blitz.Errors;
+
 public class Range implements Comparable<Range> {
   private final int firstCodepoint;
   private final int lastCodepoint;
@@ -8,7 +10,7 @@ public class Range implements Comparable<Range> {
     this.firstCodepoint = firstCodepoint;
     this.lastCodepoint = lastCodepoint;
     if (firstCodepoint > lastCodepoint)
-      throw new IllegalArgumentException("invalid range: " + this); // TODO: error message
+      Errors.S09.thro(this.toString());
   }
 
   public Range(int codepoint) {

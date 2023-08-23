@@ -9,7 +9,7 @@ import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
-  public static final Charset END = new Charset(true, RangeSet.builder().build());
+  public static final Charset END = new Charset(true, RangeSet.EOF);
 
   private final boolean deleted;
   private final RangeSet rangeSet;
@@ -64,8 +64,7 @@ public class Charset extends Term {
           builder.add(codepoint);
         }
         else {
-          for (char chr : value.toCharArray())
-            builder.add(chr);
+          value.codePoints().forEach(builder::add);
         }
       }
       else if (member instanceof RangeMember) {

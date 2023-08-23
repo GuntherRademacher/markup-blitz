@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzOption;
+import de.bottlecaps.markup.blitz.Errors;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
@@ -58,6 +60,7 @@ public class Parser
 
   public static abstract class Symbol {
     public abstract void send(EventHandler e);
+    public abstract void sendContent(EventHandler e);
   }
 
   public class Terminal extends Symbol {
@@ -69,6 +72,11 @@ public class Parser
 
     @Override
     public void send(EventHandler e) {
+      e.terminal(codepoint);
+    }
+
+    @Override
+    public void sendContent(EventHandler e) {
       e.terminal(codepoint);
     }
   }
@@ -96,19 +104,37 @@ public class Parser
       if (isAttribute) {
         e.startAttribute(name);
         for (Symbol c : children)
-          c.send(e);
+          c.sendContent(e);
         e.endAttribute(name);
       }
       else {
         e.startNonterminal(name);
+        Set<String> names = new HashSet<>();
         for (Symbol c : children)
-          if (c instanceof Nonterminal && ((Nonterminal) c).isAttribute)
-            c.send(e);
+          if (c instanceof Nonterminal) {
+            Nonterminal nonterminal = (Nonterminal) c;
+            if (nonterminal.isAttribute) {
+              String attributeName = nonterminal.name;
+              if (attributeName.equals("xmlns"))
+                Errors.D07.thro();
+              if (! names.add(attributeName))
+                Errors.D02.thro(attributeName);
+              c.send(e);
+            }
+          }
         for (Symbol c : children)
           if (! (c instanceof Nonterminal) || ! ((Nonterminal) c).isAttribute)
             c.send(e);
         e.endNonterminal(name);
       }
+    }
+
+    @Override
+    public void sendContent(EventHandler e)
+    {
+      for (Symbol c : children)
+        if (! (c instanceof Nonterminal) || ! ((Nonterminal) c).isAttribute)
+          c.sendContent(e);
     }
 
     public void addChildren(Symbol... newChildren) {
@@ -363,7 +389,8 @@ public class Parser
       String[] nonterminal,
       RangeSet[] terminal,
       int[] forks,
-      BitSet[] expectedTokens)
+      BitSet[] expectedTokens,
+      boolean isVersionMismatch)
   {
     this.defaultOptions = defaultOptions;
     this.asciiMap = asciiMap;
@@ -378,6 +405,7 @@ public class Parser
     this.terminal = terminal;
     this.forks = forks;
     this.expectedTokens = expectedTokens;
+    this.isVersionMismatch = isVersionMismatch;
   }
 
   public RangeSet getOffendingToken(ParseException e) {
@@ -452,15 +480,24 @@ public class Parser
     }
 
     Nonterminal startSymbol = ((Nonterminal) b.stack[0]);
-    if (startSymbol.children == null || startSymbol.children.length != 1 || ! (startSymbol.children[0] instanceof Nonterminal)) {
-      throw new IllegalStateException("result is not a single nonterminal");
-    }
+    if (startSymbol.children == null || startSymbol.children.length == 0)
+      Errors.D01.thro(); // not well-formed
+    if (! (startSymbol.children[0] instanceof Nonterminal))
+      Errors.D06.thro(); // not exactly one element
+    Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
+    if (nonterminal.isAttribute)
+      Errors.D05.thro(); // attribute as root
+    if (startSymbol.children.length != 1)
+      Errors.D06.thro(); // not exactly one element
 
-    if (thread.isAmbiguous) {
-      Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
-      nonterminal.addChildren(
-          attribute("xmlns:ixml", "http://invisiblexml.org/NS"),
-          attribute("ixml:state", "ambiguous"));
+    if (thread.isAmbiguous || isVersionMismatch) {
+      nonterminal.addChildren(attribute("xmlns:ixml", "http://invisiblexml.org/NS"));
+      List<String> state = new ArrayList<>();
+      if (thread.isAmbiguous)
+        state.add("ambiguous");
+      if (isVersionMismatch)
+        state.add("version-mismatch");
+      nonterminal.addChildren(attribute("ixml:state", String.join(" ", state)));
     }
 
     b.serialize(s);
@@ -962,4 +999,5 @@ public class Parser
   private final RangeSet[] terminal;
   private final int[] forks;
   private final BitSet[] expectedTokens;
+  private final boolean isVersionMismatch;
 }

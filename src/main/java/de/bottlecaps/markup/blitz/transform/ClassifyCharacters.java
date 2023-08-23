@@ -39,6 +39,10 @@ public class ClassifyCharacters extends Copy {
   private Set<String> done;
   private CharsetCollector charsetCollector;
 
+  public ClassifyCharacters(Grammar g) {
+    super(g);
+  }
+
   public Grammar combine(Grammar g, Set<BlitzOption> options) {
     List<Long> t = new ArrayList<>();
     t.add(System.currentTimeMillis());
@@ -238,7 +242,15 @@ public class ClassifyCharacters extends Copy {
         ? null
         : alts.peek().last().removeLast();
     Term term = alts.peek().last().removeLast();
-    alts.peek().last().getTerms().add(new Control(c.getOccurrence(), term, separator));
+    alts.peek().last().getTerms().add(new Control(c.getOccurrence(), term(term), term(separator)));
+  }
+
+  private Term term(Term term) {
+    while (term instanceof Alts
+        && ((Alts) term).getAlts().size() == 1
+        && ((Alts) term).getAlts().get(0).getTerms().size() == 1)
+      term = ((Alts) term).getAlts().get(0).getTerms().get(0);
+    return term;
   }
 
   private static class CharsetCollector extends Visitor {
@@ -339,11 +351,12 @@ public class ClassifyCharacters extends Copy {
   private static class ReplaceCharsets extends Copy {
     private Map<RangeSet, Set<RangeSet>> charsetToCharclasses;
 
-    private ReplaceCharsets() {
+    private ReplaceCharsets(Grammar grammar) {
+      super(grammar);
     }
 
     public static Grammar process(Grammar g, Map<RangeSet, Set<RangeSet>> charsetToCharclasses) {
-      ReplaceCharsets rc = new ReplaceCharsets();
+      ReplaceCharsets rc = new ReplaceCharsets(new Grammar(g.getVersion()));
       rc.charsetToCharclasses = charsetToCharclasses;
       rc.visit(g);
       rc.copy.setAdditionalNames(g.getAdditionalNames());

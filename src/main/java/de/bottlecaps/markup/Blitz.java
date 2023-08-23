@@ -3,6 +3,7 @@ package de.bottlecaps.markup;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -14,12 +15,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.transform.BNF;
 import de.bottlecaps.markup.blitz.transform.Generator;
+import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 
 public class Blitz {
+  private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
@@ -109,6 +118,14 @@ public class Blitz {
         .replaceFirst("^\uFEFF", "");
   }
 
+  public static Parser generateFromXml(InputStream xml, BlitzOption... blitzOptions) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  }
+
+  public static Parser generateFromXml(String xml, BlitzOption... blitzOptions) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  }
+
   public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
     Set<BlitzOption> options = Set.of(blitzOptions);
@@ -130,4 +147,27 @@ public class Blitz {
     }
     return parser;
   }
+
+  private static boolean isXml(File file) {
+    try (FileInputStream fileInputStream = new FileInputStream(file)) {
+      XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
+      try {
+        while (reader.hasNext()) {
+          if (reader.next() == XMLStreamConstants.START_ELEMENT)
+            return true;
+        }
+        return false;
+      }
+      finally {
+        reader.close();
+      }
+    }
+    catch (XMLStreamException e) {
+      return false;
+    }
+    catch (IOException e) {
+      throw new BlitzException("Failed to read file " + file, e);
+    }
+  }
+
 }
