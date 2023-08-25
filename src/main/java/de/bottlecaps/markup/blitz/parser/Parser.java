@@ -83,6 +83,25 @@ public class Parser
     }
   }
 
+  public class Insertion extends Symbol {
+    // TODO: put multiple codepoints into a single insertion object
+    public int codepoint;
+
+    public Insertion(int codepoint) {
+      this.codepoint = codepoint;
+    }
+
+    @Override
+    public void send(EventHandler e) {
+      e.terminal(codepoint);
+    }
+
+    @Override
+    public void sendContent(EventHandler e) {
+      e.terminal(codepoint);
+    }
+  }
+
   public static class Nonterminal extends Symbol
   {
     private String name;
@@ -361,7 +380,7 @@ public class Parser
       if (insertion != null) {
         if (children == null)
           children = new ArrayList<>();
-        Arrays.stream(insertion).mapToObj(Terminal::new).forEach(children::add);
+        Arrays.stream(insertion).mapToObj(Insertion::new).forEach(children::add);
       }
 
       push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()],
