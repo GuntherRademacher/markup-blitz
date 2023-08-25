@@ -17,7 +17,9 @@ import java.util.Stack;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.blitz.Errors;
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
@@ -108,6 +110,8 @@ public class Parser
         e.endAttribute(name);
       }
       else {
+        if (name.charAt(0) == ' ')
+          Errors.D03.thro(name);
         e.startNonterminal(name);
         Set<String> names = new HashSet<>();
         for (Symbol c : children)
@@ -119,6 +123,8 @@ public class Parser
                 Errors.D07.thro();
               if (! names.add(attributeName))
                 Errors.D02.thro(attributeName);
+              if (attributeName.charAt(0) == ' ')
+                Errors.D03.thro(attributeName);
               c.send(e);
             }
           }
@@ -241,6 +247,8 @@ public class Parser
 
     @Override
     public void terminal(int codepoint) {
+      if (! UnicodeCategory.xmlChar.containsCodepoint(codepoint))
+        Errors.D04.thro(Codepoint.toString(codepoint));
       if (attributeLevel > 0) {
         switch (codepoint) {
         case '&': writeOutput("&amp;"); break;

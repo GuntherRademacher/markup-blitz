@@ -22,6 +22,12 @@ public class UnicodeCategory {
     return codepoint >= 0xd800 && codepoint <= 0xdfff;
   }
 
+  public static boolean isXmlName(String name) {
+    return name.length() > 0
+        && xmlNameStartChar.containsCodepoint(name.codePointAt(0))
+        && name.codePoints().allMatch(xmlNameChar::containsCodepoint);
+  }
+
   public static final RangeSet ALPHABET;
   static {
     RangeSet unicodeRange = builder()
@@ -50,6 +56,64 @@ public class UnicodeCategory {
         .build();
     ALPHABET = unicodeRange.minus(nonCharacters);
   }
+
+//  /** XML characters (per XML 1.0) */
+//  public static final RangeSet xmlChar = builder()
+//      .add(0x9)
+//      .add(0xA)
+//      .add(0xD)
+//      .add(0x20, 0xD7FF)
+//      .add(0xE000, 0xFFFD)
+//      .add(0x10000, 0x10FFFF)
+//      .build();
+
+  /** XML characters (per XML 1.1) */
+  public static final RangeSet xmlChar;
+  static {
+    RangeSet chars = builder()
+        .add(0x1, 0xD7FF)
+        .add(0xE000, 0xFFFD)
+        .add(0x10000, 0x10FFFF)
+        .build();
+    RangeSet restrictedChars = builder()
+        .add(0x1, 0x8)
+        .add(0xB, 0xC)
+        .add(0xE, 0x1F)
+        .add(0x7F, 0x84)
+        .add(0x86, 0x9F)
+        .build();
+    xmlChar = chars.minus(restrictedChars);
+  }
+
+  /** XML name start characters */
+  public static final RangeSet xmlNameStartChar = builder()
+      .add('A', 'Z')
+      .add('_')
+      .add('a', 'z')
+      .add(0xC0, 0xD6)
+      .add(0xD8, 0xF6)
+      .add(0xF8,0x2FF)
+      .add(0x370, 0x37D)
+      .add(0x37F, 0x1FFF)
+      .add(0x200C, 0x200D)
+      .add(0x2070, 0x218F)
+      .add(0x2C00, 0x2FEF)
+      .add(0x3001, 0xD7FF)
+      .add(0xF900, 0xFDCF)
+      .add(0xFDF0, 0xFFFD)
+      .add(0x10000, 0xEFFFF)
+      .build();
+
+  /** XML name characters */
+  public static final RangeSet xmlNameChar = builder()
+      .add(xmlNameStartChar)
+      .add('-')
+      .add('.')
+      .add('0', '9')
+      .add(0xB7)
+      .add(0x0300, 0x036F)
+      .add(0x203F, 0x2040)
+      .build();
 
   public static final Map<String, RangeSet> codepointsByCode = new ConcurrentHashMap<>();
   static {

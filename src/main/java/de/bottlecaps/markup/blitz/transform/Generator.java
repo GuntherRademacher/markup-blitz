@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
+import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
@@ -723,7 +724,9 @@ public class Generator {
       nonterminalCode.put(g.getRules().keySet().iterator().next(), nonterminalCode.size());
       terminalCode.put(Charset.END.getRangeSet(), terminalCode.size());
       super.visit(g);
-      nonterminal = nonterminalCode.keySet().toArray(String[]::new);
+      nonterminal = nonterminalCode.keySet().stream()
+          .map(name -> UnicodeCategory.isXmlName(name) ? name : " " + name)
+          .toArray(String[]::new);
       terminal = terminalCode.keySet().toArray(RangeSet[]::new);
     }
 

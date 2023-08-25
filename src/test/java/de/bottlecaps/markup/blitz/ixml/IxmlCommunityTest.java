@@ -35,7 +35,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -49,8 +48,8 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.parser.Parser;
 
-//Status: 3091/35/11/7
-@Disabled
+//Status: 3091/35/0/3
+//@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
