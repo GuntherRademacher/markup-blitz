@@ -48,7 +48,7 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.parser.Parser;
 
-//Status: 3091/35/0/3
+//Status: 3091/35/0/0
 //@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
@@ -411,6 +411,11 @@ public class IxmlCommunityTest extends TestBase {
             assertEquals(testCase.getOutputs(), xml);
           }
         }
+      }
+      catch (OutOfMemoryError e) {
+        parser = null;
+        System.gc();
+        throw new RuntimeException(e.getMessage(), e);
       }
       catch (BlitzException e) {
         switch (testCase.getAssertion()) {

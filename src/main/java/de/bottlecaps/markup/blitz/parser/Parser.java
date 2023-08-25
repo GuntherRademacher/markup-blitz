@@ -551,11 +551,13 @@ public class Parser
 
   private abstract static class DeferredEvent {
     public DeferredEvent link;
+    public int queueSize;
     public int begin;
     public int end;
 
     public DeferredEvent(DeferredEvent link, int begin, int end) {
       this.link = link;
+      this.queueSize = link == null ? 0 : link.queueSize + 1;
       this.begin = begin;
       this.end = end;
     }
@@ -629,7 +631,9 @@ public class Parser
       while (! threads.isEmpty() && threads.peek().equals(thread)) {
         if (trace)
           writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-        thread = threads.poll();
+        ParsingThread t = threads.poll();
+        if (t.deferredEvent == null || t.deferredEvent.queueSize < thread.deferredEvent.queueSize)
+          thread = t;
         thread.isAmbiguous = true;
       }
 
