@@ -488,7 +488,7 @@ public class Parser
     thread.reset(0, 0, 0);
 
     try {
-      thread = parse(0, eventHandler, thread);
+      thread = parse(eventHandler, thread);
     }
     catch (ParseException pe) {
       throw new BlitzException("Failed to parse input:\n" + getErrorMessage(pe));
@@ -643,11 +643,11 @@ public class Parser
   private static final int ACCEPTED = 1;
   private static final int ERROR = 2;
 
-  private ParsingThread parse(int target, BottomUpEventHandler eventHandler, ParsingThread thread) throws ParseException {
-    PriorityQueue<ParsingThread> threads = thread.open(0, eventHandler, target);
+  private ParsingThread parse(BottomUpEventHandler eventHandler, ParsingThread thread) throws ParseException {
+    PriorityQueue<ParsingThread> threads = thread.open(eventHandler);
     for (;;) {
       thread = threads.poll();
-      while (! threads.isEmpty() && threads.peek().equals(thread)) {
+      while (thread.equals(threads.peek())) {
         if (trace)
           writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
         ParsingThread t = threads.poll();
@@ -674,13 +674,15 @@ public class Parser
         if (! threads.isEmpty()) break;
       }
 
-      if (status != ERROR)
+      if (status != ERROR) {
         threads.offer(thread);
-      else if (threads.isEmpty())
+      }
+      else if (threads.isEmpty()) {
         throw new ParseException(thread.b1,
                                  thread.e1,
                                  thread.state,
                                  thread.l1);
+      }
     }
   }
 
@@ -698,19 +700,17 @@ public class Parser
     public StackNode stack;
     public int state;
     public int action;
-    public int target;
     public DeferredEvent deferredEvent;
     public int id;
     public boolean isAmbiguous;
 
-    public PriorityQueue<ParsingThread> open(int initialState, BottomUpEventHandler eh, int t) {
+    public PriorityQueue<ParsingThread> open(BottomUpEventHandler eh) {
       accepted = false;
-      target = t;
       eventHandler = eh;
       deferredEvent = null;
       stack = new StackNode(-1, null);
-      state = initialState;
-      action = predict(initialState);
+      state = 0;
+      action = predict(state);
       threads = new PriorityQueue<>();
       threads.offer(this);
       return threads;
@@ -719,7 +719,6 @@ public class Parser
     public ParsingThread copy(ParsingThread other, int action) {
       this.action = action;
       accepted = other.accepted;
-      target = other.target;
       eventHandler = other.eventHandler;
       deferredEvent = other.deferredEvent;
       id = ++maxId;
@@ -742,12 +741,15 @@ public class Parser
       if (accepted != other.accepted)
         return accepted ? 1 : -1;
       int comp = e0 - other.e0;
-      return comp == 0 ? id - other.id : comp;
+      if (comp != 0)
+        return comp;
+      return id - other.id;
     }
 
     @Override
     public boolean equals(Object obj) {
       ParsingThread other = (ParsingThread) obj;
+      if (other == null) return false;
       if (accepted != other.accepted) return false;
       if (b1 != other.b1) return false;
       if (e1 != other.e1) return false;
@@ -760,6 +762,7 @@ public class Parser
 
     public int parse() throws ParseException {
       int nonterminalId = -1;
+      int pos = e0;
       for (;;) {
         if (trace) {
           writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
@@ -790,8 +793,8 @@ public class Parser
         case 4: // FORK
           if (trace)
             writeTrace("fork\"/>\n");
-          threads.offer(new ParsingThread().copy(this, forks[argument]));
-          action = forks[argument + 1];
+          action = forks[argument];
+          threads.offer(new ParsingThread().copy(this, forks[argument + 1]));
           return PARSING;
 
         case 5: // ACCEPT
@@ -836,7 +839,9 @@ public class Parser
           if (trace)
             writeTrace("\"/>\n");
           action = predict(state);
-          return PARSING;
+          if (e0 > pos)
+            return PARSING;
+          nonterminalId = -1;
         }
         else
         {
