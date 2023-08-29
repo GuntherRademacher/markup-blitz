@@ -455,13 +455,17 @@ public class Parser
             + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
             + "\n"
             + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ");
-    String prefix = input.subSequence(0, e.getBegin()).toString();
-    int line = prefix.replaceAll("[^\n]", "").length() + 1;
-    int column = prefix.length() - prefix.lastIndexOf('\n');
     return message
-         + "at line " + line + ", column " + column + ":\n..."
+         + "at " + lineAndColumn(e.getBegin()) + ":\n..."
          + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
          + "...";
+  }
+
+  private String lineAndColumn(int pos) {
+    String prefix = input.subSequence(0, pos).toString();
+    int line = prefix.replaceAll("[^\n]", "").length() + 1;
+    int column = prefix.length() - prefix.lastIndexOf('\n');
+    return "line " + line + ", column " + column;
   }
 
   public String parse(String string, BlitzOption... options) throws BlitzException {
@@ -645,15 +649,59 @@ public class Parser
 
   private ParsingThread parse(BottomUpEventHandler eventHandler, ParsingThread thread) throws ParseException {
     PriorityQueue<ParsingThread> threads = thread.open(eventHandler);
+    int pos = -1;
+    int threadCount = 0;
     for (;;) {
       thread = threads.poll();
-      while (thread.equals(threads.peek())) {
+      if (thread.e0 > pos) {
+        pos = thread.e0;
+        threadCount = threads.size() + 1;
+        thread.group = thread.id;
+        for (ParsingThread t : threads) {
+          t.group = t.id;
+          t.forkedFor = 0;
+        }
+      }
+      else if (threads.size() >= (threadCount << 6)) {
+        System.err.println("Thread explosion!");
+        threads.add(thread);
+        for (ParsingThread t : threads) {
+          System.err.println(t.group + " " + t.forkedFor);
+        }
+        throw new BlitzException("Too many viable alternatives at " + lineAndColumn(thread.e0) + ", there might be undetected infinite ambiguity");
+      }
+
+      ParsingThread t1 = threads.peek();
+      if (t1 != null && thread.e0 == t1.e0 && thread.group == t1.group) {
+        t1 = threads.poll();
+        ParsingThread t2 = threads.peek();
+        if (t2 != null
+            && t2.group == t1.group
+//            && t2.e0 == t1.e0
+//            && t2.state == t1.state
+//            && t2.action == t1.action) {
+            && t2.equals(t1)) {
+          if (trace) {
+            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
+            writeTrace("  <parse thread=\"" + t1.id + "\" offset=\"" + t1.e0 + "\" state=\"" + t1.state + "\" action=\"discard\"/>\n");
+          }
+          thread = threads.poll();
+          thread.isAmbiguous = true;
+          t1 = threads.peek();
+        }
+        else {
+          threads.offer(t1);
+        }
+      }
+
+      while (thread.equals(t1)) {
         if (trace)
           writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-        ParsingThread t = threads.poll();
-        if (t.deferredEvent == null || t.deferredEvent.queueSize < thread.deferredEvent.queueSize)
-          thread = t;
+        t1 = threads.poll();
+        if (t1.deferredEvent == null || t1.deferredEvent.queueSize < thread.deferredEvent.queueSize)
+          thread = t1;
         thread.isAmbiguous = true;
+        t1 = threads.peek();
       }
 
       if (thread.deferredEvent != null && threads.isEmpty()) {
@@ -703,6 +751,8 @@ public class Parser
     public DeferredEvent deferredEvent;
     public int id;
     public boolean isAmbiguous;
+    public int group;
+    public int forkedFor;
 
     public PriorityQueue<ParsingThread> open(BottomUpEventHandler eh) {
       accepted = false;
@@ -711,6 +761,8 @@ public class Parser
       stack = new StackNode(-1, null);
       state = 0;
       action = predict(state);
+      group = id;
+      forkedFor = -1;
       threads = new PriorityQueue<>();
       threads.offer(this);
       return threads;
@@ -733,6 +785,8 @@ public class Parser
       e1 = other.e1;
       end = other.end;
       isAmbiguous = other.isAmbiguous;
+      group = other.group;
+      forkedFor = action;
       return this;
     }
 
@@ -743,7 +797,10 @@ public class Parser
       int comp = e0 - other.e0;
       if (comp != 0)
         return comp;
-      return id - other.id;
+      comp = group - other.group;
+      if (comp != 0)
+        return comp;
+      return other.id - id;
     }
 
     @Override

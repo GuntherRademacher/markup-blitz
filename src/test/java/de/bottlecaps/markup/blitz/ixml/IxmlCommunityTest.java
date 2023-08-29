@@ -60,6 +60,7 @@ public class IxmlCommunityTest extends TestBase {
   private static enum SkipReason {
     SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes to long to be with each execution."),
     TOO_MUCH_MEMORY("Test has never been completed within given memory limits."),
+    UNRESOLVED_INFINITE_AMBIGUITY("Test runs into infinite ambiguity that could not be resolved."),
     ;
     private String detail;
 
@@ -78,32 +79,19 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.05/g05.c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.06/g06.c02", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.06/g06.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.10/g10c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.19/g19c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c04", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.22/g22.c05", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.23/g23.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.23/g23.r05", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.25/g25.c02", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.26/g26.c02", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.28/g28.c02", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 2/sample.grammar.29/g29.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c06", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.TOO_MUCH_MEMORY);
-    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c02", SkipReason.TOO_MUCH_MEMORY);
+//    skipReasons.put("Misc tests/sample.grammar.06/g06.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
+//    skipReasons.put("Misc tests/sample.grammar.06/g06.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
+    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 2/sample.grammar.25/g25.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
+    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 2/sample.grammar.29/g29.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
   }
 
   public static enum Catalog {
