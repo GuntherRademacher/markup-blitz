@@ -1,7 +1,5 @@
 package de.bottlecaps.markup.blitz.grammar;
 
-import static de.bottlecaps.markup.Blitz.resourceContent;
-import static de.bottlecaps.markup.Blitz.urlContent;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,7 +12,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class IxmlTest {
+import de.bottlecaps.markup.TestBase;
+
+public class IxmlTest extends TestBase {
     private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
     private static final String ixmlResource = "ixml.ixml";
 
@@ -63,8 +63,8 @@ public class IxmlTest {
       testUrlContent(invisiblexmlOrgUrl, ixmlResource, expectedResult);
     }
 
-    private void testUrlContent(String url, String resource, String expectedResult) throws IOException, MalformedURLException {
-      Grammar grammar = Ixml.parse(urlContent(new URL(url)));
+    private void testUrlContent(String url, String resource, String expectedResult) throws MalformedURLException {
+      Grammar grammar = Ixml.parse(cachedUrlContent(new URL(url)));
       assertEquals(expectedResult, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
     }
 }

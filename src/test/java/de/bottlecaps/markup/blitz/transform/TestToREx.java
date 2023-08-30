@@ -1,6 +1,5 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import static de.bottlecaps.markup.Blitz.resourceContent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
@@ -9,10 +8,11 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
 
-public class TestToREx {
+public class TestToREx extends TestBase {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
 

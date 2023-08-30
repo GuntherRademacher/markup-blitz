@@ -1,6 +1,5 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import static de.bottlecaps.markup.Blitz.resourceContent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
@@ -16,10 +15,11 @@ import org.nineml.coffeefilter.InvisibleXmlParser;
 import org.nineml.coffeefilter.ParserOptions;
 import org.nineml.coffeegrinder.parser.GearleyResult;
 
+import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Ixml;
 
-public class TestCoffee {
+public class TestCoffee extends TestBase {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
   private static final String jsonResource = "sample.json";

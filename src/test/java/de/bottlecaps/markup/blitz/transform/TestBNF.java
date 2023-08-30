@@ -1,6 +1,5 @@
 package de.bottlecaps.markup.blitz.transform;
 
-import static de.bottlecaps.markup.Blitz.resourceContent;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -15,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
@@ -29,7 +29,7 @@ import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 import de.bottlecaps.markup.blitz.parser.Parser;
 
-public class TestBNF {
+public class TestBNF extends TestBase {
   private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
 

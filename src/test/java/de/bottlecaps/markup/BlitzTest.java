@@ -585,7 +585,9 @@ public class BlitzTest extends TestBase {
         BlitzOption.INDENT);
     Set<String> expectedResults = Set.of(
         "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b=c</S>",
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b:c</S>"
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b:c</S>",
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b:c</S>",
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b=c</S>"
         );
     assertTrue(expectedResults.contains(result),
         "unexpected result: " + result);

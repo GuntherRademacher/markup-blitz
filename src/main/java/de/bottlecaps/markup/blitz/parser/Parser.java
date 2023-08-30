@@ -488,11 +488,10 @@ public class Parser
     input = string;
     size = string.length();
     maxId = 0;
-    thread = new ParsingThread();
-    thread.reset(0, 0, 0);
 
+    ParsingThread thread;
     try {
-      thread = parse(eventHandler, thread);
+      thread = parse();
     }
     catch (ParseException pe) {
       throw new BlitzException("Failed to parse input:\n" + getErrorMessage(pe));
@@ -643,14 +642,13 @@ public class Parser
     }
   }
 
-  private static final int PARSING = 0;
-  private static final int ACCEPTED = 1;
-  private static final int ERROR = 2;
+  private ParsingThread parse() throws ParseException {
+    PriorityQueue<ParsingThread> threads = new PriorityQueue<>();
+    threads.add(new ParsingThread());
 
-  private ParsingThread parse(BottomUpEventHandler eventHandler, ParsingThread thread) throws ParseException {
-    PriorityQueue<ParsingThread> threads = thread.open(eventHandler);
     int pos = -1;
     int threadCount = 0;
+    ParsingThread thread;
     for (;;) {
       thread = threads.poll();
       if (thread.e0 > pos) {
@@ -709,20 +707,20 @@ public class Parser
         thread.deferredEvent = null;
       }
 
-      if (thread.accepted) {
+      if (thread.status == Status.ACCEPTED) {
         if (! threads.isEmpty())
           throw new IllegalStateException();
         return thread;
       }
 
-      int status;
       for (;;) {
-        status = thread.parse();
-        if (status != PARSING) break;
+        int action = thread.parse(threads.isEmpty());
+        if (action != 0) threads.add(new ParsingThread(thread, action));
+        if (thread.status != Status.PARSING) break;
         if (! threads.isEmpty()) break;
       }
 
-      if (status != ERROR) {
+      if (thread.status != Status.ERROR) {
         threads.offer(thread);
       }
       else if (threads.isEmpty()) {
@@ -734,7 +732,6 @@ public class Parser
     }
   }
 
-  private ParsingThread thread = new ParsingThread();
   private BottomUpEventHandler eventHandler;
   private String input = null;
   private int size = 0;
@@ -742,9 +739,14 @@ public class Parser
   private Writer err = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
   private boolean trace;
 
+  private enum Status {
+    PARSING,
+    ACCEPTED,
+    ERROR,
+  };
+
   private class ParsingThread implements Comparable<ParsingThread> {
-    public PriorityQueue<ParsingThread> threads;
-    public boolean accepted;
+    public Status status;
     public StackNode stack;
     public int state;
     public int action;
@@ -754,27 +756,37 @@ public class Parser
     public int group;
     public int forkedFor;
 
-    public PriorityQueue<ParsingThread> open(BottomUpEventHandler eh) {
-      accepted = false;
-      eventHandler = eh;
+    private int b0, e0;
+    private int b1, e1;
+    private int c1, l1;
+
+    private int begin = 0;
+    private int end = 0;
+
+    public ParsingThread() {
+      b0 = 0;
+      e0 = 0;
+      b1 = 0;
+      e1 = 0;
+      l1 = 0;
+      end = 0;
+      maxId = 0;
+      id = maxId;
+      isAmbiguous = false;
+      status = Status.PARSING;
       deferredEvent = null;
       stack = new StackNode(-1, null);
       state = 0;
       action = predict(state);
       group = id;
       forkedFor = -1;
-      threads = new PriorityQueue<>();
-      threads.offer(this);
-      return threads;
     }
 
-    public ParsingThread copy(ParsingThread other, int action) {
+    public ParsingThread(ParsingThread other, int action) {
       this.action = action;
-      accepted = other.accepted;
-      eventHandler = other.eventHandler;
+      status = other.status;
       deferredEvent = other.deferredEvent;
       id = ++maxId;
-      threads = other.threads;
       state = other.state;
       stack = other.stack;
       b0 = other.b0;
@@ -787,13 +799,12 @@ public class Parser
       isAmbiguous = other.isAmbiguous;
       group = other.group;
       forkedFor = action;
-      return this;
     }
 
     @Override
     public int compareTo(ParsingThread other) {
-      if (accepted != other.accepted)
-        return accepted ? 1 : -1;
+      if (status != other.status)
+        return status == Status.ACCEPTED ? 1 : -1;
       int comp = e0 - other.e0;
       if (comp != 0)
         return comp;
@@ -807,7 +818,7 @@ public class Parser
     public boolean equals(Object obj) {
       ParsingThread other = (ParsingThread) obj;
       if (other == null) return false;
-      if (accepted != other.accepted) return false;
+      if (status != other.status) return false;
       if (b1 != other.b1) return false;
       if (e1 != other.e1) return false;
       if (l1 != other.l1) return false;
@@ -817,9 +828,9 @@ public class Parser
       return true;
     }
 
-    public int parse() throws ParseException {
+    public int parse(boolean isUnambiguous) throws ParseException {
       int nonterminalId = -1;
-      int pos = e0;
+      int pos = isUnambiguous ? Integer.MAX_VALUE : e0;
       for (;;) {
         if (trace) {
           writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
@@ -851,20 +862,20 @@ public class Parser
           if (trace)
             writeTrace("fork\"/>\n");
           action = forks[argument];
-          threads.offer(new ParsingThread().copy(this, forks[argument + 1]));
-          return PARSING;
+          return forks[argument + 1];
 
         case 5: // ACCEPT
           if (trace)
             writeTrace("accept\"/>\n");
-          accepted = true;
+          status = Status.ACCEPTED;
           action = 0;
-          return ACCEPTED;
+          return 0;
 
         default: // ERROR
           if (trace)
             writeTrace("fail\"/>\n");
-          return ERROR;
+          status = Status.ERROR;
+          return 0;
         }
 
         if (shift >= 0) {
@@ -872,7 +883,7 @@ public class Parser
             writeTrace("shift");
           if (nonterminalId < 0) {
             if (eventHandler != null) {
-              if (isUnambiguous()) {
+              if (isUnambiguous) {
                 eventHandler.terminal(c1);
               }
               else {
@@ -897,7 +908,7 @@ public class Parser
             writeTrace("\"/>\n");
           action = predict(state);
           if (e0 > pos)
-            return PARSING;
+            return 0;
           nonterminalId = -1;
         }
         else
@@ -921,7 +932,7 @@ public class Parser
           }
           if (eventHandler != null)
           {
-            if (isUnambiguous())
+            if (isUnambiguous)
             {
               eventHandler.nonterminal(reduceArgument);
             }
@@ -935,21 +946,6 @@ public class Parser
       }
     }
 
-    public boolean isUnambiguous()
-    {
-      return threads.isEmpty();
-    }
-
-    public final void reset(int l, int b, int e)
-    {
-              b0 = b; e0 = b;
-      l1 = l; b1 = b; e1 = e;
-      end = e;
-      maxId = 0;
-      id = maxId;
-      isAmbiguous = false;
-    }
-
     private String lookaheadString()
     {
       String result = "";
@@ -959,13 +955,6 @@ public class Parser
       }
       return result;
     }
-
-    private int         b0, e0;
-    private int c1, l1, b1, e1;
-    private BottomUpEventHandler eventHandler = null;
-
-    private int begin = 0;
-    private int end = 0;
 
     public int predict(int state) {
       if (l1 == 0) {

@@ -2,9 +2,13 @@ package de.bottlecaps.markup;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.basex.core.Context;
 import org.basex.io.IO;
@@ -15,21 +19,28 @@ import org.basex.query.value.node.DBNode;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 
 public class TestBase {
+  private static Map<URL, String> cache = Collections.synchronizedMap(new HashMap<>());
+
+  protected static String cachedUrlContent(URL url) {
+    return cache.computeIfAbsent(url, u -> {
+      try {
+        return Blitz.urlContent(u);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+    });
+  }
+
   protected static String resourceContent(String resource) {
-    URL url = BlitzTest.class.getClassLoader().getResource(resource);
-    try {
-      return Blitz.urlContent(url);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }
+    return cachedUrlContent(BlitzTest.class.getClassLoader().getResource(resource));
   }
 
   protected static String fileContent(File file) {
     try {
-      return Blitz.urlContent(file.toURI().toURL());
+      return cachedUrlContent(file.toURI().toURL());
     }
-    catch (IOException e) {
+    catch (MalformedURLException e) {
       throw new RuntimeException(e.getMessage(), e);
     }
   }

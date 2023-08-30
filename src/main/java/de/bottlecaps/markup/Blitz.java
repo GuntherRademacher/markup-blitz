@@ -88,10 +88,6 @@ public class Blitz {
     System.exit(exitCode);
   }
 
-  public static String resourceContent(String resource) throws IOException, MalformedURLException {
-    return urlContent(Blitz.class.getClassLoader().getResource(resource));
-  }
-
   private static URL url(final String input) throws URISyntaxException, MalformedURLException {
     URI uri = null;
     try {
