@@ -688,7 +688,7 @@ public class Parser
           t1 = threads.peek();
         }
         else {
-          threads.offer(t1);
+          threads.add(t1);
         }
       }
 
@@ -721,7 +721,7 @@ public class Parser
       }
 
       if (thread.status != Status.ERROR) {
-        threads.offer(thread);
+        threads.add(thread);
       }
       else if (threads.isEmpty()) {
         throw new ParseException(thread.b1,
