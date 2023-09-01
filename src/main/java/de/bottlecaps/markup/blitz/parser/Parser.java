@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -643,63 +645,27 @@ public class Parser
   }
 
   private ParsingThread parse() throws ParseException {
-    PriorityQueue<ParsingThread> threads = new PriorityQueue<>();
+    Queue<ParsingThread> threads = new PriorityQueue<>();
+    Queue<ParsingThread> currentThreads = new LinkedList<>();
+    List<ParsingThread> advancedThreads = new ArrayList<>();
+
     threads.add(new ParsingThread());
 
     int pos = -1;
-    int threadCount = 0;
     ParsingThread thread;
     for (;;) {
-      thread = threads.poll();
-      if (thread.e0 > pos) {
+      thread = threads.remove();
+      if (thread.e0 > pos)
         pos = thread.e0;
-        threadCount = threads.size() + 1;
-        thread.group = thread.id;
-        for (ParsingThread t : threads) {
-          t.group = t.id;
-          t.forkedFor = 0;
-        }
-      }
-      else if (threads.size() >= (threadCount << 6)) {
-        System.err.println("Thread explosion!");
-        threads.add(thread);
-        for (ParsingThread t : threads) {
-          System.err.println(t.group + " " + t.forkedFor);
-        }
-        throw new BlitzException("Too many viable alternatives at " + lineAndColumn(thread.e0) + ", there might be undetected infinite ambiguity");
-      }
 
-      ParsingThread t1 = threads.peek();
-      if (t1 != null && thread.e0 == t1.e0 && thread.group == t1.group) {
-        t1 = threads.poll();
-        ParsingThread t2 = threads.peek();
-        if (t2 != null
-            && t2.group == t1.group
-//            && t2.e0 == t1.e0
-//            && t2.state == t1.state
-//            && t2.action == t1.action) {
-            && t2.equals(t1)) {
-          if (trace) {
-            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-            writeTrace("  <parse thread=\"" + t1.id + "\" offset=\"" + t1.e0 + "\" state=\"" + t1.state + "\" action=\"discard\"/>\n");
-          }
-          thread = threads.poll();
-          thread.isAmbiguous = true;
-          t1 = threads.peek();
-        }
-        else {
-          threads.add(t1);
-        }
-      }
-
-      while (thread.equals(t1)) {
+      while (thread.equals(threads.peek())) {
         if (trace)
           writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-        t1 = threads.poll();
-        if (t1.deferredEvent == null || t1.deferredEvent.queueSize < thread.deferredEvent.queueSize)
-          thread = t1;
+        ParsingThread t = threads.remove();
+        if (t.deferredEvent == null || t.deferredEvent.queueSize < thread.deferredEvent.queueSize)
+          thread = t;
         thread.isAmbiguous = true;
-        t1 = threads.peek();
+        t = threads.peek();
       }
 
       if (thread.deferredEvent != null && threads.isEmpty()) {
@@ -713,22 +679,48 @@ public class Parser
         return thread;
       }
 
-      for (;;) {
-        int action = thread.parse(threads.isEmpty());
-        if (action != 0) threads.add(new ParsingThread(thread, action));
-        if (thread.status != Status.PARSING) break;
-        if (! threads.isEmpty()) break;
+      currentThreads.clear();
+      advancedThreads.clear();
+      boolean isUnambiguous = threads.isEmpty();
+      boolean stalled = false;
+      thread.forked.clear();
+      for (currentThreads.add(thread); ! currentThreads.isEmpty(); ) {
+        thread = currentThreads.remove();
+        int fork = thread.parse(isUnambiguous);
+        if (fork >= 0) {
+          isUnambiguous = false;
+          thread.action = forks[fork];
+          ParsingThread other = new ParsingThread(thread, forks[fork + 1]);
+          if (thread.e0 > pos) {
+            advancedThreads.add(thread);
+            advancedThreads.add(other);
+          }
+          else {
+            if (thread.forked.get(fork)) {
+              stalled = true;
+            }
+            else {
+              thread.forked.set(fork);
+              currentThreads.add(thread);
+              other.forked.set(fork);
+              currentThreads.add(other);
+            }
+          }
+        }
+        else if (thread.status != Status.ERROR) {
+          advancedThreads.add(thread);
+        }
+        else if (threads.isEmpty() && advancedThreads.isEmpty() && currentThreads.isEmpty()) {
+          throw new ParseException(thread.b1,
+              thread.e1,
+              thread.state,
+              thread.l1);
+        }
       }
 
-      if (thread.status != Status.ERROR) {
-        threads.add(thread);
-      }
-      else if (threads.isEmpty()) {
-        throw new ParseException(thread.b1,
-                                 thread.e1,
-                                 thread.state,
-                                 thread.l1);
-      }
+      if (stalled)
+        advancedThreads.forEach(t -> t.isAmbiguous = true);
+      threads.addAll(advancedThreads);
     }
   }
 
@@ -746,6 +738,7 @@ public class Parser
   };
 
   private class ParsingThread implements Comparable<ParsingThread> {
+    private BitSet forked; // TODO: use dense fork ids rather than only every second
     public Status status;
     public StackNode stack;
     public int state;
@@ -754,16 +747,16 @@ public class Parser
     public int id;
     public boolean isAmbiguous;
     public int group;
-    public int forkedFor;
 
     private int b0, e0;
     private int b1, e1;
     private int c1, l1;
 
-    private int begin = 0;
-    private int end = 0;
+    private int begin;
+    private int end;
 
     public ParsingThread() {
+      forked = new BitSet();
       b0 = 0;
       e0 = 0;
       b1 = 0;
@@ -779,10 +772,10 @@ public class Parser
       state = 0;
       action = predict(state);
       group = id;
-      forkedFor = -1;
     }
 
     public ParsingThread(ParsingThread other, int action) {
+      forked = (BitSet) other.forked.clone();
       this.action = action;
       status = other.status;
       deferredEvent = other.deferredEvent;
@@ -798,7 +791,6 @@ public class Parser
       end = other.end;
       isAmbiguous = other.isAmbiguous;
       group = other.group;
-      forkedFor = action;
     }
 
     @Override
@@ -861,21 +853,20 @@ public class Parser
         case 4: // FORK
           if (trace)
             writeTrace("fork\"/>\n");
-          action = forks[argument];
-          return forks[argument + 1];
+          return argument;
 
         case 5: // ACCEPT
           if (trace)
             writeTrace("accept\"/>\n");
           status = Status.ACCEPTED;
           action = 0;
-          return 0;
+          return -1;
 
         default: // ERROR
           if (trace)
             writeTrace("fail\"/>\n");
           status = Status.ERROR;
-          return 0;
+          return -1;
         }
 
         if (shift >= 0) {
@@ -908,7 +899,7 @@ public class Parser
             writeTrace("\"/>\n");
           action = predict(state);
           if (e0 > pos)
-            return 0;
+            return -1;
           nonterminalId = -1;
         }
         else

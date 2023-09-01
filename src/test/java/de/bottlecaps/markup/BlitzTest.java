@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.parser.Parser;
@@ -42,7 +41,6 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
-  @Disabled // runs out of memory
   public void testAmbiguousInsertion() {
     Parser parser = Blitz.generate(
         "S:'a', +'a'+.");
@@ -50,7 +48,7 @@ public class BlitzTest extends TestBase {
         "a",
         BlitzOption.TRACE);
     assertEquals(
-        "",
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">aa</S>",
         result);
   }
 

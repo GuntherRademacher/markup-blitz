@@ -48,7 +48,7 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.parser.Parser;
 
-//Status: 3091/35/0/0
+//Status: 3091/9/2/0
 //@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
@@ -81,17 +81,17 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
 //    skipReasons.put("Misc tests/sample.grammar.06/g06.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
 //    skipReasons.put("Misc tests/sample.grammar.06/g06.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
 //    skipReasons.put("Misc tests 2/sample.grammar.25/g25.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
 //    skipReasons.put("Misc tests 2/sample.grammar.29/g29.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
+//    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
   }
 
   public static enum Catalog {
