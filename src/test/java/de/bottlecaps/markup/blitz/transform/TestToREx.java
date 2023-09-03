@@ -28,7 +28,7 @@ public class TestToREx extends TestBase {
   @Test
   public void testIxmlResource() throws Exception {
     Grammar grammar = Ixml.parse(ixmlIxmlResourceContent);
-    String expectedResult =
+    String expectedResult = String.join("",
           "_start        ::= ixml _end\n"
         + "ixml          ::= s _ixml_option _ixml_list s\n"
         + "_ixml_option  ::=\n"
@@ -144,8 +144,8 @@ public class TestToREx extends TestBase {
         + "alt           ::=\n"
         + "                | _alt_list\n"
         + "_alt_list     ::= term\n"
-        + "                | _alt_list ',' s term\n"
-        + "dchar         ::= _dchar_preserved_chars\n"
+        + "                | _alt_list ',' s term\n",
+          "dchar         ::= _dchar_preserved_chars\n"
         + "                | _s_preserved_chars\n"
         + "                | '#'\n"
         + "                | \"'\"\n"
@@ -183,8 +183,8 @@ public class TestToREx extends TestBase {
         + "                | '}'\n"
         + "                | '~'\n"
         + "                | _namefollower_preserved_chars\n"
-        + "                | '\"' '\"'\n"
-        + "schar         ::= _dchar_preserved_chars\n"
+        + "                | '\"' '\"'\n",
+          "schar         ::= _dchar_preserved_chars\n"
         + "                | _s_preserved_chars\n"
         + "                | '\"'\n"
         + "                | '#'\n"
@@ -321,8 +321,8 @@ public class TestToREx extends TestBase {
         + "                | #xd\n"
         + "_rule_deleted_chars\n"
         + "              ::= ':'\n"
-        + "                | '='\n"
-        + "_dchar_preserved_chars\n"
+        + "                | '='\n",
+          "_dchar_preserved_chars\n"
         + "              ::= [#x0-#x8]\n"
         + "                | [#xb-#xc]\n"
         + "                | [#xe-#x1f]\n"
@@ -809,8 +809,8 @@ public class TestToREx extends TestBase {
         + "                | [#xfdfc-#xfdff]\n"
         + "                | [#xfe10-#xfe1f]\n"
         + "                | [#xfe30-#xfe6f]\n"
-        + "                | #xfe75\n"
-        + "                | [#xfefd-#xff0f]\n"
+        + "                | #xfe75\n",
+          "                | [#xfefd-#xff0f]\n"
         + "                | [#xff1a-#xff20]\n"
         + "                | [#xff3b-#xff40]\n"
         + "                | [#xff5b-#xff65]\n"
@@ -2311,7 +2311,7 @@ public class TestToREx extends TestBase {
         + "                | [#xe0100-#xe01ef]\n"
         + "_alts_deleted_chars\n"
         + "              ::= ';'\n"
-        + "                | '|'";
+        + "                | '|'");
     assertEquals(expectedResult, ToREx.process(BNF.process(grammar)));
   }
 
