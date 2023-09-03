@@ -27,6 +27,8 @@ import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
 public class Parser
 {
+  private static int STALL_THRESHOLD = 8;
+
   private static class ParseException extends Exception
   {
     private static final long serialVersionUID = 1L;
@@ -647,16 +649,10 @@ public class Parser
   private ParsingThread parse() throws ParseException {
     Queue<ParsingThread> threads = new PriorityQueue<>();
     Queue<ParsingThread> currentThreads = new LinkedList<>();
-    List<ParsingThread> advancedThreads = new ArrayList<>();
 
-    threads.add(new ParsingThread());
-
-    int pos = -1;
-    ParsingThread thread;
+    ParsingThread thread = new ParsingThread();
+    int pos = 0;
     for (;;) {
-      thread = threads.remove();
-      if (thread.e0 > pos)
-        pos = thread.e0;
 
       while (thread.equals(threads.peek())) {
         if (trace)
@@ -680,41 +676,41 @@ public class Parser
       }
 
       currentThreads.clear();
-      advancedThreads.clear();
       boolean isUnambiguous = threads.isEmpty();
-      boolean stalled = false;
-      thread.forked.clear();
-      for (currentThreads.add(thread); ! currentThreads.isEmpty(); ) {
-        thread = currentThreads.remove();
+      Arrays.fill(thread.forked, (byte) 0);
+      do {
         int fork = thread.parse(isUnambiguous);
         if (fork >= 0) {
           isUnambiguous = false;
           thread.action = forks[fork];
           if (thread.e0 > pos) {
-            advancedThreads.add(thread);
-            advancedThreads.add(new ParsingThread(thread, forks[fork + 1]));
+            threads.add(thread);
+            threads.add(new ParsingThread(thread, forks[fork + 1]));
           }
-          else if (thread.forked.get(fork)) {
-            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"stalled\"/>\n");
-            stalled = true;
+          else if (thread.forked[fork] > STALL_THRESHOLD) {
+            if (trace)
+              writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"stalled\"/>\n");
           }
           else {
-            thread.forked.set(fork);
+            if (thread.forked[fork] == STALL_THRESHOLD)
+              thread.isAmbiguous = true;
+            thread.forked[fork]++;
             currentThreads.add(thread);
             currentThreads.add(new ParsingThread(thread, forks[fork + 1]));
           }
         }
         else if (thread.status != Status.ERROR) {
-          advancedThreads.add(thread);
+          threads.add(thread);
         }
-        else if (threads.isEmpty() && advancedThreads.isEmpty() && currentThreads.isEmpty()) {
+        else if (threads.isEmpty() && currentThreads.isEmpty()) {
           throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1);
         }
       }
+      while((thread = currentThreads.poll()) != null);
 
-      if (stalled)
-        advancedThreads.forEach(t -> t.isAmbiguous = true);
-      threads.addAll(advancedThreads);
+      thread = threads.remove();
+      if (thread.e0 > pos)
+        pos = thread.e0;
     }
   }
 
@@ -732,7 +728,7 @@ public class Parser
   };
 
   private class ParsingThread implements Comparable<ParsingThread> {
-    private BitSet forked; // TODO: use dense fork ids rather than only every second
+    private byte[] forked; // TODO: use dense fork ids rather than only every second
     public Status status;
     public StackNode stack;
     public int state;
@@ -750,7 +746,7 @@ public class Parser
     private int end;
 
     public ParsingThread() {
-      forked = new BitSet();
+      forked = new byte[forks.length];
       b0 = 0;
       e0 = 0;
       b1 = 0;
@@ -769,7 +765,7 @@ public class Parser
     }
 
     public ParsingThread(ParsingThread other, int action) {
-      forked = (BitSet) other.forked.clone();
+      forked = Arrays.copyOf(other.forked, other.forked.length);
       this.action = action;
       status = other.status;
       deferredEvent = other.deferredEvent;
