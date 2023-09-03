@@ -109,7 +109,7 @@ public class Generator {
 
     ci.forks = new int[32];
     Comparator<Integer> forkComparator = (lhs, rhs) ->
-      Arrays.compare(ci.forks, lhs, lhs + 2, ci.forks, rhs, rhs + 2);
+      Arrays.compare(ci.forks, 2 * lhs, 2 * lhs + 2, ci.forks, 2 * rhs, 2 * rhs + 2);
     ci.forkId = new TreeMap<>(forkComparator);
 
     while (! ci.statesTodo.isEmpty()) {
@@ -131,10 +131,10 @@ public class Generator {
       System.out.println(ci.reduceArguments.length + " reduce arguments");
       System.out.println(ci.forks.length / 2 + " forks");
 
-      for (int i = 0; i < ci.forks.length; i += 2) {
+      for (int i = 0; i < ci.forks.length / 2; ++i) {
         System.out.println("\nfork " + i + ":");
         for (int j = 0; j < 2; ++j) {
-          int code = ci.forks[i + j];
+          int code = ci.forks[2 * i + j];
           Action action = Action.of(code);
           System.out.print(action);
           if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
@@ -234,20 +234,6 @@ public class Generator {
         + (insertion == null ? "" : ", insert " + new Insertion(insertion));
   }
 
-  private static String escapeNonAscii(int[] codepoints) {
-    StringBuilder sb = new StringBuilder("\"");
-    for (int c : codepoints) {
-      if (' ' <= c && c <= '~' && c != '"')
-        sb.append(c);
-      else if (c < 0x10000)
-        sb.append(String.format("\\u%04x", c));
-      else if (c < 0x10000)
-        sb.append(String.format("\\u%04x\\u%04x", c >> 16, c & 0xffff));
-    }
-    sb.append("\"");
-    return sb.toString();
-  }
-
   private class State {
     private int id;
     /** Kernel items, position and lookahead. */
@@ -285,38 +271,32 @@ public class Generator {
           .filter(e -> e.getKey() instanceof Nonterminal)
           .collect(Collectors.toCollection(LinkedList::new));
       for (Map.Entry<Node, TokenSet> item; null != (item = todo.poll()); ) {
-        Node node = item.getKey();
-        if (node instanceof Nonterminal) { // TODO: isn't this check superfluous?
-          TokenSet lookahead = item.getValue();
-          Node next = node.getNext();
-          if (next != null)
-            lookahead = first(next, lookahead);
-          for (Alt alt : node.getGrammar().getRule(((Nonterminal) node).getName()).getAlts().getAlts()) {
-            Node closureItemNode;
-            if (alt.getTerms().isEmpty()) {
-              closureItemNode = alt;
-            }
-            else {
-              closureItemNode = alt.getTerms().get(0);
-            }
-            TokenSet closureLookahead = closure.get(closureItemNode);
-            if (closureLookahead != null) {
-              if (! closureLookahead.containsAll(lookahead)) {
-                // existing node, new lookahead
-                closureLookahead.addAll(lookahead);
-                if (closureItemNode instanceof Nonterminal)
-                  todo.add(Map.entry(closureItemNode, lookahead));
-              }
-            }
-            else if (closureItemNode == alt) {
-              closure.put(alt, new TokenSet(lookahead));
-            }
-            else {
-              closure.put(closureItemNode, new TokenSet(lookahead));
-              // new node
+        Nonterminal nonterminal = (Nonterminal) item.getKey();
+        TokenSet lookahead = item.getValue();
+        Node next = nonterminal.getNext();
+        if (next != null)
+          lookahead = first(next, lookahead);
+        for (Alt alt : nonterminal.getGrammar().getRule(nonterminal.getName()).getAlts().getAlts()) {
+          Node closureItemNode = alt.getTerms().isEmpty()
+                               ? alt
+                               : alt.getTerms().get(0);
+          TokenSet closureLookahead = closure.get(closureItemNode);
+          if (closureLookahead != null) {
+            if (! closureLookahead.containsAll(lookahead)) {
+              // existing node, new lookahead
+              closureLookahead.addAll(lookahead);
               if (closureItemNode instanceof Nonterminal)
-                todo.add(Map.entry(closureItemNode, new TokenSet(lookahead)));
+                todo.add(Map.entry(closureItemNode, lookahead));
             }
+          }
+          else if (closureItemNode == alt) {
+            closure.put(alt, new TokenSet(lookahead));
+          }
+          else {
+            closure.put(closureItemNode, new TokenSet(lookahead));
+            // new node
+            if (closureItemNode instanceof Nonterminal)
+              todo.add(Map.entry(closureItemNode, new TokenSet(lookahead)));
           }
         }
       }
@@ -375,7 +355,7 @@ public class Generator {
                 if (tokenSet == null)
                   v.put(next, new TokenSet(lookahead));
                 else
-                  tokenSet.addAll(lookahead); // TODO: create addAll method without contains check
+                  tokenSet.addAll(lookahead);
               }
               return v;
             });
@@ -435,13 +415,13 @@ public class Generator {
 
         Integer id = -1;
         for (int i = forkList.size() - 2; i >= 0; --i) {
-          int newId = 2 * forkId.size();
-          if (newId + 2 > forks.length)
+          int newId = forkId.size();
+          if (newId << 1 + 2 > forks.length)
             forks = Arrays.copyOf(forks, forks.length << 1);
-          forks[newId    ] = forkList.get(i);
-          forks[newId + 1] = id < 0
-                           ? forkList.get(i + 1)
-                           : Action.code(Action.Type.FORK, id);
+          forks[2 * newId    ] = forkList.get(i);
+          forks[2 * newId + 1] = id < 0
+                               ? forkList.get(i + 1)
+                               : Action.code(Action.Type.FORK, id);
           id = forkId.putIfAbsent(newId, newId);
           id = id != null ? id : newId;
         }

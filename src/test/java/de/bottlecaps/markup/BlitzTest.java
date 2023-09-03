@@ -45,8 +45,7 @@ public class BlitzTest extends TestBase {
     Parser parser = generate(
         "S:'a', +'a'+.");
     String result = parser.parse(
-        "a",
-        BlitzOption.TRACE);
+        "a");
     assertEquals(
         "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">aa</S>",
         result);
@@ -600,8 +599,7 @@ public class BlitzTest extends TestBase {
       + "c : [L]+.\n"
       + "b : -numeric.\n"
       + "numeric : [Nd]+.\n"
-      + "-space : -[\" \"]*.",
-      BlitzOption.VERBOSE);
+      + "-space : -[\" \"]*.");
     assertEquals(
         "<word><a>Chapter</a><b>10</b><c>a</c></word>",
         parser.parse("Chapter 10 a"));

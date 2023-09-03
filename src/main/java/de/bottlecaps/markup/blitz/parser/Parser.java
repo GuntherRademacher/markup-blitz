@@ -91,21 +91,22 @@ public class Parser
   }
 
   public class Insertion extends Symbol {
-    // TODO: put multiple codepoints into a single insertion object
-    public int codepoint;
+    public int[] codepoints;
 
-    public Insertion(int codepoint) {
-      this.codepoint = codepoint;
+    public Insertion(int[] codepoints) {
+      this.codepoints = codepoints;
     }
 
     @Override
     public void send(EventHandler e) {
-      e.terminal(codepoint);
+      for (int codepoint : codepoints)
+        e.terminal(codepoint);
     }
 
     @Override
     public void sendContent(EventHandler e) {
-      e.terminal(codepoint);
+      for (int codepoint : codepoints)
+        e.terminal(codepoint);
     }
   }
 
@@ -387,7 +388,7 @@ public class Parser
       if (insertion != null) {
         if (children == null)
           children = new ArrayList<>();
-        Arrays.stream(insertion).mapToObj(Insertion::new).forEach(children::add);
+        children.add(new Insertion(insertion));
       }
 
       push(new Nonterminal(nonterminal[reduceArgument.getNonterminalId()],
@@ -692,10 +693,10 @@ public class Parser
         int fork = thread.parse(isUnambiguous);
         if (fork >= 0) {
           isUnambiguous = false;
-          thread.action = forks[fork];
+          thread.action = forks[2 * fork];
           if (thread.e0 > pos) {
             otherThreads.add(thread);
-            otherThreads.add(new ParsingThread(thread, forks[fork + 1]));
+            otherThreads.add(new ParsingThread(thread, forks[2 * fork + 1]));
           }
           else if (thread.forkCount[fork] > 0 && repeatedForks >= STALL_THRESHOLD) {
             stalled = true;
@@ -706,7 +707,7 @@ public class Parser
             if (thread.forkCount[fork]++ > 1)
               ++repeatedForks;
             currentThreads.add(thread);
-            currentThreads.add(new ParsingThread(thread, forks[fork + 1]));
+            currentThreads.add(new ParsingThread(thread, forks[2 * fork + 1]));
           }
         }
         else if (thread.status != Status.ERROR) {
@@ -738,7 +739,7 @@ public class Parser
   };
 
   private class ParsingThread implements Comparable<ParsingThread> {
-    private byte[] forkCount; // TODO: use dense fork ids rather than only every second
+    private byte[] forkCount;
     public Status status;
     public StackNode stack;
     public int state;
@@ -756,7 +757,7 @@ public class Parser
     private int end;
 
     public ParsingThread() {
-      forkCount = new byte[forks.length];
+      forkCount = new byte[forks.length / 2];
       b0 = 0;
       e0 = 0;
       b1 = 0;
