@@ -33,13 +33,15 @@ public class Parser
   {
     private static final long serialVersionUID = 1L;
     private int begin, end, offending, state;
+    private boolean wasStalled;
 
-    public ParseException(int b, int e, int s, int o)
+    public ParseException(int begin, int end, int state, int offending, boolean wasStalled)
     {
-      begin = b;
-      end = e;
-      state = s;
-      offending = o;
+      this.begin = begin;
+      this.end = end;
+      this.state = state;
+      this.offending = offending;
+      this.wasStalled = wasStalled;
     }
 
     @Override
@@ -54,6 +56,7 @@ public class Parser
     public int getEnd() {return end;}
     public int getState() {return state;}
     public int getOffending() {return offending;}
+    public boolean wasStalled() {return wasStalled;}
   }
 
   public interface EventHandler {
@@ -459,10 +462,13 @@ public class Parser
             + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
             + "\n"
             + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ");
-    return message
-         + "at " + lineAndColumn(e.getBegin()) + ":\n..."
-         + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
-         + "...";
+    message += "at " + lineAndColumn(e.getBegin()) + ":\n..."
+            + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
+            + "...";
+    if (e.wasStalled())
+      message += "\nHowever, some alternatives were discarded while parsing because they were"
+              + "suspected to be involved in infinite ambiguity.";
+    return message;
   }
 
   private String lineAndColumn(int pos) {
@@ -529,6 +535,8 @@ public class Parser
       List<String> state = new ArrayList<>();
       if (thread.isAmbiguous)
         state.add("ambiguous");
+//    if (...)
+//        state.add("stalled");
       if (isVersionMismatch)
         state.add("version-mismatch");
       nonterminal.addChildren(attribute("ixml:state", String.join(" ", state)));
@@ -647,68 +655,70 @@ public class Parser
   }
 
   private ParsingThread parse() throws ParseException {
-    Queue<ParsingThread> threads = new PriorityQueue<>();
     Queue<ParsingThread> currentThreads = new LinkedList<>();
-
+    Queue<ParsingThread> otherThreads = new PriorityQueue<>();
     ParsingThread thread = new ParsingThread();
     int pos = 0;
+    boolean stalled = false;
+
     for (;;) {
 
-      while (thread.equals(threads.peek())) {
+      while (thread.equals(otherThreads.peek())) {
         if (trace)
           writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-        ParsingThread t = threads.remove();
+        ParsingThread t = otherThreads.remove();
         if (t.deferredEvent == null || t.deferredEvent.queueSize < thread.deferredEvent.queueSize)
           thread = t;
         thread.isAmbiguous = true;
-        t = threads.peek();
+        t = otherThreads.peek();
       }
 
-      if (thread.deferredEvent != null && threads.isEmpty()) {
+      boolean isUnambiguous = otherThreads.isEmpty();
+
+      if (isUnambiguous && thread.deferredEvent != null) {
         thread.deferredEvent.release(eventHandler);
         thread.deferredEvent = null;
       }
 
       if (thread.status == Status.ACCEPTED) {
-        if (! threads.isEmpty())
+        if (! isUnambiguous)
           throw new IllegalStateException();
         return thread;
       }
 
-      currentThreads.clear();
-      boolean isUnambiguous = threads.isEmpty();
-      Arrays.fill(thread.forked, (byte) 0);
+      Arrays.fill(thread.forkCount, (byte) 0);
+      int repeatedForks = 0;
       do {
         int fork = thread.parse(isUnambiguous);
         if (fork >= 0) {
           isUnambiguous = false;
           thread.action = forks[fork];
           if (thread.e0 > pos) {
-            threads.add(thread);
-            threads.add(new ParsingThread(thread, forks[fork + 1]));
+            otherThreads.add(thread);
+            otherThreads.add(new ParsingThread(thread, forks[fork + 1]));
           }
-          else if (thread.forked[fork] > STALL_THRESHOLD) {
+          else if (thread.forkCount[fork] > 0 && repeatedForks >= STALL_THRESHOLD) {
+            stalled = true;
             if (trace)
               writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"stalled\"/>\n");
           }
           else {
-            if (thread.forked[fork] == STALL_THRESHOLD)
-              thread.isAmbiguous = true;
-            thread.forked[fork]++;
+            if (thread.forkCount[fork]++ > 1)
+              ++repeatedForks;
             currentThreads.add(thread);
             currentThreads.add(new ParsingThread(thread, forks[fork + 1]));
           }
         }
         else if (thread.status != Status.ERROR) {
-          threads.add(thread);
+          otherThreads.add(thread);
         }
-        else if (threads.isEmpty() && currentThreads.isEmpty()) {
-          throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1);
+        else if (otherThreads.isEmpty() && currentThreads.isEmpty()) {
+          throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1, stalled);
         }
       }
       while((thread = currentThreads.poll()) != null);
 
-      thread = threads.remove();
+      thread = otherThreads.remove();
       if (thread.e0 > pos)
         pos = thread.e0;
     }
@@ -728,7 +738,7 @@ public class Parser
   };
 
   private class ParsingThread implements Comparable<ParsingThread> {
-    private byte[] forked; // TODO: use dense fork ids rather than only every second
+    private byte[] forkCount; // TODO: use dense fork ids rather than only every second
     public Status status;
     public StackNode stack;
     public int state;
@@ -746,7 +756,7 @@ public class Parser
     private int end;
 
     public ParsingThread() {
-      forked = new byte[forks.length];
+      forkCount = new byte[forks.length];
       b0 = 0;
       e0 = 0;
       b1 = 0;
@@ -765,7 +775,7 @@ public class Parser
     }
 
     public ParsingThread(ParsingThread other, int action) {
-      forked = Arrays.copyOf(other.forked, other.forked.length);
+      forkCount = Arrays.copyOf(other.forkCount, other.forkCount.length);
       this.action = action;
       status = other.status;
       deferredEvent = other.deferredEvent;
