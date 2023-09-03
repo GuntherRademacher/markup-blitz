@@ -1,18 +1,19 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
+version = '0.5-SNAPSHOT'
+group = 'de.bottlecaps'
+
 repositories {
+    mavenLocal()
     mavenCentral()
-    maven {
-        url 'https://files.basex.org/maven/'
-    }
 }
 
 dependencies {
-    testImplementation 'org.nineml:coffeefilter:3.2.0'
-    testImplementation 'org.nineml:coffeegrinder:3.2.0'
-    testImplementation 'org.basex:basex:10.8-SNAPSHOT'
+    testImplementation 'org.basex:basex:10.7'
 }
 
 testing {	
@@ -30,6 +31,7 @@ test {
 tasks.withType(JavaCompile) {
     options.fork = true
     options.forkOptions.jvmArgs += ['-Xss4m']
+    options.encoding = "UTF-8"
 }
 
 jar {
@@ -38,4 +40,65 @@ jar {
             'Main-Class': 'de.bottlecaps.markup.Blitz'
         )
     }
+}
+
+ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
+
+void configureMetadata(MavenPublication mavenPublication) {
+    configure (mavenPublication) {
+        pom {
+            name = groupId + ':' + artifactId
+            description = 'Markup Blitz Parser Generator'
+            url = 'https://bottlecaps.de/markup-blitz'
+            licenses {
+                license {
+                    name = 'Apache-2.0'
+                    url = 'https://opensource.org/licenses/Apache-2.0'
+                }
+            }
+            developers {
+                developer {
+                    name = 'Gunther Rademacher'
+                    email = 'grd@gmx.net'
+                    organization = 'Gunther Rademacher'
+                    organizationUrl = 'https://bottlecaps.de/'
+                }
+            }
+            scm {
+                connection = 'git@github.com:GuntherRademacher/markup-blitz.git'
+                developerConnection = 'git@github.com:GuntherRademacher/markup-blitz.git'
+                url = 'https://github.com/GuntherRademacher/markup-blitz'
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            def releaseRepo = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotRepo = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = isReleaseVersion ? releaseRepo : snapshotRepo
+            credentials {
+                username = project.hasProperty('ossrhUsername') ? ossrhUsername : "Unknown user"
+                password = project.hasProperty('ossrhPassword') ? ossrhPassword : "Unknown password"
+            }
+        }
+    }
+
+    publications {
+        jar(MavenPublication) {
+            artifactId = 'markup-blitz'
+            from components.java
+            configureMetadata delegate
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.jar
+}
+
+tasks.withType(Sign) {
+    onlyIf { isReleaseVersion }
 }
