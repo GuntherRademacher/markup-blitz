@@ -690,31 +690,25 @@ public class Parser
         if (fork >= 0) {
           isUnambiguous = false;
           thread.action = forks[fork];
-          ParsingThread other = new ParsingThread(thread, forks[fork + 1]);
           if (thread.e0 > pos) {
             advancedThreads.add(thread);
-            advancedThreads.add(other);
+            advancedThreads.add(new ParsingThread(thread, forks[fork + 1]));
+          }
+          else if (thread.forked.get(fork)) {
+            writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"stalled\"/>\n");
+            stalled = true;
           }
           else {
-            if (thread.forked.get(fork)) {
-              stalled = true;
-            }
-            else {
-              thread.forked.set(fork);
-              currentThreads.add(thread);
-              other.forked.set(fork);
-              currentThreads.add(other);
-            }
+            thread.forked.set(fork);
+            currentThreads.add(thread);
+            currentThreads.add(new ParsingThread(thread, forks[fork + 1]));
           }
         }
         else if (thread.status != Status.ERROR) {
           advancedThreads.add(thread);
         }
         else if (threads.isEmpty() && advancedThreads.isEmpty() && currentThreads.isEmpty()) {
-          throw new ParseException(thread.b1,
-              thread.e1,
-              thread.state,
-              thread.l1);
+          throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1);
         }
       }
 

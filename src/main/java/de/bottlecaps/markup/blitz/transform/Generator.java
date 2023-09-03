@@ -174,9 +174,11 @@ public class Generator {
     CompressedMap nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
 
     if (ci.verbose) {
+      System.out.println();
       System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
       System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
       System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+      System.out.println();
     }
 
     return new Parser(options,
