@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.basex.core.Context;
 import org.basex.io.IO;
@@ -17,9 +18,11 @@ import org.basex.query.QueryProcessor;
 import org.basex.query.value.node.DBNode;
 
 import de.bottlecaps.markup.blitz.codepoints.Range;
+import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class TestBase {
   private static Map<URL, String> cache = Collections.synchronizedMap(new HashMap<>());
+  private static Map<Map.Entry<String, Set<BlitzOption>>, Parser> parserCache = Collections.synchronizedMap(new HashMap<>());
 
   protected static String cachedUrlContent(URL url) {
     return cache.computeIfAbsent(url, u -> {
@@ -43,6 +46,22 @@ public class TestBase {
     catch (MalformedURLException e) {
       throw new RuntimeException(e.getMessage(), e);
     }
+  }
+
+  protected static Parser generate(String grammar, BlitzOption... blitzOptions) {
+    Set<BlitzOption> options = Set.of(blitzOptions);
+    Map.Entry<String, Set<BlitzOption>> key = Map.entry(grammar, options);
+    return parserCache.computeIfAbsent(key, k ->
+      Blitz.generate(k.getKey(), k.getValue().toArray(BlitzOption[]::new))
+    );
+  }
+
+  protected static Parser generateFromXml(String grammar, BlitzOption... blitzOptions) {
+    Set<BlitzOption> options = Set.of(blitzOptions);
+    Map.Entry<String, Set<BlitzOption>> key = Map.entry(grammar, options);
+    return parserCache.computeIfAbsent(key, k ->
+      Blitz.generateFromXml(k.getKey(), k.getValue().toArray(BlitzOption[]::new))
+    );
   }
 
   protected static List<Range> transformIntegerToBitRanges(int num) {

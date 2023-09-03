@@ -43,7 +43,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
 
-import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.parser.Parser;
@@ -357,8 +356,8 @@ public class IxmlCommunityTest extends TestBase {
     Parser parser;
     try {
       parser = testCase.isXmlGrammar()
-          ? Blitz.generateFromXml(testCase.getGrammar())
-          : Blitz.generate(testCase.getGrammar());
+          ? generateFromXml(testCase.getGrammar())
+          : generate(testCase.getGrammar());
     }
     catch (BlitzException e) {
       if (TestCase.Assertion.assert_not_a_grammar != testCase.getAssertion())
@@ -377,7 +376,7 @@ public class IxmlCommunityTest extends TestBase {
       assertEquals(1, testCase.getOutputs().size(), "expected a single reference output for grammar test");
       if (ixmlParser == null) {
         String ixmlIxmlResourceContent = resourceContent("ixml.ixml");
-        ixmlParser = Blitz.generate(ixmlIxmlResourceContent);
+        ixmlParser = generate(ixmlIxmlResourceContent);
       }
       String xmlRepresentation = ixmlParser.parse(testCase.getGrammar());
       if (! deepEqual(testCase.getOutputs().get(0), xmlRepresentation))

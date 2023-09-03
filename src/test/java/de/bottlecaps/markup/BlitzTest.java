@@ -13,24 +13,24 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testEmpty() {
-    Parser parser = Blitz.generate("S: .");
+    Parser parser = generate("S: .");
     String result = parser.parse("");
     assertEquals("<S/>", result);
   }
 
   @Test
   public void testEmptyCharset() {
-    Blitz.generate("S: [], 'a'.");
+    generate("S: [], 'a'.");
   }
 
   @Test
   public void testInfinite() {
-    Blitz.generate("s: -s.");
+    generate("s: -s.");
   }
 
   @Test
   public void testInsertion() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
         "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
     String result = parser.parse(
         "cfim",
@@ -42,7 +42,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testAmbiguousInsertion() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
         "S:'a', +'a'+.");
     String result = parser.parse(
         "a",
@@ -54,21 +54,21 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testAmbiguity1() {
-    Parser parser = Blitz.generate("S: 'a', 'b'+; 'a'+, 'b'.");
+    Parser parser = generate("S: 'a', 'b'+; 'a'+, 'b'.");
     String result = parser.parse("ab");
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">ab</S>", result);
   }
 
   @Test
   public void testAmbiguity2() {
-    Parser parser = Blitz.generate("S: 'a', 'b'+, 'c'; 'a'+, 'b', 'c'.");
+    Parser parser = generate("S: 'a', 'b'+, 'c'; 'a'+, 'b', 'c'.");
     String result = parser.parse("abc");
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">abc</S>", result);
   }
 
   @Test
   public void testCss() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "     css = S, rule+.\n"
         + "    rule = selector, block.\n"
         + "   block = -\"{\", S, property**(-\";\", S), -\"}\", S.\n"
@@ -109,14 +109,14 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = Blitz.generate(resourceContent("ixml.ixml"), BlitzOption.INDENT); // , BlitzOption.TIMING);
+    Parser parser = generate(resourceContent("ixml.ixml"), BlitzOption.INDENT); // , BlitzOption.TIMING);
     String xml = parser.parse(resourceContent("ixml.ixml"));
     assertEquals(resourceContent("ixml.xml"), xml);
   }
 
   @Test
   public void testJson() {
-    Parser parser = Blitz.generate(resourceContent("json.ixml")); // , BlitzOption.TIMING, BlitzOption.TRACE, BlitzOption.VERBOSE);
+    Parser parser = generate(resourceContent("json.ixml")); // , BlitzOption.TIMING, BlitzOption.TRACE, BlitzOption.VERBOSE);
     String result = parser.parse(resourceContent("sample.json"));
     String expectedResult = resourceContent("sample.json.xml");
     assertEquals(expectedResult, result);
@@ -124,21 +124,21 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testAddress() {
-    Parser parser = Blitz.generate(resourceContent("address.ixml"));
+    Parser parser = generate(resourceContent("address.ixml"));
     String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT);
     assertEquals(resourceContent("address.xml"), xml);
   }
 
   @Test
   public void testArith() {
-    Parser parser = Blitz.generate(resourceContent("arith.ixml"));
+    Parser parser = generate(resourceContent("arith.ixml"));
     String result = parser.parse(resourceContent("arith.input"), BlitzOption.INDENT);
     assertEquals(resourceContent("arith.xml"), result);
   }
 
   @Test
   public void testAttributeValue() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "test: a, \".\".\n"
         + "@a: ~[\".\"]*.");
     String result = parser.parse(
@@ -148,7 +148,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testAttributeMultipart() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "date: month, -',', -' '*, year . \n"
         + "@month: 'Feb', 'ruary' .\n"
         + "year: ['0'-'9']+ .");
@@ -164,7 +164,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testDiary() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "diary: entry+.\n"
         + "entry: date, para.\n"
         + "date: day, s, month, s,  year, nl.\n"
@@ -224,7 +224,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testDiary2() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "diary: entry+.\n"
         + "entry: date, para.\n"
         + "date: day, s, month, s,  year, nl.\n"
@@ -284,7 +284,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testDiary3() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "diary: entry+.\n"
         + "entry: date, para.\n"
         + "date: day, s, month, s,  year, nl.\n"
@@ -342,7 +342,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testEmail() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "email: user, -\"@\", host.\n"
         + "@user: atom++\".\".\n"
         + "-atom: char+.\n"
@@ -360,7 +360,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testExpr() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
           "expression: expr.\n"
         + "-expr: term; sum; diff.\n"
         + "sum: expr, -\"+\", term.\n"
@@ -396,7 +396,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testFrege() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
         resourceContent("frege.ixml"),
         BlitzOption.INDENT);
     assertEquals(
@@ -576,7 +576,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testInsertSeparatorAlternate() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
         "S: [L]++(+':';+'=').");
     String result = parser.parse(
         "abc",
@@ -593,7 +593,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testCombinedLexicographicalAndNumericSortingCriteria() {
-    Parser parser = Blitz.generate(
+    Parser parser = generate(
         "word : a,(space,b)?,(space, c)?;\n"
       + "             b.\n"
       + "a : [L]+.\n"
@@ -627,7 +627,7 @@ public class BlitzTest extends TestBase {
 
 //  @Test
 //  public void test() {
-//    Parser parser = Blitz.generate(
+//    Parser parser = generate(
 //        "");
 //    String result = parser.parse(
 //        "",
