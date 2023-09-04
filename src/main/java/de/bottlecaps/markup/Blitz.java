@@ -6,9 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -27,7 +25,7 @@ public class Blitz {
    * @param grammar the Invisible XML grammar in ixml notation
    * @param blitzOptions options for use at generation time and parsing time
    * @return the generated parser
-   * @throws BlitzException
+   * @throws BlitzException if any error is detected while generating the parser
    */
   public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
@@ -54,10 +52,10 @@ public class Blitz {
   /**
    * Generate a parser from an Invisible XML grammar in XML, passed as a String.
    *
-   * @param grammar the Invisible XML grammar in XML
+   * @param xml the Invisible XML grammar in XML
    * @param blitzOptions options for use at generation time and parsing time
    * @return the generated parser
-   * @throws BlitzException
+   * @throws BlitzException if any error is detected while generating the parser
    */
   public static Parser generateFromXml(InputStream xml, BlitzOption... blitzOptions) throws BlitzException {
     return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
@@ -66,10 +64,10 @@ public class Blitz {
   /**
    * Generate a parser from an Invisible XML grammar in XML, passed as a String.
    *
-   * @param grammar the Invisible XML grammar in XML
+   * @param xml the Invisible XML grammar in XML
    * @param blitzOptions options for use at generation time and parsing time
    * @return the generated parser
-   * @throws BlitzException
+   * @throws BlitzException if any error is detected while generating the parser
    */
   public static Parser generateFromXml(String xml, BlitzOption... blitzOptions) throws BlitzException {
     return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
@@ -82,9 +80,7 @@ public class Blitz {
    * XML output is in UTF-8, too.
    *
    * @param args command line arguments
-   * @throws MalformedURLException
-   * @throws IOException
-   * @throws URISyntaxException
+   * @throws IOException if any input cannot be accessed
    */
   public static void main(String[] args) throws IOException {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
@@ -153,10 +149,9 @@ public class Blitz {
    *
    * @param url the URL
    * @return the string
-   * @throws IOException
-   * @throws MalformedURLException
+   * @throws IOException if the content cannot be accessed
    */
-  public static String urlContent(URL url) throws IOException, MalformedURLException {
+  public static String urlContent(URL url) throws IOException {
     String input;
     try (InputStream in = url.openStream()) {
       input = new String(in.readAllBytes(), StandardCharsets.UTF_8);
@@ -172,8 +167,6 @@ public class Blitz {
    *
    * @param input the string
    * @return the URL
-   * @throws URISyntaxException
-   * @throws MalformedURLException
    */
   public static URL url(final String input) {
     URI uri = null;
