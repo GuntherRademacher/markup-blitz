@@ -86,7 +86,7 @@ public class Blitz {
    * @throws IOException
    * @throws URISyntaxException
    */
-  public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
+  public static void main(String[] args) throws IOException {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
 
@@ -175,7 +175,7 @@ public class Blitz {
    * @throws URISyntaxException
    * @throws MalformedURLException
    */
-  public static URL url(final String input) throws URISyntaxException, MalformedURLException {
+  public static URL url(final String input) {
     URI uri = null;
     try {
       File file = new File(input);
@@ -184,10 +184,14 @@ public class Blitz {
     }
     catch (Exception e) {
     }
-    if (uri == null)
-      uri = new URI(input);
-    URL url = uri.toURL();
-    return url;
+    try {
+      if (uri == null)
+        uri = new URI(input);
+      return uri.toURL();
+    }
+    catch (Exception e) {
+      throw new BlitzException("failed to process URL: " + input, e);
+    }
   }
 
 }
