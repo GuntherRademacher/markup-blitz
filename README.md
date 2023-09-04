@@ -33,15 +33,17 @@ Markup Blitz can be run from command line to process some input according to an 
 ```sh
 Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
 
-  compile an Invisible XML grammar, and parse input with the resulting parser.
+  Compile an Invisible XML grammar, and parse input with the resulting parser.
 
   <GRAMMAR>          the grammar (file name or URL).
   <INPUT>            the input (file name or URL).
 
   Options:
-    -v, --verbose    print intermediate results (to standard output).
-    -t, --trace      print parser trace (to standard error).
-    -?, -h, --help   print this information.
+    --verbose, -v    print intermediate results (to standard output).
+    --timing         print timing information (to standard output).
+    --indent, -i     generate resulting xml with indentation.
+    --trace          print parser trace (to standard error).
+    --help, -h, -?   print this information.
 ```
 
 ## Performance
@@ -54,7 +56,13 @@ Some performance comparison of REx-generated parsers and Invisible XML parsers c
 
 Markup Blitz is provided under the [Apache 2 License][ASL].
 
+## Thanks
+
+The work in this project was supported by the [BaseX][BaseX] organization.
+[<img src="https://avatars.githubusercontent.com/u/621314?s=200&v=4" alt="drawing" width="40"/>][BaseX]
+
 [logo]: markup-blitz.svg "Markup Blitz"
+[BaseX]: https://basex.org/
 [ASL]: http://www.apache.org/licenses/LICENSE-2.0
 [REx]: https://bottlecaps.de/rex
 [LALR]: https://en.wikipedia.org/wiki/LALR_parser

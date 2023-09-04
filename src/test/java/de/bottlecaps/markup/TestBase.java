@@ -1,6 +1,7 @@
 package de.bottlecaps.markup;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,6 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.basex.core.Context;
 import org.basex.io.IO;
@@ -103,12 +109,28 @@ public class TestBase {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-//    String xml = "<?xml version=\"1.0\" encoding=\"UTF-16\"?><ixml xmlns=\"\"><prolog><version string=\"1.3\"/></prolog><rule name=\"P\"><alt><inclusion><member from=\"B\" to=\"D\"/></inclusion></alt></rule></ixml>";
-    String xml = "<x/>";
-    System.err.println("without XML declaration: " + new DBNode(IO.get(xml)));
-    System.err.println("UTF-8: " + new DBNode(IO.get("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xml)));
-    System.err.println("ASCII: " + new DBNode(IO.get("<?xml version=\"1.0\" encoding=\"ASCII\"?>" + xml)));
-    System.err.println("UTF-16: "+ new DBNode(IO.get("<?xml version=\"1.0\" encoding=\"UTF-16\"?>" + xml)));
+  private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+
+  protected static boolean isXml(File file) {
+    try (FileInputStream fileInputStream = new FileInputStream(file)) {
+      XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
+      try {
+        while (reader.hasNext()) {
+          if (reader.next() == XMLStreamConstants.START_ELEMENT)
+            return true;
+        }
+        return false;
+      }
+      finally {
+        reader.close();
+      }
+    }
+    catch (XMLStreamException e) {
+      return false;
+    }
+    catch (IOException e) {
+      throw new BlitzException("Failed to read file " + file, e);
+    }
   }
+
 }

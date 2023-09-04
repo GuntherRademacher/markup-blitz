@@ -3,7 +3,6 @@ package de.bottlecaps.markup;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -15,11 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.transform.BNF;
@@ -27,8 +21,71 @@ import de.bottlecaps.markup.blitz.transform.Generator;
 import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 
 public class Blitz {
-  private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+  /**
+   * Generate a parser from an Invisible XML grammar in ixml notation.
+   *
+   * @param grammar the Invisible XML grammar in ixml notation
+   * @param blitzOptions options for use at generation time and parsing time
+   * @return the generated parser
+   * @throws BlitzException
+   */
+  public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
+    long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
+    Set<BlitzOption> options = Set.of(blitzOptions);
+    boolean timing = options.contains(BlitzOption.TIMING);
+    if (timing)
+      t0 = System.currentTimeMillis();
+    Grammar tree = parse(grammar);
+    if (timing)
+      t1 = System.currentTimeMillis();
+    Grammar bnf = BNF.process(tree, options);
+    if (timing)
+      t2 = System.currentTimeMillis();
+    Parser parser = Generator.generate(bnf, options);
+    if (timing) {
+      t3 = System.currentTimeMillis();
+      System.err.println("             parsing time: " + (t1 - t0) + " msec");
+      System.err.println("  BNF transformation time: " + (t2 - t1) + " msec");
+      System.err.println("LALR(1) construction time: " + (t3 - t2) + " msec");
+    }
+    return parser;
+  }
 
+  /**
+   * Generate a parser from an Invisible XML grammar in XML, passed as a String.
+   *
+   * @param grammar the Invisible XML grammar in XML
+   * @param blitzOptions options for use at generation time and parsing time
+   * @return the generated parser
+   * @throws BlitzException
+   */
+  public static Parser generateFromXml(InputStream xml, BlitzOption... blitzOptions) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  }
+
+  /**
+   * Generate a parser from an Invisible XML grammar in XML, passed as a String.
+   *
+   * @param grammar the Invisible XML grammar in XML
+   * @param blitzOptions options for use at generation time and parsing time
+   * @return the generated parser
+   * @throws BlitzException
+   */
+  public static Parser generateFromXml(String xml, BlitzOption... blitzOptions) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  }
+
+  /**
+   * Process a command line in order to generate a parser from an Invisible XML grammar, in
+   * ixml notation, and parse some input using the generated parser. Write the resulting XML
+   * to standard output. Grammars and inputs must be presented in UTF-8 encoding, and the
+   * XML output is in UTF-8, too.
+   *
+   * @param args command line arguments
+   * @throws MalformedURLException
+   * @throws IOException
+   * @throws URISyntaxException
+   */
   public static void main(String[] args) throws MalformedURLException, IOException, URISyntaxException {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
@@ -74,8 +131,8 @@ public class Blitz {
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
-    System.err.println("  <GRAMMAR>          the grammar (file name or URL).");
-    System.err.println("  <INPUT>            the input (file name or URL).");
+    System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
+    System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  Options:");
     System.err.println("    --verbose, -v    print intermediate results (to standard output).");
@@ -84,11 +141,41 @@ public class Blitz {
     System.err.println("    --trace          print parser trace (to standard error).");
     System.err.println("    --help, -h, -?   print this information.");
     System.err.println();
+    System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
+    System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");
+    System.err.println("  UTF-8 as well.");
     System.err.println();
     System.exit(exitCode);
   }
 
-  private static URL url(final String input) throws URISyntaxException, MalformedURLException {
+  /**
+   * Get the content behind a URL as a string.
+   *
+   * @param url the URL
+   * @return the string
+   * @throws IOException
+   * @throws MalformedURLException
+   */
+  public static String urlContent(URL url) throws IOException, MalformedURLException {
+    String input;
+    try (InputStream in = url.openStream()) {
+      input = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    return input
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replaceFirst("^\uFEFF", "");
+  }
+
+  /**
+   * Convert a file name string or URL string to a URL object.
+   *
+   * @param input the string
+   * @return the URL
+   * @throws URISyntaxException
+   * @throws MalformedURLException
+   */
+  public static URL url(final String input) throws URISyntaxException, MalformedURLException {
     URI uri = null;
     try {
       File file = new File(input);
@@ -101,69 +188,6 @@ public class Blitz {
       uri = new URI(input);
     URL url = uri.toURL();
     return url;
-  }
-
-  public static String urlContent(URL url) throws IOException, MalformedURLException {
-    String input;
-    try (InputStream in = url.openStream()) {
-      input = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-    }
-    return input
-        .replace("\r\n", "\n")
-        .replace("\r", "\n")
-        .replaceFirst("^\uFEFF", "");
-  }
-
-  public static Parser generateFromXml(InputStream xml, BlitzOption... blitzOptions) throws BlitzException {
-    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
-  }
-
-  public static Parser generateFromXml(String xml, BlitzOption... blitzOptions) throws BlitzException {
-    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
-  }
-
-  public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
-    long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
-    Set<BlitzOption> options = Set.of(blitzOptions);
-    boolean timing = options.contains(BlitzOption.TIMING);
-    if (timing)
-      t0 = System.currentTimeMillis();
-    Grammar tree = parse(grammar);
-    if (timing)
-      t1 = System.currentTimeMillis();
-    Grammar bnf = BNF.process(tree, options);
-    if (timing)
-      t2 = System.currentTimeMillis();
-    Parser parser = Generator.generate(bnf, options);
-    if (timing) {
-      t3 = System.currentTimeMillis();
-      System.err.println("             parsing time: " + (t1 - t0) + " msec");
-      System.err.println("  BNF transformation time: " + (t2 - t1) + " msec");
-      System.err.println("LALR(1) construction time: " + (t3 - t2) + " msec");
-    }
-    return parser;
-  }
-
-  private static boolean isXml(File file) {
-    try (FileInputStream fileInputStream = new FileInputStream(file)) {
-      XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
-      try {
-        while (reader.hasNext()) {
-          if (reader.next() == XMLStreamConstants.START_ELEMENT)
-            return true;
-        }
-        return false;
-      }
-      finally {
-        reader.close();
-      }
-    }
-    catch (XMLStreamException e) {
-      return false;
-    }
-    catch (IOException e) {
-      throw new BlitzException("Failed to read file " + file, e);
-    }
   }
 
 }

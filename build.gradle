@@ -24,8 +24,9 @@ testing {
     }
 }
 
-test {
-    maxHeapSize = "2048m"
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 tasks.withType(JavaCompile) {
