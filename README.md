@@ -59,6 +59,7 @@ Markup Blitz is provided under the [Apache 2 License][ASL].
 ## Thanks
 
 The work in this project was supported by the [BaseX][BaseX] organization.
+
 [<img src="https://avatars.githubusercontent.com/u/621314?s=200&v=4" alt="drawing" width="40"/>][BaseX]
 
 [logo]: markup-blitz.svg "Markup Blitz"
