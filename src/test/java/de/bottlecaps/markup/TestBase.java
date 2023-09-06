@@ -23,8 +23,8 @@ import org.basex.query.QueryException;
 import org.basex.query.QueryProcessor;
 import org.basex.query.value.node.DBNode;
 
+import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
-import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class TestBase {
   private static Map<URL, String> cache = Collections.synchronizedMap(new HashMap<>());

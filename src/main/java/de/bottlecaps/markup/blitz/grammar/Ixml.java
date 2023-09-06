@@ -1,4 +1,4 @@
-// This file was generated on Wed Aug 23, 2023 15:51 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Wed Sep 6, 2023 07:05 (UTC+02) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -main -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1762,11 +1762,22 @@ public class Ixml
                                                                 }
                                                                 catch (ParseException pe)
                                                                 {
-                                                                  throw new de.bottlecaps.markup.BlitzException("Failed to process grammar:\n" + parser.getErrorMessage(pe), pe);
+                                                                  int offending = pe.getOffending();
+                                                                  int begin = pe.getBegin();
+                                                                  String prefix = content.substring(0, begin);
+                                                                  int line = prefix.replaceAll("[^\n]", "").length() + 1;
+                                                                  int column = prefix.length() - prefix.lastIndexOf('\n');
+                                                                  throw new de.bottlecaps.markup.BlitzParseException(
+                                                                    "Failed to process grammar:\n" + parser.getErrorMessage(pe),
+                                                                    offending >= 0 ? TOKEN[offending]
+                                                                                   : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
+                                                                                                              : "$",
+                                                                    line,
+                                                                    column);
                                                                 }
                                                                 de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                 return parser.grammar;
                                                               }
                                                             }
-                                                            // line 1772 "Ixml.java"
+                                                            // line 1783 "Ixml.java"
 // End

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.bottlecaps.markup.BlitzOption;
+import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
@@ -39,7 +40,6 @@ import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 import de.bottlecaps.markup.blitz.item.TokenSet;
 import de.bottlecaps.markup.blitz.parser.Action;
-import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 
 public class Generator {

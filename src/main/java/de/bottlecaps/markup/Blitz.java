@@ -12,8 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
-import de.bottlecaps.markup.blitz.parser.Parser;
 import de.bottlecaps.markup.blitz.transform.BNF;
 import de.bottlecaps.markup.blitz.transform.Generator;
 import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;

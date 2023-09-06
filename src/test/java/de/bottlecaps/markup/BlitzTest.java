@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import de.bottlecaps.markup.blitz.parser.Parser;
+import de.bottlecaps.markup.blitz.Parser;
 
 public class BlitzTest extends TestBase {
 

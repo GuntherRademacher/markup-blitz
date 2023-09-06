@@ -955,7 +955,18 @@ namefollower^token << '.' 'x'
                                                                   }
                                                                   catch (ParseException pe)
                                                                   {
-                                                                    throw new de.bottlecaps.markup.BlitzException("Failed to process grammar:\n" + parser.getErrorMessage(pe), pe);
+                                                                    int offending = pe.getOffending();
+                                                                    int begin = pe.getBegin();
+                                                                    String prefix = content.substring(0, begin);
+                                                                    int line = prefix.replaceAll("[^\n]", "").length() + 1;
+                                                                    int column = prefix.length() - prefix.lastIndexOf('\n');
+                                                                    throw new de.bottlecaps.markup.BlitzParseException(
+                                                                      "Failed to process grammar:\n" + parser.getErrorMessage(pe),
+                                                                      offending >= 0 ? TOKEN[offending]
+                                                                                     : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
+                                                                                                                : "$",
+                                                                      line,
+                                                                      column);
                                                                   }
                                                                   de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                   return parser.grammar;

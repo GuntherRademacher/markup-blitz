@@ -1,4 +1,4 @@
-package de.bottlecaps.markup.blitz.parser;
+package de.bottlecaps.markup.blitz;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -18,11 +18,13 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzOption;
-import de.bottlecaps.markup.blitz.Errors;
+import de.bottlecaps.markup.BlitzParseException;
 import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.grammar.Mark;
+import de.bottlecaps.markup.blitz.parser.Action;
+import de.bottlecaps.markup.blitz.parser.ReduceArgument;
 import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
 public class Parser
@@ -505,7 +507,19 @@ public class Parser
       thread = parse();
     }
     catch (ParseException pe) {
-      throw new BlitzException("Failed to parse input:\n" + getErrorMessage(pe));
+      int begin = pe.getBegin();
+      String prefix = string.substring(0, begin);
+      int offending = pe.getOffending();
+      int line = prefix.replaceAll("[^\n]", "").length() + 1;
+      int column = prefix.length() - prefix.lastIndexOf('\n');
+      throw new BlitzParseException(
+          "Failed to parse input:\n" + getErrorMessage(pe),
+          offending >= 0 ? terminal[offending].shortName()
+                         : begin < string.length() ? ("'" + Character.toString(string.codePointAt(begin)) + "'")
+                                                   : "$",
+          line,
+          column
+      );
     }
     finally {
       if (trace) {

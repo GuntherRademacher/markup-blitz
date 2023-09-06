@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.TestBase;
+import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
@@ -27,7 +28,6 @@ import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
-import de.bottlecaps.markup.blitz.parser.Parser;
 
 public class TestBNF extends TestBase {
   private static final String ixmlResource = "ixml.ixml";

@@ -45,7 +45,7 @@ import org.junit.jupiter.params.support.AnnotationConsumer;
 
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
-import de.bottlecaps.markup.blitz.parser.Parser;
+import de.bottlecaps.markup.blitz.Parser;
 
 //Status: 3091/9/2/0
 //@Disabled
