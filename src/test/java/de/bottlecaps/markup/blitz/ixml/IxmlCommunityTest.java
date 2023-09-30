@@ -47,8 +47,6 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.Parser;
 
-//Status: 3091/9/2/0
-//@Disabled
 public class IxmlCommunityTest extends TestBase {
   private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
@@ -57,9 +55,8 @@ public class IxmlCommunityTest extends TestBase {
   private static Parser ixmlParser;
 
   private static enum SkipReason {
-    SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes to long to be with each execution."),
-    TOO_MUCH_MEMORY("Test has never been completed within given memory limits."),
-    UNRESOLVED_INFINITE_AMBIGUITY("Test runs into infinite ambiguity that could not be resolved."),
+    SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes too long to be run with each execution."),
+    TOO_MUCH_MEMORY("Test runs successfully, but uses too much memory to be run with each execution."),
     ;
     private String detail;
 
@@ -78,19 +75,6 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
-//    skipReasons.put("Misc tests/sample.grammar.06/g06.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-//    skipReasons.put("Misc tests/sample.grammar.06/g06.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-//    skipReasons.put("Misc tests/sample.grammar.11/g11c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests/sample.grammar.11/g11c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests/sample.grammar.20/g20c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 2/sample.grammar.24/g24.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 2/sample.grammar.25/g25.c02", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-//    skipReasons.put("Misc tests 2/sample.grammar.27/g27.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 2/sample.grammar.29/g29.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY); // sometimes resolved?
-//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c03", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c04", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 3/sample.grammar.50/g50.c05", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
-//    skipReasons.put("Misc tests 3/sample.grammar.52/g52.c01", SkipReason.UNRESOLVED_INFINITE_AMBIGUITY);
   }
 
   public static enum Catalog {
@@ -287,7 +271,7 @@ public class IxmlCommunityTest extends TestBase {
       })
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
-    assumeFalse(testCases.isEmpty(), "Nothing to test here, because new unknown test catalogs were found.");
+    assumeFalse(testCases.isEmpty(), "Nothing to test here, because no unknown test catalogs were found.");
     return testCases.stream()
         .map(testCase -> Arguments.of(testCase.getName(), testCase));
   }
