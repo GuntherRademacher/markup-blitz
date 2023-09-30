@@ -18,7 +18,21 @@ import de.bottlecaps.markup.blitz.transform.BNF;
 import de.bottlecaps.markup.blitz.transform.Generator;
 import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 
+/**
+ * The Markup Blitz main class. It provides static methods for parser
+ * generation and the main method for command line execution.
+ *
+ * @author Gunther Rademacher
+ */
 public class Blitz {
+  /** Generation time and parse time options. */
+  public enum Option {
+    /** Print information on intermediate results. */ VERBOSE,
+    /** Print timing information.                  */ TIMING,
+    /** Generate XML with indentation.             */ INDENT,
+    /** Print parser trace.                        */ TRACE;
+  }
+
   /**
    * Generate a parser from an Invisible XML grammar in ixml notation.
    *
@@ -27,10 +41,10 @@ public class Blitz {
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generate(String grammar, BlitzOption... blitzOptions) throws BlitzException {
+  public static Parser generate(String grammar, Blitz.Option... blitzOptions) throws BlitzException {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
-    Set<BlitzOption> options = Set.of(blitzOptions);
-    boolean timing = options.contains(BlitzOption.TIMING);
+    Set<Blitz.Option> options = Set.of(blitzOptions);
+    boolean timing = options.contains(Blitz.Option.TIMING);
     if (timing)
       t0 = System.currentTimeMillis();
     Grammar tree = parse(grammar);
@@ -57,7 +71,7 @@ public class Blitz {
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generateFromXml(InputStream xml, BlitzOption... blitzOptions) throws BlitzException {
+  public static Parser generateFromXml(InputStream xml, Option... blitzOptions) throws BlitzException {
     return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
   }
 
@@ -69,7 +83,7 @@ public class Blitz {
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generateFromXml(String xml, BlitzOption... blitzOptions) throws BlitzException {
+  public static Parser generateFromXml(String xml, Option... blitzOptions) throws BlitzException {
     return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
   }
 
@@ -86,15 +100,15 @@ public class Blitz {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
 
-    Set<BlitzOption> options = new HashSet<>();
+    Set<Option> options = new HashSet<>();
     int i = 0;
     for (; i < args.length; ++i) {
       if (args[i].equals("-v") || args[i].equals("--verbose"))
-        options.add(BlitzOption.VERBOSE);
+        options.add(Option.VERBOSE);
       else if (args[i].equals("-t") || args[i].equals("--trace"))
-        options.add(BlitzOption.TRACE);
+        options.add(Option.TRACE);
       else if (args[i].equals("-i") || args[i].equals("--indent"))
-        options.add(BlitzOption.INDENT);
+        options.add(Option.INDENT);
       else if (args[i].equals("-?") || args[i].equals("--help"))
         usage(0);
       else if (args[i].startsWith("-"))
@@ -111,13 +125,13 @@ public class Blitz {
     String grammarString = grammar.startsWith("!")
                          ? grammar.substring(1)
                          : urlContent(url(grammar));
-    Parser parser = generate(grammarString, options.toArray(BlitzOption[]::new));
+    Parser parser = generate(grammarString, options.toArray(Option[]::new));
     String inputString = input.startsWith("!")
                        ? input.substring(1)
                        : urlContent(url(input));
     String result = parser.parse(inputString);
     System.out.print("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-    if (options.contains(BlitzOption.INDENT))
+    if (options.contains(Option.INDENT))
       System.out.println();
     System.out.print(result);
   }

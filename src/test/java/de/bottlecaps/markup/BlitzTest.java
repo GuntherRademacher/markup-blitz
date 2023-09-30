@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 
 public class BlitzTest extends TestBase {
@@ -34,7 +35,7 @@ public class BlitzTest extends TestBase {
         "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
     String result = parser.parse(
         "cfim",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<S>abcdeghijklm</S>",
         result);
@@ -82,7 +83,7 @@ public class BlitzTest extends TestBase {
         + "      -S = -[\" \" | #a]*.");
     String result = parser.parse(
         "p { }",
-        BlitzOption.INDENT);
+        Option.INDENT);
     Set<String> expectedResults = Set.of(
         "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
         + "   <rule>\n"
@@ -108,14 +109,14 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = generate(resourceContent("ixml.ixml"), BlitzOption.INDENT); // , BlitzOption.TIMING);
+    Parser parser = generate(resourceContent("ixml.ixml"), Option.INDENT); // , Option.TIMING);
     String xml = parser.parse(resourceContent("ixml.ixml"));
     assertEquals(resourceContent("ixml.xml"), xml);
   }
 
   @Test
   public void testJson() {
-    Parser parser = generate(resourceContent("json.ixml")); // , BlitzOption.TIMING, BlitzOption.TRACE, BlitzOption.VERBOSE);
+    Parser parser = generate(resourceContent("json.ixml")); // , Option.TIMING, Option.TRACE, Option.VERBOSE);
     String result = parser.parse(resourceContent("sample.json"));
     String expectedResult = resourceContent("sample.json.xml");
     assertEquals(expectedResult, result);
@@ -124,14 +125,14 @@ public class BlitzTest extends TestBase {
   @Test
   public void testAddress() {
     Parser parser = generate(resourceContent("address.ixml"));
-    String xml = parser.parse(resourceContent("address.input"), BlitzOption.INDENT);
+    String xml = parser.parse(resourceContent("address.input"), Option.INDENT);
     assertEquals(resourceContent("address.xml"), xml);
   }
 
   @Test
   public void testArith() {
     Parser parser = generate(resourceContent("arith.ixml"));
-    String result = parser.parse(resourceContent("arith.input"), BlitzOption.INDENT);
+    String result = parser.parse(resourceContent("arith.input"), Option.INDENT);
     assertEquals(resourceContent("arith.xml"), result);
   }
 
@@ -153,7 +154,7 @@ public class BlitzTest extends TestBase {
         + "year: ['0'-'9']+ .");
     String result = parser.parse(
         "February, 2022",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<date month=\"February\">\n"
         + "   <year>2022</year>\n"
@@ -190,7 +191,7 @@ public class BlitzTest extends TestBase {
         + "26 December 2021\n"
         + "Groan.\n"
         + "\n",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -250,7 +251,7 @@ public class BlitzTest extends TestBase {
         + "26 December 2021\n"
         + "Groan.\n"
         + "\n",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -308,7 +309,7 @@ public class BlitzTest extends TestBase {
         + "26 December 2021\n"
         + "Groan.\n"
         + "\n",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -377,7 +378,7 @@ public class BlitzTest extends TestBase {
         + "-digit: [\"0\"-\"9\"].");
     String result = parser.parse(
         "pi+(10\u00d7b)",
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<expression>\n"
         + "   <sum>\n"
@@ -397,7 +398,7 @@ public class BlitzTest extends TestBase {
   public void testFrege() {
     Parser parser = generate(
         resourceContent("frege.ixml"),
-        BlitzOption.INDENT);
+        Option.INDENT);
     assertEquals(
           "<formula>\n"
         + "   <maybe>\n"
@@ -579,7 +580,7 @@ public class BlitzTest extends TestBase {
         "S: [L]++(+':';+'=').");
     String result = parser.parse(
         "abc",
-        BlitzOption.INDENT);
+        Option.INDENT);
     Set<String> expectedResults = Set.of(
         "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b=c</S>",
         "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b:c</S>",
@@ -629,7 +630,7 @@ public class BlitzTest extends TestBase {
 //        "");
 //    String result = parser.parse(
 //        "",
-//        BlitzOption.INDENT);
+//        Option.INDENT);
 //    assertEquals(
 //        "",
 //        result);

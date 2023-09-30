@@ -16,8 +16,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.BlitzException;
-import de.bottlecaps.markup.BlitzOption;
 import de.bottlecaps.markup.BlitzParseException;
 import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -418,7 +418,7 @@ public class Parser
   }
 
   public Parser(
-      Set<BlitzOption> defaultOptions,
+      Set<Option> defaultOptions,
       int[] asciiMap, CompressedMap bmpMap, int[] smpMap,
       CompressedMap terminalTransitions, int numberOfTokens,
       CompressedMap nonterminalTransitions, int numberOfNonterminals,
@@ -481,25 +481,33 @@ public class Parser
     return "line " + line + ", column " + column;
   }
 
-  public String parse(String string, BlitzOption... options) throws BlitzException {
-    Set<BlitzOption> currentOptions = options.length == 0
+  /**
+   * Parse the given input.
+   *
+   * @param input the input string
+   * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
+   * @return the resulting XML
+   * @throws BlitzException if any error is detected while parsing
+   */
+  public String parse(String input, Option... options) throws BlitzException {
+    Set<Option> currentOptions = options.length == 0
         ? defaultOptions
         : Set.of(options);
 
     long t0 = System.currentTimeMillis();
 
-    boolean indent = currentOptions.contains(BlitzOption.INDENT);
-    StringWriter w = new StringWriter(string.length());
+    boolean indent = currentOptions.contains(Option.INDENT);
+    StringWriter w = new StringWriter(input.length());
     XmlSerializer s = new XmlSerializer(w, indent);
     ParseTreeBuilder b = new ParseTreeBuilder();
 
-    trace = currentOptions.contains(BlitzOption.TRACE);
+    trace = currentOptions.contains(Option.TRACE);
     if (trace)
       writeTrace("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">\n<trace>\n");
 
     eventHandler = b;
-    input = string;
-    size = string.length();
+    this.input = input;
+    size = input.length();
     maxId = 0;
 
     ParsingThread thread;
@@ -508,14 +516,14 @@ public class Parser
     }
     catch (ParseException pe) {
       int begin = pe.getBegin();
-      String prefix = string.substring(0, begin);
+      String prefix = input.substring(0, begin);
       int offending = pe.getOffending();
       int line = prefix.replaceAll("[^\n]", "").length() + 1;
       int column = prefix.length() - prefix.lastIndexOf('\n');
       throw new BlitzParseException(
           "Failed to parse input:\n" + getErrorMessage(pe),
           offending >= 0 ? terminal[offending].shortName()
-                         : begin < string.length() ? ("'" + Character.toString(string.codePointAt(begin)) + "'")
+                         : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
                                                    : "$",
           line,
           column
@@ -560,7 +568,7 @@ public class Parser
     b.serialize(s);
     String result = w.toString();
 
-    if (currentOptions.contains(BlitzOption.TIMING)) {
+    if (currentOptions.contains(Option.TIMING)) {
       long t1 = System.currentTimeMillis();
       System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
     }
@@ -1074,7 +1082,7 @@ public class Parser
     return expected.toArray(String[]::new);
   }
 
-  private final Set<BlitzOption> defaultOptions;
+  private final Set<Option> defaultOptions;
   private final int[] asciiMap;
   private final CompressedMap bmpMap;
   private final int[] smpMap;

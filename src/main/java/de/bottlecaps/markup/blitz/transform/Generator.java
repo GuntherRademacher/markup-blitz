@@ -24,7 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.bottlecaps.markup.BlitzOption;
+import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -75,9 +75,9 @@ public class Generator {
     return generate(g,  Collections.emptySet());
   }
 
-  public static Parser generate(Grammar g, Set<BlitzOption> options) {
+  public static Parser generate(Grammar g, Set<Option> options) {
     Generator ci  = new Generator();
-    ci.verbose = options.contains(BlitzOption.VERBOSE);
+    ci.verbose = options.contains(Option.VERBOSE);
     ci.grammar = g;
 
     if (ci.verbose) {
@@ -89,7 +89,7 @@ public class Generator {
 
     ci.new SymbolCodeAssigner().visit(g);
 
-    if (options.contains(BlitzOption.VERBOSE)) {
+    if (options.contains(Option.VERBOSE)) {
       System.out.println();
       System.out.println("Number of charClasses: " + ci.terminalCode.size());
       System.out.println("----------------------");

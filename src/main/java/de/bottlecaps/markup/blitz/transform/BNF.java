@@ -9,7 +9,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
-import de.bottlecaps.markup.BlitzOption;
+import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.blitz.grammar.Alt;
 import de.bottlecaps.markup.blitz.grammar.Alts;
 import de.bottlecaps.markup.blitz.grammar.Charset;
@@ -40,13 +40,13 @@ public class BNF extends Visitor {
     return process(g, Collections.emptySet());
   }
 
-  public static Grammar process(Grammar g, Set<BlitzOption> options) {
+  public static Grammar process(Grammar g, Set<Blitz.Option> options) {
     return process(g, false, options);
   }
 
-  public static Grammar process(Grammar g, boolean isolateCharsets, Set<BlitzOption> options) {
+  public static Grammar process(Grammar g, boolean isolateCharsets, Set<Blitz.Option> options) {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
-    boolean timing = options.contains(BlitzOption.TIMING);
+    boolean timing = options.contains(Blitz.Option.TIMING);
 
     if (timing)
       t0 = System.currentTimeMillis();
