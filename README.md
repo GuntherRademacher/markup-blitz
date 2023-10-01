@@ -22,6 +22,16 @@ gradlew clean jar
 
 This creates `build\libs\markup-blitz.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
 
+# Running tests
+
+For running the tests, use this command:
+
+```sh
+gradlew test
+```
+
+Markup Blitz comes with a few tests, but it also passes all of the 3091 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the Markup Blitz project and use the above command.
+
 # Markup Blitz in Eclipse
 
 The project can be imported into Eclipse as a Gradle project.
@@ -39,15 +49,19 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
 
-  <GRAMMAR>          the grammar (file name or URL).
-  <INPUT>            the input (file name or URL).
+  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.
+  <INPUT>            the input (literal, file name or URL).
 
-  Options:
-    --verbose, -v    print intermediate results (to standard output).
-    --timing         print timing information (to standard output).
-    --indent, -i     generate resulting xml with indentation.
-    --trace          print parser trace (to standard error).
-    --help, -h, -?   print this information.
+  <OPTION>:
+    --indent         generate resulting xml with indentation.
+    --trace          print parser trace.
+    --timing         print timing information.
+    --verbose        print intermediate results.
+
+  A literal grammar or input must be preceded by an exclamation point (!).
+  All inputs must be presented in UTF-8 encoding, and output is written in
+  UTF-8 as well. Resulting XML goes to standard output, all diagnostics go
+  to standard error.
 ```
 
 # Using the Java API
@@ -73,15 +87,13 @@ public static Parser generate(String grammar, Option... blitzOptions) throws Bli
 Parse the given input.
 
 ```java
-public String parse(String input, Option... options) throws BlitzException
+public String parse(String input, Option... options)
 ```
 **Parameters**:
 - `String input`: the input string
 - `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
 
 **Returns:** `String`: the resulting XML
-
-**Throws:** `BlitzException`: if any error is detected while parsing
 
 ### de.bottlecaps.markup.Blitz.Option
 Either of the `generate` and `parse` methods accepts `Option` arguments for creating extra diagnostic output. Generation time options are passed to the `Parser` object implicitly, and they are used at parsing time, when `parse`is called without any options.
@@ -117,6 +129,7 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [GLR]: https://en.wikipedia.org/wiki/GLR_parser
 [rex-parser-benchmark]: https://github.com/GuntherRademacher/rex-parser-benchmark
 [IXML]: https://invisiblexml.org/
+[GHIXML]: https://github.com/invisibleXML/ixml
 [CFG]: https://en.wikipedia.org/wiki/Context-free_grammar
 [parser]: https://en.wikipedia.org/wiki/Parsing#Parser
 [parse-tree]: https://en.wikipedia.org/wiki/Parse_tree

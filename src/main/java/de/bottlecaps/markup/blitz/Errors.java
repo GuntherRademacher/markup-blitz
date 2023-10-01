@@ -1,6 +1,6 @@
 package de.bottlecaps.markup.blitz;
 
-import de.bottlecaps.markup.BlitzException;
+import de.bottlecaps.markup.BlitzIxmlException;
 
 public enum Errors {
   S01("Two rules are not separated by at least one whitespace character or comment."),
@@ -33,6 +33,6 @@ public enum Errors {
     String msg = args.length == 0
         ? text
         : text.replaceFirst("\\.$", ": ") + String.join(", ", args) + ".";
-    throw new BlitzException("[" + name() + "] " + msg);
+    throw new BlitzIxmlException(this, "[" + name() + "] " + msg);
   }
 }

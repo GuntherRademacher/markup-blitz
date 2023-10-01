@@ -135,11 +135,6 @@ public class ClassifyCharacters extends Copy {
       }
     }
 
-//    System.out.println(a.getRule());
-//    System.out.println("    preserved: " + preservedChars);
-//    System.out.println("      deleted: -" + deletedChars);
-//    System.out.println("        other: " + other);
-
     if (other.equals(a)) {
       super.visit(a);
     }

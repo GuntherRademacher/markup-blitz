@@ -81,19 +81,19 @@ public class Generator {
     ci.grammar = g;
 
     if (ci.verbose) {
-      System.out.println();
-      System.out.println("BNF grammar:");
-      System.out.println("------------");
-      System.out.println(g);
+      System.err.println();
+      System.err.println("BNF grammar:");
+      System.err.println("------------");
+      System.err.println(g);
     }
 
     ci.new SymbolCodeAssigner().visit(g);
 
     if (options.contains(Option.VERBOSE)) {
-      System.out.println();
-      System.out.println("Number of charClasses: " + ci.terminalCode.size());
-      System.out.println("----------------------");
-      ci.terminalCode.forEach((k, v) -> System.out.println(v + ": " + k));
+      System.err.println();
+      System.err.println("Number of charClasses: " + ci.terminalCode.size());
+      System.err.println("----------------------");
+      ci.terminalCode.forEach((k, v) -> System.err.println(v + ": " + k));
     }
 
     ci.reduceArguments = ci.reduceArguments();
@@ -126,28 +126,28 @@ public class Generator {
     // report status
 
     if (ci.verbose) {
-      System.out.println();
-      System.out.println(ci.states.size() + " states (not counting LR(0) reduce states)");
-      System.out.println(ci.reduceArguments.length + " reduce arguments");
-      System.out.println(ci.forks.length / 2 + " forks");
+      System.err.println();
+      System.err.println(ci.states.size() + " states (not counting LR(0) reduce states)");
+      System.err.println(ci.reduceArguments.length + " reduce arguments");
+      System.err.println(ci.forks.length / 2 + " forks");
 
       for (int i = 0; i < ci.forks.length / 2; ++i) {
-        System.out.println("\nfork " + i + ":");
+        System.err.println("\nfork " + i + ":");
         for (int j = 0; j < 2; ++j) {
           int code = ci.forks[2 * i + j];
           Action action = Action.of(code);
-          System.out.print(action);
+          System.err.print(action);
           if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
-            System.out.print(" (");
-            System.out.print(ci.toString(ci.reduceArguments[action.getArgument()]));
-            System.out.print(")");
+            System.err.print(" (");
+            System.err.print(ci.toString(ci.reduceArguments[action.getArgument()]));
+            System.err.print(")");
           }
-          System.out.println();
+          System.err.println();
         }
       }
 
       for (State state : ci.states.keySet())
-        System.out.println("\nstate " + state.id + ":\n" + state);
+        System.err.println("\nstate " + state.id + ":\n" + state);
     }
 
     final BitSet[] expectedTokens = new BitSet[ci.states.size()];
@@ -174,11 +174,11 @@ public class Generator {
     CompressedMap nonterminalTransitions = new CompressedMap(nonterminalTransitionIterator, 3);
 
     if (ci.verbose) {
-      System.out.println();
-      System.out.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
-      System.out.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
-      System.out.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
-      System.out.println();
+      System.err.println();
+      System.err.println("size of token code map: " + bmpMap.data().length + ", shift: " + Arrays.toString(bmpMap.shift()));
+      System.err.println("size of terminal transition map: " + terminalTransitions.data().length + ", shift: " + Arrays.toString(terminalTransitions.shift()));
+      System.err.println("size of nonterminal transition map: " + nonterminalTransitions.data().length + ", shift: " + Arrays.toString(nonterminalTransitions.shift()));
+      System.err.println();
     }
 
     return new Parser(options,

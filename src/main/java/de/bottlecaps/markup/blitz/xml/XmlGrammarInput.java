@@ -2,7 +2,6 @@ package de.bottlecaps.markup.blitz.xml;
 
 import static java.util.Arrays.stream;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -214,7 +213,4 @@ public class XmlGrammarInput {
     return childElements.toArray(Element[]::new);
   }
 
-  public static void main(String[] args) throws Exception {
-    System.out.println(new XmlGrammarInput(new FileInputStream(args[0])).toIxml());
-  }
 }

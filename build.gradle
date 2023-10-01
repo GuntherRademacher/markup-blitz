@@ -4,11 +4,10 @@ plugins {
     id 'signing'
 }
 
-version = '0.7-SNAPSHOT'
+version = '1.0'
 group = 'de.bottlecaps'
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -50,7 +49,7 @@ void configureMetadata(MavenPublication mavenPublication) {
         pom {
             name = groupId + ':' + artifactId
             description = 'Markup Blitz Parser Generator'
-            url = 'https://bottlecaps.de/markup-blitz'
+            url = 'https://github.com/GuntherRademacher/markup-blitz'
             licenses {
                 license {
                     name = 'Apache-2.0'

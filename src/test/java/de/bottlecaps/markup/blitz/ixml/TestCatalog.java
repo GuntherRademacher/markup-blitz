@@ -73,13 +73,4 @@ public class TestCatalog {
     return testCases;
   }
 
-  public static void main(String[] args) throws Exception {
-//    TestCatalog catalog = new TestCatalog("C:/etc/github/GuntherRademacher/ixml/tests/correct/test-catalog.xml");
-//    TestCatalog catalog = new TestCatalog(new File("C:/etc/github/GuntherRademacher/ixml/tests/test-catalog.xml"));
-    TestCatalog catalog = new TestCatalog(new File("C:/etc/github/GuntherRademacher/markup-blitz"), "test-catalog2.xml");
-    System.out.println(catalog.getTestCases().size() + " " + " testcases");
-    for (TestCase testCase : catalog.getTestCases()) {
-      System.out.println(testCase.getName() + " " + (testCase.getGrammar() != null));
-    }
-  }
 }

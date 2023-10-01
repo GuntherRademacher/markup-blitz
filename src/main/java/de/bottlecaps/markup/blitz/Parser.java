@@ -18,6 +18,7 @@ import java.util.Stack;
 
 import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.BlitzException;
+import de.bottlecaps.markup.BlitzIxmlException;
 import de.bottlecaps.markup.BlitzParseException;
 import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -29,6 +30,7 @@ import de.bottlecaps.markup.blitz.transform.CompressedMap;
 
 public class Parser
 {
+  public static final String IXML_NAMESPACE = "http://invisiblexml.org/NS";
   private static int STALL_THRESHOLD = 8;
 
   private static class ParseException extends Exception
@@ -173,14 +175,9 @@ public class Parser
     }
 
     public void addChildren(Symbol... newChildren) {
-      if (newChildren == null) {
-        children = newChildren;
-      }
-      else {
-        int length = children.length;
-        children = Arrays.copyOf(children, length + newChildren.length);
-        System.arraycopy(newChildren, 0, children, length, newChildren.length);
-      }
+      int length = children.length;
+      children = Arrays.copyOf(children, length + newChildren.length);
+      System.arraycopy(newChildren, 0, children, length, newChildren.length);
     }
   }
 
@@ -487,9 +484,8 @@ public class Parser
    * @param input the input string
    * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
    * @return the resulting XML
-   * @throws BlitzException if any error is detected while parsing
    */
-  public String parse(String input, Option... options) throws BlitzException {
+  public String parse(String input, Option... options) {
     Set<Option> currentOptions = options.length == 0
         ? defaultOptions
         : Set.of(options);
@@ -510,59 +506,71 @@ public class Parser
     size = input.length();
     maxId = 0;
 
-    ParsingThread thread;
     try {
-      thread = parse();
-    }
-    catch (ParseException pe) {
-      int begin = pe.getBegin();
-      String prefix = input.substring(0, begin);
-      int offending = pe.getOffending();
-      int line = prefix.replaceAll("[^\n]", "").length() + 1;
-      int column = prefix.length() - prefix.lastIndexOf('\n');
-      throw new BlitzParseException(
-          "Failed to parse input:\n" + getErrorMessage(pe),
-          offending >= 0 ? terminal[offending].shortName()
-                         : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
-                                                   : "$",
-          line,
-          column
-      );
-    }
-    finally {
-      if (trace) {
-        writeTrace("</trace>\n");
-        try {
-          err.flush();
-        }
-        catch (IOException e) {
-          throw new BlitzException(e);
-        }
+      ParsingThread thread;
+      try {
+        thread = parse();
       }
-      w.flush();
+      catch (ParseException pe) {
+        int begin = pe.getBegin();
+        String prefix = input.substring(0, begin);
+        int offending = pe.getOffending();
+        int line = prefix.replaceAll("[^\n]", "").length() + 1;
+        int column = prefix.length() - prefix.lastIndexOf('\n');
+        throw new BlitzParseException(
+            "Failed to parse input:\n" + getErrorMessage(pe),
+            offending >= 0 ? terminal[offending].shortName()
+                           : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
+                                                     : "$",
+            line,
+            column
+        );
+      }
+      finally {
+        if (trace) {
+          writeTrace("</trace>\n");
+          try {
+            err.flush();
+          }
+          catch (IOException e) {
+          }
+        }
+        w.flush();
+      }
+
+      Nonterminal startSymbol = ((Nonterminal) b.stack[0]);
+      if (startSymbol.children == null || startSymbol.children.length == 0)
+        Errors.D01.thro(); // not well-formed
+      if (! (startSymbol.children[0] instanceof Nonterminal))
+        Errors.D06.thro(); // not exactly one element
+      Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
+      if (nonterminal.isAttribute)
+        Errors.D05.thro(); // attribute as root
+      if (startSymbol.children.length != 1)
+        Errors.D06.thro(); // not exactly one element
+
+      if (thread.isAmbiguous || isVersionMismatch) {
+        nonterminal.addChildren(attribute("xmlns:ixml", IXML_NAMESPACE));
+        List<String> state = new ArrayList<>();
+        if (thread.isAmbiguous)
+          state.add("ambiguous");
+        if (isVersionMismatch)
+          state.add("version-mismatch");
+        nonterminal.addChildren(attribute("ixml:state", String.join(" ", state)));
+      }
     }
-
-    Nonterminal startSymbol = ((Nonterminal) b.stack[0]);
-    if (startSymbol.children == null || startSymbol.children.length == 0)
-      Errors.D01.thro(); // not well-formed
-    if (! (startSymbol.children[0] instanceof Nonterminal))
-      Errors.D06.thro(); // not exactly one element
-    Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
-    if (nonterminal.isAttribute)
-      Errors.D05.thro(); // attribute as root
-    if (startSymbol.children.length != 1)
-      Errors.D06.thro(); // not exactly one element
-
-    if (thread.isAmbiguous || isVersionMismatch) {
-      nonterminal.addChildren(attribute("xmlns:ixml", "http://invisiblexml.org/NS"));
-      List<String> state = new ArrayList<>();
-      if (thread.isAmbiguous)
-        state.add("ambiguous");
-//    if (...)
-//        state.add("stalled");
-      if (isVersionMismatch)
-        state.add("version-mismatch");
-      nonterminal.addChildren(attribute("ixml:state", String.join(" ", state)));
+    catch (BlitzIxmlException e) {
+      Nonterminal ixml = new Nonterminal("ixml", new Symbol[] {new Insertion(e.getMessage().codePoints().toArray())});
+      ixml.addChildren(attribute("xmlns:ixml", IXML_NAMESPACE));
+      ixml.addChildren(attribute("ixml:state", "failed"));
+      ixml.addChildren(attribute("ixml:error-code", e.getError().name()));
+      b.stack[0] = new Nonterminal("root", new Symbol[] {ixml});
+    }
+    catch (BlitzException e) {
+      Nonterminal ixml = new Nonterminal("ixml", new Symbol[] {new Insertion(e.getMessage().codePoints().toArray())});
+      ixml.addChildren(attribute("xmlns:ixml", IXML_NAMESPACE));
+      ixml.addChildren(attribute("ixml:state", "failed"));
+      b.stack[0] = new Nonterminal("root", new Symbol[] {ixml});
     }
 
     b.serialize(s);

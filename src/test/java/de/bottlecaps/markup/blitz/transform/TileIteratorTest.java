@@ -87,8 +87,6 @@ public class TileIteratorTest extends TestBase {
       }
       assertEquals(bitPattern, value);
 
-//      System.out.println(bitRanges + ", " + Arrays.toString(uncompressedData));
-
       for (int tileIndexBits = 1; tileIndexBits <= log2(bits) + 1; ++ tileIndexBits) {
         int tileSize = 1 << tileIndexBits;
         for (int maxCodepoint = 0; maxCodepoint <= bits + 1; ++maxCodepoint) {
@@ -98,12 +96,6 @@ public class TileIteratorTest extends TestBase {
           assertEquals(numberOfTiles, it.numberOfTiles());
           assertEquals(tileSize, it.tileSize());
           int[] reconstruction = reconstruct(it);
-
-//          System.out.println(tileIndexBits +
-//                       " " + maxCodepoint +
-//                       " " + numberOfTiles +
-//                       " " + tileSize +
-//                       " " + Arrays.toString(reconstruction));
 
           assertEquals(numberOfTiles * tileSize, reconstruction.length);
           int[] expectedResult = Arrays.copyOf(uncompressedData, maxCodepoint);

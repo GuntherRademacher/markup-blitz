@@ -48,7 +48,7 @@ public class BlitzTest extends TestBase {
     String result = parser.parse(
         "a");
     assertEquals(
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">aa</S>",
+        "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">aa</S>",
         result);
   }
 
@@ -56,14 +56,14 @@ public class BlitzTest extends TestBase {
   public void testAmbiguity1() {
     Parser parser = generate("S: 'a', 'b'+; 'a'+, 'b'.");
     String result = parser.parse("ab");
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">ab</S>", result);
+    assertEquals("<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">ab</S>", result);
   }
 
   @Test
   public void testAmbiguity2() {
     Parser parser = generate("S: 'a', 'b'+, 'c'; 'a'+, 'b', 'c'.");
     String result = parser.parse("abc");
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">abc</S>", result);
+    assertEquals("<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">abc</S>", result);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class BlitzTest extends TestBase {
         "p { }",
         Option.INDENT);
     Set<String> expectedResults = Set.of(
-        "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
+        "<css xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">\n"
         + "   <rule>\n"
         + "      <selector>\n"
         + "         <name>p</name>\n"
@@ -95,7 +95,7 @@ public class BlitzTest extends TestBase {
         + "      </block>\n"
         + "   </rule>\n"
         + "</css>",
-          "<css xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">\n"
+          "<css xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">\n"
         + "   <rule>\n"
         + "      <selector>\n"
         + "         <name>p</name>\n"
@@ -582,10 +582,10 @@ public class BlitzTest extends TestBase {
         "abc",
         Option.INDENT);
     Set<String> expectedResults = Set.of(
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b=c</S>",
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b:c</S>",
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a=b:c</S>",
-        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">a:b=c</S>"
+        "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">a=b=c</S>",
+        "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">a:b:c</S>",
+        "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE +  "\" ixml:state=\"ambiguous\">a=b:c</S>",
+        "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">a:b=c</S>"
         );
     assertTrue(expectedResults.contains(result),
         "unexpected result: " + result);

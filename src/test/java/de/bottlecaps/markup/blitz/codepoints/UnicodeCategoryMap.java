@@ -18,7 +18,11 @@ public class UnicodeCategoryMap {
     // also see http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
     String unicodeDataUrl = "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt";
     Map<String, Builder> categoryMap = parseUnicodeData(unicodeDataUrl);
-    printCategoryMap(categoryMap);
+    for (Entry<String, Builder> entry : categoryMap.entrySet()) {
+      String categoryName = entry.getKey();
+      RangeSet codepointRangeSet = entry.getValue().build();
+      System.err.println("codepointsByCode.put(\"" + categoryName + "\", " + codepointRangeSet.toJava() + ");");
+    }
   }
 
   private static Map<String, RangeSet.Builder> parseUnicodeData(String url) throws Exception {
@@ -77,11 +81,4 @@ public class UnicodeCategoryMap {
     return categoryMap;
   }
 
-  private static void printCategoryMap(Map<String, Builder> categoryMap) {
-    for (Entry<String, Builder> entry : categoryMap.entrySet()) {
-      String categoryName = entry.getKey();
-      RangeSet codepointRangeSet = entry.getValue().build();
-      System.out.println("codepointsByCode.put(\"" + categoryName + "\", " + codepointRangeSet.toJava() + ");");
-    }
-  }
 }

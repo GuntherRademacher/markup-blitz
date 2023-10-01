@@ -27,10 +27,10 @@ import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 public class Blitz {
   /** Generation time and parse time options. */
   public enum Option {
-    /** Print information on intermediate results. */ VERBOSE,
-    /** Print timing information.                  */ TIMING,
     /** Generate XML with indentation.             */ INDENT,
-    /** Print parser trace.                        */ TRACE;
+    /** Print parser trace.                        */ TRACE,
+    /** Print timing information.                  */ TIMING,
+    /** Print information on intermediate results. */ VERBOSE;
   }
 
   /**
@@ -64,7 +64,7 @@ public class Blitz {
   }
 
   /**
-   * Generate a parser from an Invisible XML grammar in XML, passed as a String.
+   * Generate a parser from an Invisible XML grammar in XML, passed as an InputStream.
    *
    * @param xml the Invisible XML grammar in XML
    * @param blitzOptions options for use at generation time and parsing time
@@ -103,14 +103,14 @@ public class Blitz {
     Set<Option> options = new HashSet<>();
     int i = 0;
     for (; i < args.length; ++i) {
-      if (args[i].equals("-v") || args[i].equals("--verbose"))
-        options.add(Option.VERBOSE);
-      else if (args[i].equals("-t") || args[i].equals("--trace"))
-        options.add(Option.TRACE);
-      else if (args[i].equals("-i") || args[i].equals("--indent"))
+      if (args[i].equals("--indent"))
         options.add(Option.INDENT);
-      else if (args[i].equals("-?") || args[i].equals("--help"))
-        usage(0);
+      else if (args[i].equals("--trace"))
+        options.add(Option.TRACE);
+      else if (args[i].equals("--timing"))
+        options.add(Option.TIMING);
+      else if (args[i].equals("--verbose"))
+        options.add(Option.VERBOSE);
       else if (args[i].startsWith("-"))
         usage(1);
       else
@@ -144,16 +144,16 @@ public class Blitz {
     System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
     System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
-    System.err.println("  Options:");
-    System.err.println("    --verbose, -v    print intermediate results (to standard output).");
-    System.err.println("    --timing         print timing information (to standard output).");
-    System.err.println("    --indent, -i     generate resulting xml with indentation.");
-    System.err.println("    --trace          print parser trace (to standard error).");
-    System.err.println("    --help, -h, -?   print this information.");
+    System.err.println("  <OPTION>:");
+    System.err.println("    --indent         generate resulting xml with indentation.");
+    System.err.println("    --trace          print parser trace.");
+    System.err.println("    --timing         print timing information.");
+    System.err.println("    --verbose        print intermediate results.");
     System.err.println();
     System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
     System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");
-    System.err.println("  UTF-8 as well.");
+    System.err.println("  UTF-8 as well. Resulting XML goes to standard output, all diagnostics go");
+    System.err.println("  to standard error.");
     System.err.println();
     System.exit(exitCode);
   }

@@ -370,6 +370,8 @@ public class IxmlCommunityTest extends TestBase {
       assertNotNull(input, "missing input");
       try {
         String xml = parser.parse(input);
+        if (xml.startsWith("<ixml xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"failed\""))
+          throw new BlitzException(xml);
         assertEquals(TestCase.Assertion.assert_xml, testCase.getAssertion());
         assertTrue(testCase.getOutputs().size() > 0, "missing reference output");
         if (! testCase.getOutputs().stream().anyMatch(o -> deepEqual(o, xml))) {
@@ -396,7 +398,7 @@ public class IxmlCommunityTest extends TestBase {
         case assert_dynamic_error:
           Set<String> expected = testCase.getErrorCodes();
           if (! expected.isEmpty()
-           && ! expected.stream().anyMatch(c -> e.getMessage().startsWith("[" + c + "] ")))
+           && ! expected.stream().anyMatch(c -> e.getMessage().contains("[" + c + "] ")))
               assertEquals(expected, e.getMessage());
           break;
         default:
