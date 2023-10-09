@@ -44,7 +44,7 @@ Markup Blitz is available on Maven Central with groupId `de.bottlecaps` and arti
 
 Markup Blitz can be run from command line to process some input according to an Invisible XML grammar:
 
-```sh
+```txt
 Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
@@ -63,6 +63,10 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
   UTF-8 as well. Resulting XML goes to standard output, all diagnostics go
   to standard error.
 ```
+
+# Running Markup Blitz online
+
+[BaseX][BaseX] uses Markup Blitz to implement [`fn:invisible-xml`][fnInvisibleXml]. It can be tested online on [BXFiddle][BXFiddle].
 
 # Using the Java API
 
@@ -134,3 +138,5 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [parser]: https://en.wikipedia.org/wiki/Parsing#Parser
 [parse-tree]: https://en.wikipedia.org/wiki/Parse_tree
 [parser-generator]: https://en.wikipedia.org/wiki/Compiler-compiler
+[fnInvisibleXml]: https://github.com/qt4cg/qtspecs/issues/238
+[BXFiddle]: https://bxfiddle.cloud.basexgmbh.de/
