@@ -624,6 +624,36 @@ public class BlitzTest extends TestBase {
         parser.parse("1"));
   }
 
+  @Test
+  public void testUnicodeVersion() {
+    // source: https://lists.w3.org/Archives/Public/public-ixml/2023Oct/0014.html
+    Parser parser = generate(
+          "{ Input must be #11F04 #10F70 #18B00 #10FE0 (with newlines since the characters are rtl)\n"
+        + "\ud807\udf04\n"
+        + "\ud803\udf70\n"
+        + "\ud822\udf00\n"
+        + "\ud803\udfe0\n"
+        + "}\n"
+        + "\n"
+        + "Unicode: version.\n"
+        + "\n"
+        + "@version: v15; v14; v13; v12; pre-v12.\n"
+        + "\n"
+        + "-v15: -[Lo], -#a, -[Lo], -#a, -[Lo], -#a, -[Lo], -#a, +\"15\".\n"
+        + "-v14: -[Cn], -#a, -[Lo], -#a, -[Lo], -#a, -[Lo], -#a, +\"14\".\n"
+        + "-v13: -[Cn], -#a, -[Cn], -#a, -[Lo], -#a, -[Lo], -#a, +\"13\".\n"
+        + "-v12: -[Cn], -#a, -[Cn], -#a, -[Cn], -#a, -[Lo], -#a, +\"12\".\n"
+        + "-pre-v12: -[Cn], -#a, -[Cn], -#a, -[Cn], -#a, -[Cn], -#a, +\"pre 12\".");
+    String result = parser.parse(
+          "\ud807\udf04\n"
+        + "\ud803\udf70\n"
+        + "\ud822\udf00\n"
+        + "\ud803\udfe0\n");
+    assertEquals(
+        "<Unicode version=\"15\"/>",
+        result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(
