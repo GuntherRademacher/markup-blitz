@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.0'
+version = '1.1-SNAPSHOT'
 group = 'de.bottlecaps'
 
 repositories {
@@ -18,7 +18,7 @@ dependencies {
 testing {	
     suites {
         test {
-            useJUnitJupiter('5.9.3')
+            useJUnitJupiter('5.10.0')
         }
     }
 }
