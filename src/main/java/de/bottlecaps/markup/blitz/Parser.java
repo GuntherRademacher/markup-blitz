@@ -560,6 +560,8 @@ public class Parser
       }
     }
     catch (BlitzIxmlException e) {
+      if (currentOptions.contains(Option.FAIL_ON_ERROR))
+        throw e;
       Nonterminal ixml = new Nonterminal("ixml", new Symbol[] {new Insertion(e.getMessage().codePoints().toArray())});
       ixml.addChildren(attribute("xmlns:ixml", IXML_NAMESPACE));
       ixml.addChildren(attribute("ixml:state", "failed"));
@@ -567,20 +569,22 @@ public class Parser
       b.stack[0] = new Nonterminal("root", new Symbol[] {ixml});
     }
     catch (BlitzException e) {
+      if (currentOptions.contains(Option.FAIL_ON_ERROR))
+        throw e;
       Nonterminal ixml = new Nonterminal("ixml", new Symbol[] {new Insertion(e.getMessage().codePoints().toArray())});
       ixml.addChildren(attribute("xmlns:ixml", IXML_NAMESPACE));
       ixml.addChildren(attribute("ixml:state", "failed"));
       b.stack[0] = new Nonterminal("root", new Symbol[] {ixml});
     }
+    finally {
+      if (currentOptions.contains(Option.TIMING)) {
+        long t1 = System.currentTimeMillis();
+        System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
+      }
+    }
 
     b.serialize(s);
-    String result = w.toString();
-
-    if (currentOptions.contains(Option.TIMING)) {
-      long t1 = System.currentTimeMillis();
-      System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
-    }
-    return result;
+    return w.toString();
   }
 
   private Nonterminal attribute(String name, String value) {

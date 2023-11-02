@@ -12,11 +12,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.TestBase;
 
 public class IxmlTest extends TestBase {
     private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
-    private static final String ixmlResource = "ixml.ixml";
 
     private static final String githubJsonIxmlUrl = "https://raw.githubusercontent.com/GuntherRademacher/rex-parser-benchmark/main/src/main/resources/de/bottlecaps/rex/benchmark/json/parsers/xquery/json.ixml";
     private static final String jsonIxmlResource = "json.ixml";
@@ -26,7 +26,7 @@ public class IxmlTest extends TestBase {
 
     @BeforeAll
     public static void beforeAll() throws URISyntaxException, IOException {
-      ixmlIxmlResourceContent = resourceContent(ixmlResource);
+      ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
       jsonIxmlResourceContent = resourceContent(jsonIxmlResource);
     }
 
@@ -36,7 +36,7 @@ public class IxmlTest extends TestBase {
       String expectedResult = ixmlIxmlResourceContent
           .replaceAll("^\\{[^\n]*\n", "")
           .replaceAll("\\. \\{[^\n]*\n", ".\n");
-      assertEquals(expectedResult, grammar.toString(), "roundtrip failed for " + ixmlResource);
+      assertEquals(expectedResult, grammar.toString(), "roundtrip failed for " + Blitz.IXML_GRAMMAR_RESOURCE);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class IxmlTest extends TestBase {
       String expectedResult = ixmlIxmlResourceContent
           .replaceAll("^\\{[^\n]*\n", "")
           .replaceAll("\\. \\{[^\n]*\n", ".\n");
-      testUrlContent(invisiblexmlOrgUrl, ixmlResource, expectedResult);
+      testUrlContent(invisiblexmlOrgUrl, Blitz.IXML_GRAMMAR_RESOURCE, expectedResult);
     }
 
     private void testUrlContent(String url, String resource, String expectedResult) throws MalformedURLException {

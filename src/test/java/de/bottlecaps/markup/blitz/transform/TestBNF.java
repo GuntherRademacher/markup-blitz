@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -30,7 +31,6 @@ import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
 public class TestBNF extends TestBase {
-  private static final String ixmlResource = "ixml.ixml";
   private static final String jsonIxmlResource = "json.ixml";
 
   private static String ixmlIxmlResourceContent;
@@ -38,7 +38,7 @@ public class TestBNF extends TestBase {
 
   @BeforeAll
   public static void beforeAll() throws URISyntaxException, IOException {
-    ixmlIxmlResourceContent = resourceContent(ixmlResource);
+    ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
     jsonIxmlResourceContent = resourceContent(jsonIxmlResource);
   }
 

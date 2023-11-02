@@ -43,6 +43,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
 
+import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.Parser;
@@ -359,7 +360,7 @@ public class IxmlCommunityTest extends TestBase {
       assertNull(input, "unexpected input for grammar test " + testCase.getName());
       assertEquals(1, testCase.getOutputs().size(), "expected a single reference output for grammar test");
       if (ixmlParser == null) {
-        String ixmlIxmlResourceContent = resourceContent("ixml.ixml");
+        String ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
         ixmlParser = generate(ixmlIxmlResourceContent);
       }
       String xmlRepresentation = ixmlParser.parse(testCase.getGrammar());

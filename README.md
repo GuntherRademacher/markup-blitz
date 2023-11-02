@@ -12,25 +12,42 @@ Markup Blitz is an implementation of [Invisible XML][IXML] (ixml). Please see th
 
 # Building Markup Blitz
 
-Use JDK 11 or higher. For building Markup Blitz, use these commands:
+Use JDK 11 or higher. For building Markup Blitz, clone this GitHub repository and go to the resulting directory:
 
 ```sh
 git clone https://github.com/GuntherRademacher/markup-blitz.git
 cd markup-blitz 
+```
+
+Then run this command, on Unix/Linux,
+
+```sh
+./gradlew clean jar
+```
+
+or this one, on Windows
+
+```sh
 gradlew clean jar
 ```
 
-This creates `build\libs\markup-blitz.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
+This creates `build/libs/markup-blitz-1.1.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
 
 # Running tests
 
-For running the tests, use this command:
+For running the tests, use this command on Unix/Linux,
+
+```sh
+./gradlew test
+```
+
+or this one on Windows:
 
 ```sh
 gradlew test
 ```
 
-Markup Blitz comes with a few tests, but it also passes all of the 3091 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the Markup Blitz project and use the above command.
+Markup Blitz comes with a few tests, but it also passes all of the 3091 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command.
 
 # Markup Blitz in Eclipse
 
@@ -38,23 +55,25 @@ The project can be imported into Eclipse as a Gradle project.
 
 # Markup Blitz on Maven Central
 
-Markup Blitz is available on Maven Central with groupId `de.bottlecaps` and artifactId `markup-blitz`.
+Markup Blitz is available on [Maven Central][maven-central] with groupId `de.bottlecaps` and artifactId `markup-blitz`.
 
 # Running Markup Blitz from command line
 
 Markup Blitz can be run from command line to process some input according to an Invisible XML grammar:
 
 ```txt
-Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>
+Usage: java -jar markup-blitz-1.1.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
 
   <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.
+                     When omitted, the ixml grammar will be used.
   <INPUT>            the input (literal, file name or URL).
 
   <OPTION>:
     --indent         generate resulting xml with indentation.
     --trace          print parser trace.
+    --fail-on-error  throw an exception instead of returning an error document.
     --timing         print timing information.
     --verbose        print intermediate results.
 
@@ -100,15 +119,19 @@ public String parse(String input, Option... options)
 **Returns:** `String`: the resulting XML
 
 ### de.bottlecaps.markup.Blitz.Option
-Either of the `generate` and `parse` methods accepts `Option` arguments for creating extra diagnostic output. Generation time options are passed to the `Parser` object implicitly, and they are used at parsing time, when `parse`is called without any options.
+Either of the `generate` and `parse` methods accepts `Option` arguments for creating extra diagnostic output. Generation time options are passed to the `Parser` object implicitly, and they are used at parsing time, when `parse` is called without any options.
+
 ```java
+/** Parser and generator options. */
 public enum Option {
-  /** Print information on intermediate results. */ VERBOSE,
-  /** Print timing information. */                  TIMING,
-  /** Generate XML with indentation. */             INDENT,
-  /** Print parser trace. */                        TRACE;
+  /**    Parser option: Generate XML with indentation.             */ INDENT,
+  /**    Parser option: Print parser trace.                        */ TRACE,
+  /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
+  /** Generator option: Print timing information.                  */ TIMING,
+  /** Generator option: Print information on intermediate results. */ VERBOSE;
 }
 ```
+
 # Performance
 
 As with [REx Parser Generator][REx], the goal of Markup Blitz is to provide good performance. In general, however, REx parsers can be expected to perform much better. This is primarily because REx allows separating the specification into tokenization and parsing steps. This is in contrast to Invisible XML, which uses a uniform grammar to resolve from the start symbol down to codepoint level. Separate tokenization enables the use of algorithms optimized for this purpose, the establishment of token termination rules, and the easy accommodation of whitespace rules. Without it, all of this has to be accomplished by the parser alone, which often leads to costly handling of local ambiguities.
@@ -138,5 +161,7 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [parser]: https://en.wikipedia.org/wiki/Parsing#Parser
 [parse-tree]: https://en.wikipedia.org/wiki/Parse_tree
 [parser-generator]: https://en.wikipedia.org/wiki/Compiler-compiler
-[fnInvisibleXml]: https://github.com/qt4cg/qtspecs/issues/238
+[fnInvisibleXml]: https://qt4cg.org/pr/791/xpath-functions-40/Overview.html#func-invisible-xml
 [BXFiddle]: https://bxfiddle.cloud.basexgmbh.de/
+[markup-blitz]: https://github.com/GuntherRademacher/markup-blitz
+[maven-central]: https://github.com/GuntherRademacher/markup-blitz

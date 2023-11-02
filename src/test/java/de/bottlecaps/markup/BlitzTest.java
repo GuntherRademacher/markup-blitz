@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.Blitz.Option;
@@ -109,8 +110,8 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = generate(resourceContent("ixml.ixml"), Option.INDENT); // , Option.TIMING);
-    String xml = parser.parse(resourceContent("ixml.ixml"));
+    Parser parser = generate(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE), Option.INDENT); // , Option.TIMING);
+    String xml = parser.parse(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE));
     assertEquals(resourceContent("ixml.xml"), xml);
   }
 
@@ -652,6 +653,54 @@ public class BlitzTest extends TestBase {
     assertEquals(
         "<Unicode version=\"15\"/>",
         result);
+  }
+
+  @Test
+  public void testIxmlGrammar() {
+    Parser parser = generate(Blitz.ixmlGrammar());
+    String result = parser.parse(
+        "S: 'a'.",
+        Option.INDENT);
+    assertEquals(
+          "<ixml>\n"
+        + "   <rule name=\"S\">\n"
+        + "      <alt>\n"
+        + "         <literal string=\"a\"/>\n"
+        + "      </alt>\n"
+        + "   </rule>\n"
+        + "</ixml>",
+        result);
+  }
+
+  @Test
+  public void testErrorDocument() {
+    Parser parser = Blitz.generate("S: 'a'.");
+    String result = parser.parse("b");
+    assertEquals(
+          "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
+          + "lexical analysis failed\n"
+          + "while expecting 'a'\n"
+          + "at line 1, column 1:\n"
+          + "...b...</ixml>",
+        result);
+  }
+
+  @Test
+  public void testFailOnError() {
+    Parser parser = Blitz.generate("S: 'a'.", Option.FAIL_ON_ERROR);
+    try {
+      String result = parser.parse("b");
+      Assertions.fail("Parse did not fail, returned: \n" + result);
+    }
+    catch (BlitzParseException e) {
+      assertEquals(
+            "Failed to parse input:\n"
+            + "lexical analysis failed\n"
+            + "while expecting 'a'\n"
+            + "at line 1, column 1:\n"
+            + "...b...",
+          e.getMessage());
+    }
   }
 
 //  @Test

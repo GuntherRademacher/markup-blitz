@@ -25,18 +25,22 @@ import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
  * @author Gunther Rademacher
  */
 public class Blitz {
-  /** Generation time and parse time options. */
+  /** The ixml grammar resource. */
+  public final static String IXML_GRAMMAR_RESOURCE = "de/bottlecaps/markup/blitz/ixml.ixml";
+
+  /** Parser and generator options. */
   public enum Option {
-    /** Generate XML with indentation.             */ INDENT,
-    /** Print parser trace.                        */ TRACE,
-    /** Print timing information.                  */ TIMING,
-    /** Print information on intermediate results. */ VERBOSE;
+    /**    Parser option: Generate XML with indentation.             */ INDENT,
+    /**    Parser option: Print parser trace.                        */ TRACE,
+    /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
+    /** Generator option: Print timing information.                  */ TIMING,
+    /** Generator option: Print information on intermediate results. */ VERBOSE;
   }
 
   /**
    * Generate a parser from an Invisible XML grammar in ixml notation.
    *
-   * @param grammar the Invisible XML grammar in ixml notation
+   * @param grammar the Invisible XML grammar in ixml notation.
    * @param blitzOptions options for use at generation time and parsing time
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
@@ -117,10 +121,12 @@ public class Blitz {
         break;
     }
 
-    if (i != args.length - 2)
+    if (i != args.length - 2 && i != args.length - 1)
       usage(1);
-    String grammar = args[i];
-    String input = args[i + 1];
+    String grammar = i == args.length - 1
+        ? ixmlGrammar()
+        : args[i];
+    String input = args[args.length - 1];
 
     String grammarString = grammar.startsWith("!")
                          ? grammar.substring(1)
@@ -137,16 +143,23 @@ public class Blitz {
   }
 
   private static void usage(int exitCode) {
-    System.err.println("Usage: java -jar markup-blitz.jar [<OPTION>...] <GRAMMAR> <INPUT>");
+    String resource = Blitz.class.getResource("/" + Blitz.class.getName().replace('.',  '/') + ".class").toString();
+    final String origin = resource.startsWith("jar:")
+      ? "-jar " + resource.replaceFirst("^.*/([^/]+.jar)!.*$", "$1")
+      : Blitz.class.getName();
+
+    System.err.println("Usage: java " + origin + " [<OPTION>...] [<GRAMMAR>] <INPUT>");
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
     System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
+    System.err.println("                     When omitted, the ixml grammar will be used.");
     System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  <OPTION>:");
     System.err.println("    --indent         generate resulting xml with indentation.");
     System.err.println("    --trace          print parser trace.");
+    System.err.println("    --fail-on-error  throw an exception instead of returning an error document.");
     System.err.println("    --timing         print timing information.");
     System.err.println("    --verbose        print intermediate results.");
     System.err.println();
@@ -197,8 +210,21 @@ public class Blitz {
       return uri.toURL();
     }
     catch (Exception e) {
-      throw new BlitzException("failed to process URL: " + input, e);
+      throw new BlitzException("Failed to process URL: " + input, e);
     }
   }
 
+  /**
+   * Return the ixml grammar as a string.
+   *
+   * @return the ixml grammar
+   */
+  public static String ixmlGrammar() {
+    try {
+      return urlContent(Blitz.class.getClassLoader().getResource(IXML_GRAMMAR_RESOURCE));
+    }
+    catch (IOException e) {
+      throw new BlitzException("Failed to access ixml grammar resource " + IXML_GRAMMAR_RESOURCE, e);
+    }
+  }
 }
