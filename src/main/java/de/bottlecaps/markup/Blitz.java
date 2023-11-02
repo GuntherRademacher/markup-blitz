@@ -124,7 +124,7 @@ public class Blitz {
     if (i != args.length - 2 && i != args.length - 1)
       usage(1);
     String grammar = i == args.length - 1
-        ? ixmlGrammar()
+        ? "!" + ixmlGrammar()
         : args[i];
     String input = args[args.length - 1];
 
