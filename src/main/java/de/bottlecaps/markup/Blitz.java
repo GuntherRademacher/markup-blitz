@@ -111,6 +111,8 @@ public class Blitz {
         options.add(Option.INDENT);
       else if (args[i].equals("--trace"))
         options.add(Option.TRACE);
+      else if (args[i].equals("--fail-on-error"))
+        options.add(Option.FAIL_ON_ERROR);
       else if (args[i].equals("--timing"))
         options.add(Option.TIMING);
       else if (args[i].equals("--verbose"))
