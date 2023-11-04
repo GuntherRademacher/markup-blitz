@@ -1,4 +1,4 @@
-{version 2022-06-07}
+{version 2023-10-23}
          ixml: s, prolog?, rule++RS, s.
            -s: (whitespace; comment)*. {Optional spacing}
           -RS: (whitespace; comment)+. {Required spacing}
@@ -13,8 +13,13 @@
        -cchar: ~['{}'].
        prolog: version, s.
       version: -'ixml', RS, -'version', RS, string, s, -'.'.
-         rule: (mark, s)?, name, s, -['=:'], s, -alts, -'.'.
-        @mark: ['@^-'].
+         rule: naming, -['=:'], s, -alts, -'.'.
+      -naming: (mark, s)?, name, s, ('>', s, alias, s)?.
+        @name: namestart, namefollower*.
+   -namestart: ['_'; L].
+-namefollower: namestart;
+               ['-.·‿⁀'; Nd; Mn].
+       @alias: name.
          alts: alt++(-[';|'], s).
           alt: term**(-',', s).
         -term: factor;
@@ -28,12 +33,9 @@
       repeat0: factor, (-'*', s; -'**', s, sep).
       repeat1: factor, (-'+', s; -'++', s, sep).
        option: factor, -'?', s.
+        @mark: ['@^-'].
           sep: factor.
-  nonterminal: (mark, s)?, name, s.
-        @name: namestart, namefollower*.
-   -namestart: ['_'; L].
--namefollower: namestart;
-               ['-.·‿⁀'; Nd; Mn].
+  nonterminal: naming.
     -terminal: literal;
                charset.
       literal: quoted;
@@ -42,10 +44,10 @@
        @tmark: ['^-'].
       @string: -'"', dchar+, -'"';
                -'''', schar+, -''''.
-        dchar: ~['"'; #a; #d];
-               '"', -'"'. {all characters except line breaks; quotes must be doubled}
-        schar: ~[''''; #a; #d];
-               '''', -''''. {all characters except line breaks; quotes must be doubled}
+        dchar: ~['"'; Cc];
+               '"', -'"'. {all characters except controls; quotes must be doubled}
+        schar: ~[''''; Cc];
+               '''', -''''. {all characters except controls; quotes must be doubled}
      -encoded: (tmark, s)?, -'#', hex, s.
          @hex: ['0'-'9'; 'a'-'f'; 'A'-'F']+.
      -charset: inclusion;

@@ -703,6 +703,31 @@ public class BlitzTest extends TestBase {
     }
   }
 
+  @Test
+  public void testRename() {
+    Parser parser = generate(
+          "          expr: open, -arith, @close, -\";\".\n"
+        + "         @open: \"(\".\n"
+        + "         close: \")\".\n"
+        + "         arith: left, op, ^right>second.\n"
+        + "    left>first: operand.\n"
+        + "        -right: operand.\n"
+        + "      -operand: name; -number.\n"
+        + "         @name: [\"a\"-\"z\"].\n"
+        + "       @number: [\"0\"-\"9\"].\n"
+        + "           -op: sign.\n"
+        + "@sign>operator: \"+\"; \"-\".",
+        Option.INDENT, Option.VERBOSE);
+    String result = parser.parse(
+        "(a+1);");
+    assertEquals(
+          "<expr open=\"(\" operator=\"+\" close=\")\">\n"
+        + "   <first name=\"a\"/>\n"
+        + "   <second>1</second>\n"
+        + "</expr>",
+        result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(

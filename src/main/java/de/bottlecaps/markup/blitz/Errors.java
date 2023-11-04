@@ -11,7 +11,7 @@ public enum Errors {
   S08("An encoded character denotes a Unicode noncharacter or surrogate code point."),
   S09("The first character in a range has a code point value greater than the second character in the range."),
   S10("A Unicode character category is not defined in the Unicode specification."),
-  S11("A string contains a line break."),
+  S11("A string contains a C0 or C1 control character, e.g. a line break."),
   S12("The grammar does not conform to the implied or declared version."),
 
   D01("The parse tree produced by a grammar cannot be represented as well-formed XML."),

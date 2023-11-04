@@ -4,15 +4,21 @@ import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Nonterminal extends Term {
   private final Mark mark;
+  private final String alias;
   private final String name;
 
-  public Nonterminal(Mark mark, String name) {
+  public Nonterminal(Mark mark, String alias, String name) {
     this.mark = mark;
+    this.alias = alias;
     this.name = name;
   }
 
   public Mark getMark() {
     return mark;
+  }
+
+  public String getAlias() {
+    return alias;
   }
 
   public String getName() {
@@ -28,6 +34,12 @@ public class Nonterminal extends Term {
         : definition.getMark();
   }
 
+  public String getEffectiveAlias() {
+    return alias != null
+         ? alias
+         : grammar.getRule(name).getAlias();
+  }
+
   @Override
   public void accept(Visitor v) {
     v.visit(this);
@@ -35,13 +47,14 @@ public class Nonterminal extends Term {
 
   @Override
   public String toString() {
-    return mark + name;
+    return mark + name + (alias != null ? ">" + alias : "");
   }
 
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
+    result = prime * result + ((alias == null) ? 0 : alias.hashCode());
     result = prime * result + ((mark == null) ? 0 : mark.hashCode());
     result = prime * result + ((name == null) ? 0 : name.hashCode());
     return result;
@@ -54,6 +67,12 @@ public class Nonterminal extends Term {
     if (!(obj instanceof Nonterminal))
       return false;
     Nonterminal other = (Nonterminal) obj;
+    if (alias == null) {
+      if (other.alias != null)
+        return false;
+    }
+    else if (!alias.equals(other.alias))
+      return false;
     if (mark != other.mark)
       return false;
     if (name == null) {

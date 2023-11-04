@@ -12,16 +12,32 @@
                                                             <?java grammar = new Grammar(stringBuilder.toString());?>
                  s '.'
 
-         rule::= mark name                                  <?java
+         rule::= naming                                     <?java
                                                                alts.push(new Alts());
-                                                               grammar.addRule(new Rule(mark, nameBuilder.toString(), alts.peek()));
+                                                               grammar.addRule(new Rule(mark, alias, name, alts.peek()));
                                                             ?>
                                 s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
-         mark::= ( '@' s                                    <?java mark = Mark.ATTRIBUTE;?>
-                 | '^' s                                    <?java mark = Mark.NODE;?>
-                 | '-' s                                    <?java mark = Mark.DELETE;?>
-                 |                                          <?java mark = Mark.NONE;?>
-                 )
+       naming::= mark name ( s '>' s alias )?
+         name::=                                            <?java nameBuilder.setLength(0);?> 
+                 namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
+                           ( namefollower                   <?java nameBuilder.append(input.subSequence(b0, e0));?>
+                                          )*                <?java
+                                                              name = nameBuilder.toString();
+                                                              alias = null;
+                                                            ?>
+    namestart::= namestart^token
+               | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+               | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+               | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+               | 'V' | 'W' | 'X' | 'Y' | 'Z'
+               | 'i'
+ namefollower::= namefollower^token
+               | '.' | 'x'
+        alias::=                                            <?java savedName = name;?>
+                 name                                       <?java 
+                                                              alias = name;
+                                                              name = savedName;
+                                                            ?>
          alts::= alt ( ( ';' | '|' ) s alt )*
                                                             addAlt::= <?java alts.peek().addAlt(new Alt());?>
           alt::=                                            addAlt
@@ -62,38 +78,31 @@
                                                               Term term = alts.peek().last().removeLast();
                                                               alts.peek().last().addControl(Occurrence.ZERO_OR_ONE, term, null);
                                                             ?>
+         mark::= ( '@' s                                    <?java mark = Mark.ATTRIBUTE;?>
+                 | '^' s                                    <?java mark = Mark.NODE;?>
+                 | '-' s                                    <?java mark = Mark.DELETE;?>
+                 |                                          <?java mark = Mark.NONE;?>
+                 )
           sep::= factor
-  nonterminal::= mark name s                                <?java alts.peek().last().addNonterminal(mark, nameBuilder.toString());?>
-
-         name::=                                            <?java nameBuilder.setLength(0);?> 
-                 namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
-                           ( namefollower                   <?java nameBuilder.append(input.subSequence(b0, e0));?>
-                                          )*
-    namestart::= namestart^token
-               | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
-               | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
-               | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
-               | 'V' | 'W' | 'X' | 'Y' | 'Z'
-               | 'i'
- namefollower::= namefollower^token
-               | '.' | 'x'
-
+  nonterminal::= naming s                                   <?java alts.peek().last().addNonterminal(mark, alias, name);?>
      terminal::=                                            <?java deleted = false;?>
                  ( tmark s )?
                  ( literal
                  | charset                                  <?java alts.peek().last().addCharset(new Charset(deleted, exclusion, members));?>
                  )
                  s
-        tmark::= '^'
-               | '-'                                        <?java deleted = true;?>
       literal::= string                                     <?java alts.peek().last().addString(deleted, stringBuilder.toString());?>
                | hex                                        <?java alts.peek().last().addCodepoint(deleted, codepoint);?>
+        tmark::= '^'
+               | '-'                                        <?java deleted = true;?>
        string::=                                            <?java stringBuilder.setLength(0);?>
                  ( '"' ( ( dchar | '"' '"' )                <?java stringBuilder.append(input.subSequence(b0, e0));?>
                                              )+ '"'
                  | "'" ( ( schar | "'" "'" )                <?java stringBuilder.append(input.subSequence(b0, e0));?>
                                              )+ "'"
                  )
+        dchar::= dchar^token                                <?java validateStringChar(input.toString().codePointAt(b0));?>
+        schar::= schar^token                                <?java validateStringChar(input.toString().codePointAt(b0));?>
           hex::= '#'                                        <?java hexBegin = b0;?>
                  hexdigit+                                  <?java codepoint = input.subSequence(hexBegin, e0).toString();?>
 
@@ -124,17 +133,14 @@
                | hex
         class::= capital ( letter                           <?java clazz += input.subSequence(b0, e0);?>
                                   )?
-    insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
-                                | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
-                                      ) s
       capital::= ( 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
                  | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
                  | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
                  | 'V' | 'W' | 'X' | 'Y' | 'Z'
                  )                                          <?java clazz = input.subSequence(b0, e0).toString();?>
-
-        dchar::= dchar^token                                <?java if (0 <= "\r\n".indexOf(input.charAt(b0))) de.bottlecaps.markup.blitz.Errors.S11.thro();?>
-        schar::= schar^token                                <?java if (0 <= "\r\n".indexOf(input.charAt(b0))) de.bottlecaps.markup.blitz.Errors.S11.thro();?>
+    insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
+                                | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
+                                      ) s
 
 <?TOKENS?>
 
@@ -924,6 +930,26 @@
 
           eof::= $
 
+            .::= [#x1-#xd7ff]
+               | [#xe000-#xfdcf]
+               | [#xfdf0-#xfffd]
+               | [#x10000-#x1fffd]
+               | [#x20000-#x2fffd]
+               | [#x30000-#x3fffd]
+               | [#x40000-#x4fffd]
+               | [#x50000-#x5fffd]
+               | [#x60000-#x6fffd]
+               | [#x70000-#x7fffd]
+               | [#x80000-#x8fffd]
+               | [#x90000-#x9fffd]
+               | [#xa0000-#xafffd]
+               | [#xb0000-#xbfffd]
+               | [#xc0000-#xcfffd]
+               | [#xd0000-#xdfffd]
+               | [#xe0000-#xefffd]
+               | [#xf0000-#xffffd]
+               | [#x100000-#x10fffd]
+
 namestart^token    << 'A' 'B' 'C' 'D' 'E' 'F' 'G'
                       'H' 'I' 'J' 'K' 'L' 'M' 'N'
                       'O' 'P' 'Q' 'R' 'S' 'T' 'U'
@@ -943,6 +969,9 @@ namefollower^token << '.' 'x'
                                                                 private java.util.List<Member> members;
                                                                 private Grammar grammar;
                                                                 private Mark mark;
+                                                                private String name;
+                                                                private String alias;
+                                                                private String savedName;
                                                                 private java.util.Stack<Alts> alts = new java.util.Stack<>();
                                                                 private StringBuilder stringBuilder = new StringBuilder();
                                                                 private StringBuilder nameBuilder = new StringBuilder();
@@ -970,6 +999,12 @@ namefollower^token << '.' 'x'
                                                                   }
                                                                   de.bottlecaps.markup.blitz.transform.PostProcess.process(parser.grammar);
                                                                   return parser.grammar;
+                                                                }
+
+                                                                private static void validateStringChar(int codepoint) {
+                                                                  if (codepoint >= 0x00 && codepoint <= 0x1f
+                                                                   || codepoint >= 0x7f && codepoint <= 0x9f)
+                                                                   de.bottlecaps.markup.blitz.Errors.S11.thro("#" + Integer.toHexString(codepoint));
                                                                 }
                                                               }
                                                             ?>

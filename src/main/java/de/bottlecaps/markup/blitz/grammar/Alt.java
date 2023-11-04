@@ -31,8 +31,8 @@ public class Alt extends Node {
     return terms.remove(terms.size() - 1);
   }
 
-  public Alt addNonterminal(Mark mark, String name) {
-    terms.add(new Nonterminal(mark, name));
+  public Alt addNonterminal(Mark mark, String alias, String name) {
+    terms.add(new Nonterminal(mark, alias, name));
     return this;
   }
 

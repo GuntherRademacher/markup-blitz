@@ -127,6 +127,10 @@ public class Parser
       this.isAttribute = false;
     }
 
+    public void setName(String name) {
+      this.name = name;
+    }
+
     public void setAttribute(boolean isAttribute) {
       this.isAttribute = isAttribute;
     }
@@ -336,6 +340,7 @@ public class Parser
     @Override
     public void nonterminal(ReduceArgument reduceArgument) {
       Mark[] marks = reduceArgument.getMarks();
+      int[] aliases = reduceArgument.getAliases();
       int count = marks.length;
       top -= count;
       int from = top + 1;
@@ -345,8 +350,8 @@ public class Parser
 
       for (int i = from; i < to; ++i) {
         Symbol symbol = stack[i];
+        Mark mark = marks[i - top - 1];
         if (symbol instanceof Terminal) {
-          Mark mark = marks[i - top - 1];
           switch (mark) {
           case NODE:
             if (children == null)
@@ -362,20 +367,23 @@ public class Parser
           }
         }
         else {
-          Nonterminal nonterminal = (Nonterminal) symbol;
-          switch (marks[i - top - 1]) {
+          Nonterminal n = (Nonterminal) symbol;
+          int alias = aliases[i - top - 1];
+          if (alias >= 0)
+            n.setName(nonterminal[alias]);
+          switch (mark) {
           case ATTRIBUTE:
-            nonterminal.setAttribute(true);
+            n.setAttribute(true);
             // fall through
           case NODE:
             if (children == null)
               children = new ArrayList<>();
-            children.add(nonterminal);
+            children.add(n);
             break;
           case DELETE:
             if (children == null)
               children = new ArrayList<>();
-            children.addAll(Arrays.asList(nonterminal.children));
+            children.addAll(Arrays.asList(n.children));
             break;
           case NONE:
             throw new IllegalStateException();

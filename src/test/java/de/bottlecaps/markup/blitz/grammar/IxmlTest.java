@@ -9,14 +9,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.TestBase;
 
 public class IxmlTest extends TestBase {
-    private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/1.0/ixml.ixml";
+    private static final String invisiblexmlOrgUrl = "https://invisiblexml.org/current/ixml.ixml";
 
     private static final String githubJsonIxmlUrl = "https://raw.githubusercontent.com/GuntherRademacher/rex-parser-benchmark/main/src/main/resources/de/bottlecaps/rex/benchmark/json/parsers/xquery/json.ixml";
     private static final String jsonIxmlResource = "json.ixml";
@@ -46,7 +45,6 @@ public class IxmlTest extends TestBase {
     }
 
     @Test
-    @Disabled
     public void testGithubJsonIxmlUrl() throws Exception {
       String expectedResult = jsonIxmlResourceContent
           .replaceAll("^\\{[^\n]*\n", "")
@@ -55,7 +53,6 @@ public class IxmlTest extends TestBase {
     }
 
     @Test
-    @Disabled
     public void testInvisiblexmlOrgUrlContent() throws Exception {
       String expectedResult = ixmlIxmlResourceContent
           .replaceAll("^\\{[^\n]*\n", "")

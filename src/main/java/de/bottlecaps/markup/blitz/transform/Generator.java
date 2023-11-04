@@ -660,7 +660,7 @@ public class Generator {
 
   private void parserData() {
     terminalTransitionData = new Map2D(states.size(), terminal.length);
-    nonterminalTransitionData = new Map2D(states.size(), nonterminal.length);
+    nonterminalTransitionData = new Map2D(states.size(), grammar.getRules().size());
     nonterminalTransitionData.put(new Map2D.Index(0, 0), Action.code(Action.Type.ACCEPT, 0));
     states.keySet().forEach(State::parserData);
   }
@@ -671,21 +671,34 @@ public class Generator {
       int code = nonterminalCode.get(rule.getName());
       for (Alt alt : rule.getAlts().getAlts()) {
         List<Mark> marks = new ArrayList<>();
+        List<Integer> aliases = new ArrayList<>();
         int[] insertion = null;
         for (Term term : alt.getTerms()) {
-          if (term instanceof Insertion)
+          if (term instanceof Insertion) {
             insertion = (((Insertion) term).getCodepoints());
-          else if (term instanceof Nonterminal)
-            marks.add(((Nonterminal) term).getMark());
-          else if (! (term instanceof Charset))
+          }
+          else if (term instanceof Nonterminal) {
+            final Nonterminal n = (Nonterminal) term;
+            marks.add(n.getMark());
+            aliases.add(n.getAlias() == null || n.getName().equals(n.getAlias())
+                ? -1
+                : nonterminalCode.get(n.getAlias()));
+          }
+          else if (! (term instanceof Charset)) {
             throw new IllegalStateException();
-          else if (((Charset) term).isDeleted())
+          }
+          else if (((Charset) term).isDeleted()) {
             marks.add(Mark.DELETE);
-          else
+            aliases.add(-1);
+          }
+          else {
             marks.add(Mark.NODE);
+            aliases.add(-1);
+          }
         }
         ReduceArgument reduction = new ReduceArgument(
             marks.toArray(Mark[]::new),
+            aliases.stream().mapToInt(Integer::intValue).toArray(),
             insertion,
             code);
         int newId = reductionId.size();
@@ -702,8 +715,9 @@ public class Generator {
       nonterminalCode = new LinkedHashMap<>();
       terminalCode = new LinkedHashMap<>();
       terminalCodeByRange = new TreeMap<>();
-
-      nonterminalCode.put(g.getRules().keySet().iterator().next(), nonterminalCode.size());
+      g.getRules().keySet().forEach(name ->
+        nonterminalCode.put(name, nonterminalCode.size())
+      );
       terminalCode.put(Charset.END.getRangeSet(), terminalCode.size());
       super.visit(g);
       nonterminal = nonterminalCode.keySet().stream()
@@ -714,9 +728,9 @@ public class Generator {
 
     @Override
     public void visit(Nonterminal n) {
-      if (! nonterminalCode.containsKey(n.getName())) {
+      if (n.getAlias() != null && ! nonterminalCode.containsKey(n.getAlias())) {
         int code = nonterminalCode.size();
-        nonterminalCode.put(n.getName(), code);
+        nonterminalCode.put(n.getAlias(), code);
       }
     }
 
