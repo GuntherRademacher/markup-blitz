@@ -347,7 +347,7 @@ public class IxmlCommunityTest extends TestBase {
     catch (BlitzException e) {
       if (TestCase.Assertion.assert_not_a_grammar != testCase.getAssertion())
         throw new RuntimeException(
-            "Generating parer for test case with assertion " + testCase.getAssertion()
+            "Generating parser for test case with assertion " + testCase.getAssertion()
           + " failed with exception", e);
       Set<String> expected = testCase.getErrorCodes();
       if (! expected.isEmpty()
