@@ -39,8 +39,7 @@
                                                               name = savedName;
                                                             ?>
          alts::= alt ( ( ';' | '|' ) s alt )*
-                                                            addAlt::= <?java alts.peek().addAlt(new Alt());?>
-          alt::=                                            addAlt
+          alt::=                                            <?java alts.peek().addAlt(new Alt());?>
                  ( term ( ',' s term )* )?
          term::= factor
                | option
