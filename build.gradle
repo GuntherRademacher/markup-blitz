@@ -18,7 +18,7 @@ dependencies {
 testing {	
     suites {
         test {
-            useJUnitJupiter('5.10.0')
+            useJUnitJupiter('5.10.1')
         }
     }
 }
