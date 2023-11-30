@@ -190,7 +190,7 @@ public class Generator {
         ci.terminal,
         ci.forks,
         expectedTokens,
-        ci.grammar.getVersion() != null && ! ci.grammar.getVersion().equals("1.0"));
+        ci.grammar.isMismatch());
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {

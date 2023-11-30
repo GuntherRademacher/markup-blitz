@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -8,17 +9,63 @@ import de.bottlecaps.markup.blitz.Errors;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public final class Grammar extends Node {
-  private final String version;
+  private final String versionString;
   private final Map<String, Rule> rules;
   // metadata
   private Map<Term, String[]> additionalNames;
+  private final Version version;
+  private boolean mismatch;
 
-  public Grammar(String version) {
-    this.version = version;
-    this.rules = new LinkedHashMap<>();
+  public enum Version {
+    V1_0("1.0"),
+    V1_1("1.1"),
+    UNSPECIFIED("unspecified");
+
+    private String string;
+
+    Version(String string) {
+      this.string = string;
+    }
+
+    public boolean isAtLeast(Version other) {
+      return ordinal() >= other.ordinal();
+    }
+
+    @Override
+    public String toString() {
+      return string;
+    }
+  };
+
+  public Grammar(String versionString) {
+    this(versionString, null, false);
   }
 
-  public String getVersion() {
+  public Grammar(Grammar other) {
+    this(other.versionString, other.version, other.mismatch);
+  }
+
+  private Grammar(String versionString, Version version, boolean mismatch) {
+    this.versionString = versionString;
+    this.rules = new LinkedHashMap<>();
+    if (version != null) {
+      this.version = Version.UNSPECIFIED;
+      this.mismatch = mismatch;
+    }
+    else if (this.versionString == null) {
+      this.version = Version.UNSPECIFIED;
+      mismatch = false;
+    }
+    else {
+      this.version = Arrays.stream(Version.values())
+          .filter(v -> this.versionString.equals(v.toString()))
+          .findAny()
+          .orElse(Version.UNSPECIFIED);
+      this.mismatch = this.version == Version.UNSPECIFIED;
+    }
+  }
+
+  public Version getVersion() {
     return version;
   }
 
@@ -35,6 +82,10 @@ public final class Grammar extends Node {
 
   public Map<Term, String[]> getAdditionalNames() {
     return additionalNames;
+  }
+
+  public boolean isMismatch() {
+    return mismatch;
   }
 
   public void setAdditionalNames(Map<Term, String[]> additionalNames) {
@@ -55,7 +106,7 @@ public final class Grammar extends Node {
   @SuppressWarnings("unchecked")
   @Override
   public Grammar copy() {
-    Grammar grammar = new Grammar(version);
+    Grammar grammar = new Grammar(version.toString());
     for (Rule rule : rules.values())
       grammar.addRule(rule.copy());
     return grammar;
@@ -63,7 +114,7 @@ public final class Grammar extends Node {
 
   @Override
   public String toString() {
-    return (version == null ? "" : "ixml version '" + version.replace("'", "''") + "'\n")
+    return (version == null ? "" : "ixml version '" + versionString.replace("'", "''") + "'\n")
          + rules.values().stream().map(Rule::toString).collect(Collectors.joining("\n"));
   }
 

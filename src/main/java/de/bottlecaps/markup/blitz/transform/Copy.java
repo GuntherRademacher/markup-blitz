@@ -22,7 +22,7 @@ public class Copy extends Visitor {
   }
 
   public static Grammar process(Grammar g) {
-    Copy c = new Copy(new Grammar(g.getVersion()));
+    Copy c = new Copy(new Grammar(g));
     c.visit(g);
     PostProcess.process(c.copy);
     return  c.copy;

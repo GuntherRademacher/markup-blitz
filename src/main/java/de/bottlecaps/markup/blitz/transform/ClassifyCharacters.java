@@ -351,7 +351,7 @@ public class ClassifyCharacters extends Copy {
     }
 
     public static Grammar process(Grammar g, Map<RangeSet, Set<RangeSet>> charsetToCharclasses) {
-      ReplaceCharsets rc = new ReplaceCharsets(new Grammar(g.getVersion()));
+      ReplaceCharsets rc = new ReplaceCharsets(new Grammar(g));
       rc.charsetToCharclasses = charsetToCharclasses;
       rc.visit(g);
       rc.copy.setAdditionalNames(g.getAdditionalNames());

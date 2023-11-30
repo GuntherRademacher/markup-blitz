@@ -1,4 +1,4 @@
-         ixml::= s prolog?                                  <?java if (grammar == null) grammar = new Grammar(null);?>
+         ixml::= s prolog?                                  <?java if (grammar == null) grammar = new Grammar((String) null);?>
                            rule ( rs rule )* s eof
            rs::=                                            <?java de.bottlecaps.markup.blitz.Errors.S01.thro();?>
                | RS
@@ -33,7 +33,11 @@
                | 'i'
  namefollower::= namefollower^token
                | '.' | 'x'
-        alias::=                                            <?java savedName = name;?>
+        alias::=                                            <?java
+                                                              if (! grammar.getVersion().isAtLeast(Grammar.Version.V1_1))
+                                                                de.bottlecaps.markup.blitz.Errors.S12.thro(grammar.getVersion() + " does not support renaming");
+                                                              savedName = name;
+                                                            ?>
                  name                                       <?java 
                                                               alias = name;
                                                               name = savedName;
