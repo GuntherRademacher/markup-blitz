@@ -12,10 +12,16 @@ import java.util.TreeMap;
 
 import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
 
+/**
+ * Generate Unicode category map from UnicodeData.txt
+ * @see de.bottlecaps.markup.blitz.codepoints.UnicodeCategory#codepointsByCode
+ * @see <a href="http://www.unicode.org/Public/UNIDATA/UnicodeData.txt">UnicodeData.txt</a>
+ * @see <a href="https://unicode.org/versions/">Unicode versions</a>
+ * @see <a href="http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt">PropertyValueAliases</a>
+ */
 public class UnicodeCategoryMap {
 
   public static void main(String[] args) throws Exception {
-    // also see http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
     String unicodeDataUrl = "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt";
     Map<String, Builder> categoryMap = parseUnicodeData(unicodeDataUrl);
     for (Entry<String, Builder> entry : categoryMap.entrySet()) {
@@ -42,13 +48,13 @@ public class UnicodeCategoryMap {
             BufferedReader reader = new BufferedReader(inputStreamReader)) {
           for (String line; (line = reader.readLine()) != null;) {
             String[] fields = line.split(";");
-            int codepoint = Codepoint.of(fields[0]);
+            int codepoint = Codepoint.of(fields[0], false);
             String name = fields[1];
             String categoryName = fields[2];
             if (name.endsWith(", First>")) {
               String lastLine = reader.readLine();
               String[] lastFields = lastLine.split(";");
-              int lastCodepoint = Codepoint.of(lastFields[0]);
+              int lastCodepoint = Codepoint.of(lastFields[0], false);
               String lastName = lastFields[1];
               String lastCategoryName = lastFields[2];
               if (! lastName.endsWith(", Last>")
