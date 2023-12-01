@@ -114,7 +114,7 @@ public final class Grammar extends Node {
 
   @Override
   public String toString() {
-    return (version == null ? "" : "ixml version '" + versionString.replace("'", "''") + "'\n")
+    return (versionString == null ? "" : "ixml version '" + versionString.replace("'", "''") + "'\n")
          + rules.values().stream().map(Rule::toString).collect(Collectors.joining("\n"));
   }
 
