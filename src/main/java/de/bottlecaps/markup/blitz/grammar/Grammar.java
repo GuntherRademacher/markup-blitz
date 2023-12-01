@@ -106,7 +106,7 @@ public final class Grammar extends Node {
   @SuppressWarnings("unchecked")
   @Override
   public Grammar copy() {
-    Grammar grammar = new Grammar(version.toString());
+    Grammar grammar = new Grammar(this);
     for (Rule rule : rules.values())
       grammar.addRule(rule.copy());
     return grammar;

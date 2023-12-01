@@ -1215,7 +1215,8 @@ public class TestToREx extends TestBase {
         + "                | [#x2b73a-#x2b73f]\n"
         + "                | [#x2b81e-#x2b81f]\n"
         + "                | [#x2cea2-#x2ceaf]\n"
-        + "                | [#x2ebe1-#x2f7ff]\n"
+        + "                | [#x2ebe1-#x2ebef]\n"
+        + "                | [#x2ee5e-#x2f7ff]\n"
         + "                | [#x2fa1e-#x2fffd]\n"
         + "                | [#x3134b-#x3134f]\n"
         + "                | [#x323b0-#x3fffd]\n"
@@ -1901,6 +1902,7 @@ public class TestToREx extends TestBase {
         + "                | [#x2b740-#x2b81d]\n"
         + "                | [#x2b820-#x2cea1]\n"
         + "                | [#x2ceb0-#x2ebe0]\n"
+        + "                | [#x2ebf0-#x2ee5d]\n"
         + "                | [#x2f800-#x2fa1d]\n"
         + "                | [#x30000-#x3134a]\n"
         + "                | [#x31350-#x323af]\n",
