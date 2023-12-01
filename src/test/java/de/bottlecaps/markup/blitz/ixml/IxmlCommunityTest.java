@@ -92,8 +92,13 @@ public class IxmlCommunityTest extends TestBase {
     misc_041_060("tests/misc/misc-041-060-catalog.xml"),
     parse("tests/parse/test-catalog.xml"),
     performance_a_star_doubling("tests/performance/a-star/doubling-test-catalog.xml"),
+    performance_a_star_linear("tests/performance/a-star/linear-test-catalog.xml"),
     performance_a_star_tenfold("tests/performance/a-star/tenfold-test-catalog.xml"),
     performance_evens_and_odds("tests/performance/evens-and-odds/test-catalog.xml"),
+    performance_mod_357("tests/performance/mod357/test-catalog.xml"),
+    performance_oberon("tests/performance/oberon/test-catalog.xml"),
+    performance_spec_grammar("tests/performance/ixml-spec-grammar/test-catalog.xml"),
+    performance_xpath("tests/performance/xpath/test-catalog.xml"),
     syntax_catalog_as_grammar("tests/syntax/catalog-as-grammar-tests.xml"),
     syntax_catalog_as_instance_tests_ixml("tests/syntax/catalog-as-instance-tests-ixml.xml"),
     syntax_catalog_as_instance_tests_xml("tests/syntax/catalog-as-instance-tests-xml.xml"),
@@ -208,6 +213,12 @@ public class IxmlCommunityTest extends TestBase {
   }
 
   @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.performance_a_star_linear)
+  public void performance_a_star_linear(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.performance_a_star_tenfold)
   public void performance_a_star_tenfold(String name, TestCase testCase) {
     test(testCase);
@@ -216,6 +227,30 @@ public class IxmlCommunityTest extends TestBase {
   @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.performance_evens_and_odds)
   public void performance_evens_and_odds(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.performance_mod_357)
+  public void performance_mod_357(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.performance_oberon)
+  public void performance_oberon(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.performance_spec_grammar)
+  public void performance_spec_grammar(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.performance_xpath)
+  public void performance_xpath(String name, TestCase testCase) {
     test(testCase);
   }
 
@@ -262,7 +297,7 @@ public class IxmlCommunityTest extends TestBase {
       assertTrue(testCatalogs.contains(catalog.path), "Missing test-catalog: " + catalog);
       testCatalogs.remove(catalog.path);
     }
-    assertFalse(testCatalogs.isEmpty(), "No addtional test catalogs found, not even the empty ones.");
+    assertFalse(testCatalogs.isEmpty(), "No additional test catalogs found, not even the empty ones.");
     List<TestCase> testCases = testCatalogs.stream()
       .map(catalogPath -> new TestCatalog(ixmlFolder, catalogPath))
       .filter(catalog -> ! catalog.getTestCases().isEmpty())
@@ -336,6 +371,7 @@ public class IxmlCommunityTest extends TestBase {
           SkipReason skipReason = skipReasons.get(testCase.getName());
           return "Test was skipped: [" + skipReason + "] " + skipReason.detail;
         });
+    assumeTrue(null == testCase.getSkippedBecause(), () -> testCase.getSkippedBecause());
 
     String input = testCase.getInput();
     Parser parser;
