@@ -47,7 +47,7 @@ or this one on Windows:
 gradlew test
 ```
 
-Markup Blitz comes with a few tests, but it also passes all of the 3091 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command.
+Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command.
 
 # Markup Blitz in Eclipse
 

@@ -58,6 +58,7 @@ public class IxmlCommunityTest extends TestBase {
   private static enum SkipReason {
     SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes too long to be run with each execution."),
     TOO_MUCH_MEMORY("Test runs successfully, but uses too much memory to be run with each execution."),
+    DEFUNCT("Test case is not correct in ixml project."),
     ;
     private String detail;
 
@@ -68,14 +69,53 @@ public class IxmlCommunityTest extends TestBase {
 
   private static Map<String, SkipReason> skipReasons = new HashMap<>();
   static {
+    // long execution time
     skipReasons.put("Evens and odds/evens-odds/P-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
     skipReasons.put("Evens and odds/evens-odds/N-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
     skipReasons.put("Evens and odds/evens-odds/P-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
     skipReasons.put("Evens and odds/evens-odds/N-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
+
+    // lots of memory needed
     skipReasons.put("Evens and odds/evens-odds/P-16384", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
+
+    // waiting for https://github.com/invisibleXML/ixml/pull/227
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-06", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-07", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-08", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-09", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-10", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-ORP", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORS", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORB", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORG", SkipReason.DEFUNCT);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORP", SkipReason.DEFUNCT);
+
+    // waiting for https://github.com/invisibleXML/ixml/pull/226
+    skipReasons.put("xpath-performance-tests/XPath/xsltforms-3", SkipReason.DEFUNCT);
+
+    // waiting for https://github.com/invisibleXML/ixml/pull/225
+    skipReasons.put("Spec grammar tests/spec-grammar/XPath", SkipReason.DEFUNCT);
+
+    // waiting for https://github.com/invisibleXML/ixml/pull/224
+    skipReasons.put("mod357/mod357/mod357-0000004", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000008", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000016", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000032", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000064", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000128", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000256", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0000512", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0001024", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0002048", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0004096", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0008192", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0016384", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0032768", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357/mod357-0065536", SkipReason.DEFUNCT);
+    skipReasons.put("mod357/mod357", SkipReason.DEFUNCT);
   }
 
   public static enum Catalog {
