@@ -120,9 +120,9 @@ public class UnicodeCategory {
 
   /**
    * Generated from UnicodeData.txt on 2023-11-30T17:10:00+01:00
+   * by de.bottlecaps.markup.blitz.codepoints.UnicodeCategoryMap#main
    *
    * @see <a href="http://www.unicode.org/Public/UNIDATA/UnicodeData.txt">UnicodeData.txt</a>
-   * @see de.bottlecaps.markup.blitz.codepoints.UnicodeCategoryMap#main
    */
   public static final Map<String, RangeSet> codepointsByCode = new ConcurrentHashMap<>();
   static {
