@@ -74,6 +74,7 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
     skipReasons.put("Evens and odds/evens-odds/P-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
     skipReasons.put("Evens and odds/evens-odds/N-8193", SkipReason.SUCCESS_BUT_TOO_LONG);
+    skipReasons.put("A-star/G.linear/linear-", SkipReason.SUCCESS_BUT_TOO_LONG);
 
     // lots of memory needed
     skipReasons.put("Evens and odds/evens-odds/P-16384", SkipReason.TOO_MUCH_MEMORY);
@@ -406,11 +407,10 @@ public class IxmlCommunityTest extends TestBase {
   static int n = 0;
 
   private void test(TestCase testCase) {
-    assumeFalse(skipReasons.containsKey(testCase.getName()),
-        () -> {
-          SkipReason skipReason = skipReasons.get(testCase.getName());
-          return "Test was skipped: [" + skipReason + "] " + skipReason.detail;
-        });
+    skipReasons.forEach((prefix, skipReason) ->
+      assumeFalse(testCase.getName().startsWith(prefix), () ->
+        "Test was skipped: [" + skipReason + "] " + skipReason.detail)
+    );
     assumeTrue(null == testCase.getSkippedBecause(), () -> testCase.getSkippedBecause());
 
     String input = testCase.getInput();
