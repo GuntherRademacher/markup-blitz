@@ -1,5 +1,6 @@
 package de.bottlecaps.markup;
 
+import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -110,16 +111,16 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = generate(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE), Option.INDENT); // , Option.TIMING);
-    String xml = parser.parse(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE));
-    assertEquals(resourceContent("ixml.xml"), xml);
+    Parser parser = generate(Blitz.ixmlGrammar(), Option.INDENT); // , Option.TIMING);
+    String xml = parser.parse(Blitz.ixmlGrammar());
+    assertEquals(normalizeEol(resourceContent("ixml.xml")), xml);
   }
 
   @Test
   public void testJson() {
     Parser parser = generate(resourceContent("json.ixml")); // , Option.TIMING, Option.TRACE, Option.VERBOSE);
     String result = parser.parse(resourceContent("sample.json"));
-    String expectedResult = resourceContent("sample.json.xml");
+    String expectedResult = normalizeEol(resourceContent("sample.json.xml"));
     assertEquals(expectedResult, result);
   }
 
@@ -127,14 +128,14 @@ public class BlitzTest extends TestBase {
   public void testAddress() {
     Parser parser = generate(resourceContent("address.ixml"));
     String xml = parser.parse(resourceContent("address.input"), Option.INDENT);
-    assertEquals(resourceContent("address.xml"), xml);
+    assertEquals(normalizeEol(resourceContent("address.xml")), xml);
   }
 
   @Test
   public void testArith() {
     Parser parser = generate(resourceContent("arith.ixml"));
     String result = parser.parse(resourceContent("arith.input"), Option.INDENT);
-    assertEquals(resourceContent("arith.xml"), result);
+    assertEquals(normalizeEol(resourceContent("arith.xml")), result);
   }
 
   @Test
@@ -717,7 +718,7 @@ public class BlitzTest extends TestBase {
         + "       @number: [\"0\"-\"9\"].\n"
         + "           -op: sign.\n"
         + "@sign>operator: \"+\"; \"-\".",
-        Option.INDENT, Option.VERBOSE);
+        Option.INDENT); // , Option.VERBOSE);
     String result = parser.parse(
         "(a+1);");
     assertEquals(

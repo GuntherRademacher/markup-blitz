@@ -1,5 +1,6 @@
 package de.bottlecaps.markup.blitz.grammar;
 
+import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,8 +26,8 @@ public class IxmlTest extends TestBase {
 
     @BeforeAll
     public static void beforeAll() throws URISyntaxException, IOException {
-      ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
-      jsonIxmlResourceContent = resourceContent(jsonIxmlResource);
+      ixmlIxmlResourceContent = normalizeEol(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE));
+      jsonIxmlResourceContent = normalizeEol(resourceContent(jsonIxmlResource));
     }
 
     @Test

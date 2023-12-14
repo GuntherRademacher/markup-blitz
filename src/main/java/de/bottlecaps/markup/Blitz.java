@@ -185,10 +185,22 @@ public class Blitz {
     try (InputStream in = url.openStream()) {
       input = new String(in.readAllBytes(), StandardCharsets.UTF_8);
     }
+    return input.replaceFirst("^\uFEFF", "");
+  }
+
+  /**
+   * Normalize line endings to be just LF, similar to XML
+   * <a href="https://www.w3.org/TR/2008/REC-xml-20081126/#sec-line-ends">End-of-Line Handling</a>.
+   * This is necessary when reading resources from this project, when it was checked out on Windows
+   * using the default Git configuration (which is core.autocrlf=true on Windows).
+   *
+   * @param input string to be normalized
+   * @return the normalized string
+   */
+  public static String normalizeEol(String input) {
     return input
         .replace("\r\n", "\n")
-        .replace("\r", "\n")
-        .replaceFirst("^\uFEFF", "");
+        .replace("\r", "\n");
   }
 
   /**
@@ -223,7 +235,8 @@ public class Blitz {
    */
   public static String ixmlGrammar() {
     try {
-      return urlContent(Blitz.class.getClassLoader().getResource(IXML_GRAMMAR_RESOURCE));
+      String grammar = urlContent(Blitz.class.getClassLoader().getResource(IXML_GRAMMAR_RESOURCE));
+      return normalizeEol(grammar);
     }
     catch (IOException e) {
       throw new BlitzException("Failed to access ixml grammar resource " + IXML_GRAMMAR_RESOURCE, e);
