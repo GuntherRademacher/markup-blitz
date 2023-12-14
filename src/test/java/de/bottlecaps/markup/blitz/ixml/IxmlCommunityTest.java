@@ -82,18 +82,6 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.TOO_MUCH_MEMORY);
 
-    // waiting for https://github.com/invisibleXML/ixml/pull/227
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-06", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-07", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-08", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-09", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-10", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-ORP", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORS", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORB", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORG", SkipReason.DEFUNCT);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORP", SkipReason.DEFUNCT);
-
     // waiting for https://github.com/invisibleXML/ixml/pull/226
     skipReasons.put("xpath-performance-tests/XPath/xsltforms-3", SkipReason.DEFUNCT);
 
