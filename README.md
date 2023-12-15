@@ -47,7 +47,13 @@ or this one on Windows:
 gradlew test
 ```
 
-Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command.
+Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command. Executing these tests takes a few minutes, however some of the performance tests are skipped by default, because they require significantly more time or memory. For running those as well, set property `ALL_TESTS` to `true`:
+
+```sh
+./gradlew test -PALL_TESTS=true
+```
+
+(on Windows omit the leading `./`). Note that this causes JVM arguments to be set for a heap size of 16GB and a stack size of 4MB. Execution may take more than half an hour in this case.
 
 # Markup Blitz in Eclipse
 

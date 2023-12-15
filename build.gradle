@@ -43,7 +43,11 @@ jar {
 }
 
 test {
-    systemProperty 'ALL_TESTS', System.getProperty('ALL_TESTS')
+    if (project.hasProperty('ALL_TESTS') && project.ALL_TESTS.toBoolean()) {
+        maxHeapSize = '16g'
+        systemProperty 'ALL_TESTS', 'true'
+        jvmArgs('-Xss4m')
+    }
 }
 
 ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
