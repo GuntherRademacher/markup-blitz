@@ -35,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,6 +55,7 @@ public class IxmlCommunityTest extends TestBase {
   private static File ixmlFolder;
   private static XMLInputFactory xmlInputFactory;
   private static Parser ixmlParser;
+  private static Boolean allTests;
 
   private static enum SkipReason {
     SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes too long to be run with each execution."),
@@ -139,10 +141,11 @@ public class IxmlCommunityTest extends TestBase {
     private Catalog(String path) {
       this.path = path;
     }
-  };
+  }
 
   @BeforeAll
   public static void beforeAll() throws Exception {
+    allTests = Boolean.parseBoolean(System.getProperty("ALL_TESTS"));
     xmlInputFactory = XMLInputFactory.newInstance();
     String thisPath = "/" + IxmlCommunityTest.class.getName().replace(".", "/") + ".class";
     URL thisResource = IxmlCommunityTest.class.getResource(thisPath);
@@ -395,10 +398,11 @@ public class IxmlCommunityTest extends TestBase {
   static int n = 0;
 
   private void test(TestCase testCase) {
-    skipReasons.forEach((prefix, skipReason) ->
-      assumeFalse(testCase.getName().startsWith(prefix), () ->
-        "Test was skipped: [" + skipReason + "] " + skipReason.detail)
-    );
+    skipReasons.forEach((prefix, skipReason) -> {
+      boolean runTest = ! testCase.getName().startsWith(prefix)
+          || allTests && skipReason != SkipReason.DEFUNCT;
+      assumeTrue(runTest, () -> "Test was skipped: [" + skipReason + "] " + skipReason.detail);
+    });
     assumeTrue(null == testCase.getSkippedBecause(), () -> testCase.getSkippedBecause());
 
     String input = testCase.getInput();

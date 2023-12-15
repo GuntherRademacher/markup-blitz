@@ -42,6 +42,10 @@ jar {
     }
 }
 
+test {
+    systemProperty 'ALL_TESTS', System.getProperty('ALL_TESTS')
+}
+
 ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
 
 void configureMetadata(MavenPublication mavenPublication) {
