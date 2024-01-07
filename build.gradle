@@ -69,7 +69,7 @@ void configureMetadata(MavenPublication mavenPublication) {
                     name = 'Gunther Rademacher'
                     email = 'grd@gmx.net'
                     organization = 'Gunther Rademacher'
-                    organizationUrl = 'https://bottlecaps.de/'
+                    organizationUrl = 'https://www.bottlecaps.de/'
                 }
             }
             scm {

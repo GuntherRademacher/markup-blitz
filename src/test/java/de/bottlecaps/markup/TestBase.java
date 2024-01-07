@@ -43,7 +43,7 @@ public class TestBase {
   }
 
   protected static String resourceContent(String resource) {
-    return cachedUrlContent(BlitzTest.class.getClassLoader().getResource(resource));
+    return cachedUrlContent(TestBase.class.getClassLoader().getResource(resource));
   }
 
   protected static String fileContent(File file) {

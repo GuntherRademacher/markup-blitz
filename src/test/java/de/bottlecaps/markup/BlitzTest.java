@@ -675,7 +675,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testErrorDocument() {
-    Parser parser = Blitz.generate("S: 'a'.");
+    Parser parser = generate("S: 'a'.");
     String result = parser.parse("b");
     assertEquals(
           "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
@@ -688,7 +688,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testFailOnError() {
-    Parser parser = Blitz.generate("S: 'a'.", Option.FAIL_ON_ERROR);
+    Parser parser = generate("S: 'a'.", Option.FAIL_ON_ERROR);
     try {
       String result = parser.parse("b");
       Assertions.fail("Parse did not fail, returned: \n" + result);

@@ -157,7 +157,7 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [logo]: markup-blitz.svg "Markup Blitz"
 [BaseX]: https://basex.org/
 [ASL]: http://www.apache.org/licenses/LICENSE-2.0
-[REx]: https://bottlecaps.de/rex
+[REx]: https://www.bottlecaps.de/rex
 [LALR]: https://en.wikipedia.org/wiki/LALR_parser
 [GLR]: https://en.wikipedia.org/wiki/GLR_parser
 [rex-parser-benchmark]: https://github.com/GuntherRademacher/rex-parser-benchmark
