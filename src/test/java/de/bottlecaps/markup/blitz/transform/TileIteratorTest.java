@@ -1,3 +1,5 @@
+// Copyright (c) 2023-2024 Gunther Rademacher. Provided under the Apache 2 License.
+
 package de.bottlecaps.markup.blitz.transform;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;

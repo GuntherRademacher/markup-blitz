@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.2-SNAPSHOT'
+version = '1.2'
 group = 'de.bottlecaps'
 
 repositories {
