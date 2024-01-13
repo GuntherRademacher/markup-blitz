@@ -31,7 +31,7 @@ or this one, on Windows
 gradlew clean jar
 ```
 
-This creates `build/libs/markup-blitz-1.2.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
+This creates `build/libs/markup-blitz-1.3-SNAPSHOT.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
 
 # Running tests
 
@@ -68,7 +68,7 @@ Markup Blitz is available on [Maven Central][maven-central] with groupId `de.bot
 Markup Blitz can be run from command line to process some input according to an Invisible XML grammar:
 
 ```txt
-Usage: java -jar markup-blitz-1.2.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
+Usage: java -jar markup-blitz-1.3-SNAPSHOT.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
 
@@ -170,4 +170,4 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [fnInvisibleXml]: https://qt4cg.org/pr/791/xpath-functions-40/Overview.html#func-invisible-xml
 [BXFiddle]: https://bxfiddle.cloud.basexgmbh.de/
 [markup-blitz]: https://github.com/GuntherRademacher/markup-blitz
-[maven-central]: https://github.com/GuntherRademacher/markup-blitz
+[maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz
