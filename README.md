@@ -31,7 +31,7 @@ or this one, on Windows
 gradlew clean jar
 ```
 
-This creates `build/libs/markup-blitz` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
+This creates `build/libs/markup-blitz.jar` which serves the Markup Blitz API. It is also usable as an executable jar for standalone execution.
 
 # Running tests
 
