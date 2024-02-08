@@ -69,11 +69,13 @@ public class TestCase extends TestBase{
               switch (childNode.getLocalName()) {
               case "vxml-grammar":
                 isXmlGrammar = true;
+                // fall through
               case "ixml-grammar":
                 grammar = childNode.getTextContent();
                 break;
               case "vxml-grammar-ref":
                 isXmlGrammar = true;
+                // fall through
               case "ixml-grammar-ref":
                 Node href = childNode.getAttributes().getNamedItemNS(null, "href");
                 assertNotNull(href, "no href attribute in test-string-ref of test case " + name);

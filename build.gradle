@@ -15,10 +15,10 @@ dependencies {
     testImplementation 'org.basex:basex:10.7'
 }
 
-testing {	
+testing {
     suites {
         test {
-            useJUnitJupiter('5.10.1')
+            useJUnitJupiter('5.10.2')
         }
     }
 }
@@ -30,16 +30,20 @@ java {
 
 tasks.withType(JavaCompile) {
     options.fork = true
-    options.forkOptions.jvmArgs += ['-Xss4m']
+    options.forkOptions.jvmArgs << '-Xss4m'
+    options.forkOptions.jvmArgs << '-Duser.language=en'
     options.encoding = "UTF-8"
 }
 
 jar {
     manifest {
         attributes(
-            'Main-Class': 'de.bottlecaps.markup.Blitz'
+            'Main-Class': 'de.bottlecaps.markup.Blitz',
+            'Implementation-Version': archiveVersion,
+            'Build-Timestamp': new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date())
         )
     }
+    archiveFileName = "${project.name}.jar"
 }
 
 test {

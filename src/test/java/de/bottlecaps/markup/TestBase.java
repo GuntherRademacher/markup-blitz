@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Set;
 
 import javax.xml.stream.XMLInputFactory;
@@ -39,13 +40,16 @@ public class TestBase {
         return Blitz.urlContent(u);
       }
       catch (IOException e) {
-        throw new RuntimeException(e.getMessage(), e);
+        throw new RuntimeException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
       }
     });
   }
 
   protected static String resourceContent(String resource) {
-    return cachedUrlContent(TestBase.class.getClassLoader().getResource(resource));
+    final URL resourceUrl = TestBase.class.getClassLoader().getResource(resource);
+    if (resourceUrl != null)
+      return cachedUrlContent(resourceUrl);
+    throw new MissingResourceException("missing resource: " + resource, TestBase.class.getName(), resource);
   }
 
   protected static String fileContent(File file) {
@@ -53,7 +57,7 @@ public class TestBase {
       return cachedUrlContent(file.toURI().toURL());
     }
     catch (MalformedURLException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      throw new RuntimeException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
     }
   }
 
@@ -108,7 +112,7 @@ public class TestBase {
       return (boolean) proc.value().toJava();
     }
     catch (IOException | QueryException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      throw new RuntimeException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
     }
   }
 

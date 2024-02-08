@@ -12,7 +12,7 @@ public class Range implements Comparable<Range> {
     this.firstCodepoint = firstCodepoint;
     this.lastCodepoint = lastCodepoint;
     if (firstCodepoint > lastCodepoint)
-      Errors.S09.thro(this.toString());
+      Errors.S09.thro(toString(firstCodepoint, lastCodepoint));
   }
 
   public Range(int codepoint) {
@@ -38,6 +38,10 @@ public class Range implements Comparable<Range> {
 
   @Override
   public String toString() {
+    return toString(firstCodepoint, lastCodepoint);
+  }
+
+  private static String toString(int firstCodepoint, int lastCodepoint) {
     return firstCodepoint == lastCodepoint
         ? Codepoint.toString(firstCodepoint)
         : Codepoint.toString(firstCodepoint) + "-" + Codepoint.toString(lastCodepoint);

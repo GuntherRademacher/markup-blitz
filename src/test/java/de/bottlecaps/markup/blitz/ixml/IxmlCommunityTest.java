@@ -159,7 +159,7 @@ public class IxmlCommunityTest extends TestBase {
                    + "/"
                    + ixmlProject;
 
-    ixmlFolder = new File(new URL(ixmlUrl).toURI());
+    ixmlFolder = new File(new URI(ixmlUrl));
     assumeTrue(ixmlFolder.exists(),
           IxmlCommunityTest.class.getSimpleName() + " was not executed,\n"
         + "because this folder does not exist: " + ixmlFolder + "\n"

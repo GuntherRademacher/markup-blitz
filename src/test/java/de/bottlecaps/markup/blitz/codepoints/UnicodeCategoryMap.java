@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,7 +37,7 @@ public class UnicodeCategoryMap {
   private static Map<String, RangeSet.Builder> parseUnicodeData(String url) throws Exception {
     Map<String, RangeSet.Builder> categoryMap = new TreeMap<>();
 
-    URL unicodeDataURL = new URL(url);
+    URL unicodeDataURL = new URI(url).toURL();
     HttpURLConnection connection = (HttpURLConnection) unicodeDataURL.openConnection();
     connection.setRequestMethod("GET");
     connection.connect();

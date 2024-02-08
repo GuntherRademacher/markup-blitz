@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -63,8 +63,10 @@ public class IxmlTest extends TestBase {
       testUrlContent(invisiblexmlOrgUrl, Blitz.IXML_GRAMMAR_RESOURCE, expectedResult);
     }
 
-    private void testUrlContent(String url, String resource, String expectedResult) throws MalformedURLException {
-      Grammar grammar = Ixml.parse(cachedUrlContent(new URL(url)));
+    private void testUrlContent(String url, String resource, String expectedResult)
+        throws MalformedURLException, URISyntaxException {
+
+      Grammar grammar = Ixml.parse(cachedUrlContent(new URI(url).toURL()));
       assertEquals(expectedResult, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
     }
 }
