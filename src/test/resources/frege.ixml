@@ -1,3 +1,9 @@
+{ Grammar and test cases taken from 
+  Sperberg-McQueen, C. M. “Keyboarding Frege's concept writing: A case study in the use of invisible
+  XML.” Presented at Balisage: The Markup Conference 2023, Washington, DC, July 31 - August 4, 2023.
+  In Proceedings of Balisage: The Markup Conference 2023. Balisage Series on Markup Technologies,
+  vol. 28 (2023). https://doi.org/10.4242/BalisageVol28.Sperberg-McQueen01 }
+
 { Gottlob Frege, Begriffsschrift, eine der arithmetisschen
 nachgebildete Formelsprache des reinen Denkens (Halle a.S.:
 Verlag von Louis Nebert, 1879. }

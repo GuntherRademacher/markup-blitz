@@ -1,0 +1,1846 @@
+<ixml>
+   <comment> Grammar and test cases taken from &#xD;
+  Sperberg-McQueen, C. M. “Keyboarding Frege's concept writing: A case study in the use of invisible&#xD;
+  XML.” Presented at Balisage: The Markup Conference 2023, Washington, DC, July 31 - August 4, 2023.&#xD;
+  In Proceedings of Balisage: The Markup Conference 2023. Balisage Series on Markup Technologies,&#xD;
+  vol. 28 (2023). https://doi.org/10.4242/BalisageVol28.Sperberg-McQueen01 </comment>
+   <comment> Gottlob Frege, Begriffsschrift, eine der arithmetisschen&#xD;
+nachgebildete Formelsprache des reinen Denkens (Halle a.S.:&#xD;
+Verlag von Louis Nebert, 1879. </comment>
+   <comment> Revisions:&#xD;
+  2023-04-18 : CMSMcQ : allow page breaks in inferences.&#xD;
+  2023-04-05 : CMSMcQ : move on to Part III.&#xD;
+  2023-04-05 : CMSMcQ : move on to Part II.&#xD;
+                        . allow braces for parenthesized propositions&#xD;
+                        . support formula numbers&#xD;
+                        . unhide conclusion/formula&#xD;
+                        . allow tables of substitutions&#xD;
+  2023-04-01 : CMSMcQ : add italic caps (*F)&#xD;
+  2023-03-31 : CMSMcQ : tweaks (make functor an element)&#xD;
+  2023-03-29 : CMSMcQ : tweaks (hiding, Greek, Fraktur)&#xD;
+  2023-03-28 : CMSMcQ : everything in Part I is now here&#xD;
+  2023-03-27 : CMSMcQ : started again from scratch&#xD;
+  2020-06-23 : CMSMcQ : made standalone file&#xD;
+  2020-06-03/---06:  CMSMcQ : sketched a grammar in work log&#xD;
+</comment>
+   <comment> Preliminary notes:&#xD;
+&#xD;
+  The grammar works mostly in the order of Frege's presentation, and&#xD;
+  top down.&#xD;
+&#xD;
+  We follow the basic principle that no nonterminal except the&#xD;
+  outermost one starts or ends with whitespace.&#xD;
+</comment>
+   <comment> ****************************************************************&#xD;
+  Top level&#xD;
+  ****************************************************************</comment>
+   <comment> What we are transcribing -- an inline expression that needs special&#xD;
+  attention, or a typographic display -- can be any of several things:&#xD;
+&#xD;
+  - a formula expressing a proposition, either with an affirmative&#xD;
+    judgement (nonterminal 'yes') or without (nonterminal 'maybe'),&#xD;
+&#xD;
+  - the declaration of a new notation, or &#xD;
+&#xD;
+  - an inference (one or more premises, and one or more inference &#xD;
+    steps, or&#xD;
+&#xD;
+  - a basic formula without a content stroke (perhaps not strictly&#xD;
+    to be regarded as a full formula in Frege's notation, but in&#xD;
+    need of transcription).&#xD;
+&#xD;
+  If there are other kinds of expressions, I've missed them so far.&#xD;
+&#xD;
+  After any of these, we allow an optional end-mark.  &#xD;
+&#xD;
+</comment>
+   <rule mark="-" name="begriffsschrift">
+      <alt>
+         <nonterminal name="s"/>
+         <alts>
+            <alt>
+               <nonterminal name="formula"/>
+            </alt>
+            <alt>
+               <nonterminal name="inference"/>
+            </alt>
+            <alt>
+               <nonterminal name="notation-declaration"/>
+            </alt>
+            <alt>
+               <nonterminal name="mention"/>
+            </alt>
+         </alts>
+         <nonterminal name="s"/>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="end-mark"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+      </alt>
+   </rule>
+   <comment> ****************************************************************&#xD;
+  Formulas&#xD;
+  ****************************************************************</comment>
+   <comment> A formula is one sequence of basic statements with a logical&#xD;
+  superstructure given by content strokes, conditional strokes,&#xD;
+  negation strokes, and possibly an affirmation stroke.&#xD;
+&#xD;
+  As mentioned in §6 but not shown in detail until §14, formulas can&#xD;
+  be numbered (with a label on the right), and when used as a premise&#xD;
+  they can be (and in practice always are) numbered with a label on&#xD;
+  the left, to show where the formula was first given. Call these&#xD;
+  right-labels and left-labels.&#xD;
+&#xD;
+  Only one label ever appears, but we don't bother trying to enforce&#xD;
+  that.  If two labels appear, there will be two @n attributes and the&#xD;
+  parse will blow up on its own.&#xD;
+&#xD;
+  For that matter, only judgements carry numbers, so unless the&#xD;
+  formula's child is 'yes', it won't in practice get a right-label.&#xD;
+  But that, too, we will not trouble to enforce.&#xD;
+&#xD;
+</comment>
+   <rule name="formula">
+      <alt>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="left-label"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+         <alts>
+            <alt>
+               <nonterminal name="yes"/>
+            </alt>
+            <alt>
+               <nonterminal name="maybe"/>
+            </alt>
+         </alts>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="s"/>
+                  <nonterminal name="right-label"/>
+               </alt>
+            </alts>
+         </option>
+      </alt>
+   </rule>
+   <comment> A right-label of the form (=nn) assigns a number nn to this formula;&#xD;
+  it occurs when the formula is a theorem. </comment>
+   <rule mark="-" name="right-label">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="="/>
+         <nonterminal name="s"/>
+         <nonterminal mark="@" name="n"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> A left-label of the form (nn=) identifies a fully written out&#xD;
+  premise of an inference as a theorem given earlier.  Left-labels do&#xD;
+  not appear in Frege's presentation of inference steps in Part I, but&#xD;
+  they appear on all fully written out premises in Parts II and III.&#xD;
+&#xD;
+  Note that left-hand labels may have tables of substitutions, which&#xD;
+  are defined below with inferences.&#xD;
+&#xD;
+</comment>
+   <rule mark="-" name="left-label">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <nonterminal mark="@" name="n"/>
+         <nonterminal name="s"/>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="substitutions"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+         <literal tmark="-" string="="/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> In left- and right-labels, the number becomes an @n attribute on the&#xD;
+  formula. </comment>
+   <rule mark="@" name="n">
+      <alt>
+         <repeat1>
+            <inclusion>
+               <member from="0" to="9"/>
+            </inclusion>
+         </repeat1>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Propositions&#xD;
+</comment>
+   <comment> §2 The content stroke (Inhaltsstrich). </comment>
+   <rule name="maybe">
+      <alt>
+         <option>
+            <alts>
+               <alt>
+                  <literal tmark="-" string="maybe"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+         <nonterminal name="proposition"/>
+      </alt>
+   </rule>
+   <comment> §2 The judgement stroke (Urtheilsstrich). </comment>
+   <rule name="yes">
+      <alt>
+         <literal tmark="-" string="yes"/>
+         <nonterminal name="s"/>
+         <nonterminal name="proposition"/>
+      </alt>
+   </rule>
+   <comment> Frege speaks of content which may or may not be affirmed; in effect,&#xD;
+  we would speak of sentences to which a truth value may be attached.&#xD;
+  I think the usual word for this is 'proposition'.&#xD;
+&#xD;
+  A proposition can be a basic proposition (leaf), or a conditional&#xD;
+  expression, or a negation, or a universal quantification.  For&#xD;
+  technical reasons (operator priorities, associativity) we&#xD;
+  distinguish the set of all propositions from the set of 'all&#xD;
+  propositions except unparenthesized conditionals'.&#xD;
+&#xD;
+</comment>
+   <rule mark="-" name="prop-no-ifs">
+      <alt>
+         <nonterminal name="leaf"/>
+      </alt>
+      <alt>
+         <nonterminal name="not"/>
+      </alt>
+      <alt>
+         <nonterminal name="univ"/>
+      </alt>
+      <alt>
+         <nonterminal name="analytic"/>
+      </alt>
+      <alt>
+         <nonterminal name="parenthesized-prop"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="proposition">
+      <alt>
+         <nonterminal name="prop-no-ifs"/>
+      </alt>
+      <alt>
+         <nonterminal name="conditional"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="parenthesized-prop">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <nonterminal name="proposition"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="{"/>
+         <nonterminal name="s"/>
+         <nonterminal name="proposition"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="}"/>
+      </alt>
+   </rule>
+   <comment> The simplest binding story I can tell is roughly this:&#xD;
+&#xD;
+  The 'if' operator is left-associative.  So "a if b if c" = ((a if b)&#xD;
+  if c).&#xD;
+&#xD;
+  This allows a very simple transcription of formulas with all&#xD;
+  branches on the top or main content stroke, and allows the simple&#xD;
+  rule that parentheses are needed only when the graphic structure is&#xD;
+  more complicated (for conditionals not on the main content stroke&#xD;
+  and not on the main content stroke for the sub-expression), or&#xD;
+  equivalently: parens are needed for conditionals in the antecedent,&#xD;
+  but not for conditionals in the consequent.&#xD;
+&#xD;
+  A very few glances at the book show that when conditionals nest,&#xD;
+  they nest in the consequent far more often than in the antecedent,&#xD;
+  so this rule coincidentally reduces the need for parentheses.&#xD;
+&#xD;
+  For negation and universal quantification, right-association is&#xD;
+  natural.  But should "not Alpha if Beta" mean ((not Alpha) if Beta)&#xD;
+  or (not (Alpha if Beta))?  By analogy with other languages, negation&#xD;
+  is made to bind very tightly: we choose the first interpretation.&#xD;
+  So we say that the argument of 'not' cannot contain an&#xD;
+  unparenthesized 'if'.&#xD;
+&#xD;
+  For universal quantification, the opposite rule is tempting: unless&#xD;
+  otherwise indicated by parentheses, assume that the expression is in&#xD;
+  prenex normal form.  That would make "all ka satisfy P(ka) if b"&#xD;
+  parse as (all ka satisfy (P(ka) if b)), instead of ((all ka satisfy&#xD;
+  P(ka)) if b).&#xD;
+&#xD;
+  But I think the rule will be simpler to remember if both unary&#xD;
+  operators obey the same rule: no unparenthesized conditionals in the&#xD;
+  argument.&#xD;
+&#xD;
+  So "all ka satisy P(ka) if b" should parse as a conditional with a&#xD;
+  universal quantification in the consequent, not as a universal&#xD;
+  quantification over a conditional.  Preliminary counts suggest that&#xD;
+  the quantification may be slightly more common than the conditional,&#xD;
+  but both forms are common, as are cases where a quantifier governs a&#xD;
+  conditional which contains a quantifier.&#xD;
+&#xD;
+  So we want a non-terminal that means "any proposition except&#xD;
+  a conditional'.  That is prop-no-ifs.&#xD;
+&#xD;
+</comment>
+   <comment> ................................................................&#xD;
+  Basic propositions (leaves)&#xD;
+</comment>
+   <comment> The expressions on the right side of a Begriffsschrift formula&#xD;
+  are basic propositions.  We call them leaves, because they are&#xD;
+  leaves on the parse tree.&#xD;
+&#xD;
+  They are not necessarily atomic by most lights, but they are&#xD;
+  normally free of negation, conjunction, and other purely logical&#xD;
+  operators.&#xD;
+&#xD;
+  For the moment, we distinguish four kinds of basic propositions:&#xD;
+  expressions (variables and function applications), equivalence&#xD;
+  statements, introduction of new notation (a special kind of&#xD;
+  equivalence statement), and jargon (material in some format&#xD;
+  not defined here).&#xD;
+&#xD;
+</comment>
+   <rule name="leaf">
+      <alt>
+         <nonterminal name="expr"/>
+      </alt>
+      <alt>
+         <nonterminal name="equivalence"/>
+      </alt>
+      <alt>
+         <nonterminal name="jargon"/>
+      </alt>
+      <alt>
+         <nonterminal mark="-" name="new-notation"/>
+      </alt>
+      <alt>
+         <nonterminal name="ad-hoc"/>
+      </alt>
+   </rule>
+   <comment> In addition, we define one ad-hoc kind of leaf, to handle&#xD;
+  some otherwise ill-formed formulas.&#xD;
+</comment>
+   <rule name="ad-hoc">
+      <alt>
+         <nonterminal name="nil"/>
+      </alt>
+   </rule>
+   <rule name="nil">
+      <alt>
+         <literal tmark="-" string="nil"/>
+      </alt>
+   </rule>
+   <comment> A 'mention' formula is a basic statement with no content stroke.&#xD;
+  The name reflects the fact that these formulas appear (§10, §24)&#xD;
+  as objects of metalinguistic discussion, typically in sentences&#xD;
+  of the form "[formula] denotes ..." or "the abbreviated form &#xD;
+  [formula] can always be replaced by the full form [formula]".&#xD;
+&#xD;
+  The keyword 'expr' used here is intended to suggest reading a&#xD;
+  formula like "expr a" as "the expression 'a'".&#xD;
+</comment>
+   <rule name="mention">
+      <alt>
+         <literal tmark="-" string="expr"/>
+         <nonterminal name="s"/>
+         <nonterminal name="leaf"/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Expressions &#xD;
+</comment>
+   <comment> Expressions are used for basic statements, function arguments,&#xD;
+  either side of an equivalence, and the left-hand side of a&#xD;
+  substitution.&#xD;
+&#xD;
+  The most frequent form of expression in the book is a single-letter&#xD;
+  variable: upper-case Greek, lower-case italic Roman, later also&#xD;
+  lower-case Greek and upper-case italic.  These are often used as&#xD;
+  basic statements; today we would call them propositional variables.&#xD;
+&#xD;
+  Bound variables are syntactically distinct from variables with&#xD;
+  implicit universal quantification (bound variables are Fraktur,&#xD;
+  others italic). We carry that distinction into the syntax here, just &#xD;
+  in case we ever need it.  &#xD;
+&#xD;
+  Bound variables do not, as far as I know, ever show up as basic&#xD;
+  statements, but I don't see anything in Frege's explanations that&#xD;
+  would rule it out.  He says explicitly that a variable explicitly&#xD;
+  bound at the root of the expression (a bound-var) is equivalent to&#xD;
+  an implicitly bound variable (an instance of italic or Italic).&#xD;
+&#xD;
+  Some basic statements have internal structure which we need to&#xD;
+  capture (either to be able to process the logical formulas usefully&#xD;
+  or for purely typographic reasons).  So what we call leaves are not,&#xD;
+  strictly speaking, always leaves in OUR parse tree.&#xD;
+&#xD;
+</comment>
+   <rule mark="-" name="expr">
+      <alt>
+         <nonterminal name="var"/>
+      </alt>
+      <alt>
+         <nonterminal name="bound-var"/>
+      </alt>
+      <alt>
+         <nonterminal name="fa"/>
+      </alt>
+   </rule>
+   <comment> Details of variables are banished down to the 'Low-level details'&#xD;
+  section at the bottom of the grammar. </comment>
+   <rule name="var">
+      <alt>
+         <nonterminal name="Greek-letter"/>
+      </alt>
+      <alt>
+         <nonterminal name="greek-letter"/>
+      </alt>
+      <alt>
+         <nonterminal name="italic"/>
+      </alt>
+      <alt>
+         <nonterminal name="Italic"/>
+      </alt>
+   </rule>
+   <comment> In the general case, the leaf expressions may come from any notation&#xD;
+  developed by a particular discipline.  To allow such formulas&#xD;
+  without changing this grammar, we provide a sort of escape hatch,&#xD;
+  using brackets ⦑ ... ⦒ (U+2991, U+2992, left / right angle bracket&#xD;
+  with dot).  For brevity, we'll call the specialized language inside&#xD;
+  the brackets 'jargon'. </comment>
+   <rule name="jargon">
+      <alt>
+         <literal hex="2991"/>
+         <repeat0>
+            <exclusion>
+               <member hex="2991"/>
+               <member hex="2992"/>
+            </exclusion>
+         </repeat0>
+         <literal hex="2992"/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Conditionals&#xD;
+</comment>
+   <comment> §5 Conditionals are left-associative.  Since the consequent is&#xD;
+  always given first and the antecedent second, we could hide those&#xD;
+  nonterminals and just rely on the position of the child to know its&#xD;
+  role.  But it feels slightly less error-prone to keep the names;&#xD;
+  it makes a transform that shifts into conventional order easier&#xD;
+  to write and read.&#xD;
+&#xD;
+</comment>
+   <rule name="conditional">
+      <alt>
+         <nonterminal name="consequent"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="if"/>
+         <nonterminal name="s"/>
+         <nonterminal name="antecedent"/>
+      </alt>
+   </rule>
+   <rule name="consequent">
+      <alt>
+         <nonterminal name="proposition"/>
+      </alt>
+   </rule>
+   <rule name="antecedent">
+      <alt>
+         <nonterminal name="prop-no-ifs"/>
+      </alt>
+   </rule>
+   <comment> ****************************************************************&#xD;
+  Inferences&#xD;
+  ****************************************************************</comment>
+   <comment> §6 Inferences.  In the simple case we have multiple premises&#xD;
+  and a conclusion.  More often, one of the premises is omitted.&#xD;
+  (Oddly, never both premises, I do not understand why not.)&#xD;
+&#xD;
+  There may be more than one inference step.&#xD;
+</comment>
+   <rule name="inference">
+      <alt>
+         <nonterminal name="premises"/>
+         <nonterminal name="sep"/>
+         <repeat1>
+            <nonterminal name="infstep"/>
+            <sep>
+               <nonterminal name="sep"/>
+            </sep>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule mark="-" name="premises">
+      <alt>
+         <literal tmark="-" string="we have:"/>
+         <nonterminal name="s"/>
+         <repeat1>
+            <nonterminal name="premise"/>
+            <sep>
+               <alts>
+                  <alt>
+                     <nonterminal name="sep"/>
+                     <literal tmark="-" string="and:"/>
+                     <nonterminal name="s"/>
+                  </alt>
+               </alts>
+            </sep>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule name="premise">
+      <alt>
+         <nonterminal name="formula"/>
+      </alt>
+   </rule>
+   <rule name="conclusion">
+      <alt>
+         <nonterminal name="formula"/>
+      </alt>
+   </rule>
+   <comment> An inference step may also refer to further premises by number.&#xD;
+  These are NOT given explicitly, only be reference.</comment>
+   <rule name="infstep">
+      <alt>
+         <literal tmark="-" string="from which"/>
+         <nonterminal name="s"/>
+         <option>
+            <alts>
+               <alt>
+                  <literal tmark="-" string="via"/>
+                  <nonterminal name="s"/>
+                  <nonterminal name="premise-references"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+         <literal tmark="-" string="we infer:"/>
+         <nonterminal name="s"/>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="pagebreak"/>
+                  <nonterminal name="s"/>
+               </alt>
+            </alts>
+         </option>
+         <nonterminal name="conclusion"/>
+      </alt>
+   </rule>
+   <comment> Page breaks sometimes occur after the inference line;&#xD;
+we encode them just after the "we infer:", but n.b.&#xD;
+the replacement table for the premise ref is printed after&#xD;
+the page break, though transcribed before it. </comment>
+   <rule name="pagebreak">
+      <alt>
+         <literal tmark="-" string="|p"/>
+         <nonterminal name="s"/>
+         <nonterminal mark="@" name="n"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="|"/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  References to premises&#xD;
+</comment>
+   <comment> References may refer to the first premise of Frege's modus ponens&#xD;
+  (the conditional) or to the second (the hypothesis).  I'll call&#xD;
+  these 'con' for the conditional and 'ant' for the hypothesis or&#xD;
+  antecedent.  If there are standard names, I don't know what they&#xD;
+  are.&#xD;
+&#xD;
+  As far as I can see, 102 is the only formula that actually uses&#xD;
+  multiple premises by reference in a single inference step.  It uses&#xD;
+  no substitutions.  In Frege's book, then, a premise reference&#xD;
+  can EITHER have multiple references without substitutions or a &#xD;
+  single reference with optional substitutions.&#xD;
+&#xD;
+</comment>
+   <rule mark="-" name="premise-references">
+      <alt>
+         <nonterminal name="premise-ref-con"/>
+      </alt>
+      <alt>
+         <nonterminal name="premise-ref-ant"/>
+      </alt>
+   </rule>
+   <rule name="premise-ref-con">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <repeat1>
+            <nonterminal name="ref"/>
+            <sep>
+               <nonterminal name="comma"/>
+            </sep>
+         </repeat1>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="):"/>
+      </alt>
+   </rule>
+   <rule name="premise-ref-ant">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <repeat1>
+            <nonterminal name="ref"/>
+            <sep>
+               <nonterminal name="comma"/>
+            </sep>
+         </repeat1>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")::"/>
+      </alt>
+   </rule>
+   <rule name="ref">
+      <alt>
+         <repeat1>
+            <literal string="X"/>
+         </repeat1>
+      </alt>
+      <alt>
+         <nonterminal mark="@" name="n"/>
+         <option>
+            <alts>
+               <alt>
+                  <nonterminal name="s"/>
+                  <nonterminal name="substitutions"/>
+               </alt>
+            </alts>
+         </option>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Substitution tables&#xD;
+</comment>
+   <comment> For premise references, a substitution table may be specified. </comment>
+   <rule name="substitutions">
+      <alt>
+         <literal tmark="-" string="["/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="replacing"/>
+         <nonterminal name="s"/>
+         <repeat1>
+            <nonterminal name="subst"/>
+            <sep>
+               <nonterminal name="sep"/>
+            </sep>
+         </repeat1>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="]"/>
+      </alt>
+   </rule>
+   <comment> A single substitution has left- and right-hand sides separated by&#xD;
+  'with'.  To make substitution tables easier to read and write, each&#xD;
+  substitution must be enclosed in parentheses.  I don't know good&#xD;
+  names for the two parts, so we are stuck with awkward ones.&#xD;
+&#xD;
+    - oldterm, newterm&#xD;
+    - del, ins / delete, insert / delendum, inserendum&#xD;
+    - tollendum, ponendum / take, give / pull, push&#xD;
+&#xD;
+  The Biblical echoes dispose me right now to take and give.  One hand&#xD;
+  gives and the other takes away.&#xD;
+&#xD;
+</comment>
+   <rule name="subst">
+      <alt>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <nonterminal name="taken"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="with"/>
+         <nonterminal name="s"/>
+         <nonterminal name="given"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> A quick survey suggests that 'taken' is always an expression&#xD;
+  (variable or function application), while 'given' can be arbitrarily&#xD;
+  complex. </comment>
+   <rule name="taken">
+      <alt>
+         <nonterminal name="expr"/>
+      </alt>
+   </rule>
+   <rule name="given">
+      <alt>
+         <nonterminal name="proposition"/>
+      </alt>
+   </rule>
+   <comment> ****************************************************************&#xD;
+  Formulas (cont'd)&#xD;
+  ****************************************************************</comment>
+   <comment> ................................................................&#xD;
+  Negation&#xD;
+</comment>
+   <comment> §7 Negation </comment>
+   <rule name="not">
+      <alt>
+         <literal tmark="-" string="not"/>
+         <nonterminal name="s"/>
+         <nonterminal name="prop-no-ifs"/>
+      </alt>
+   </rule>
+   <comment> §8 Equivalence sign.  &#xD;
+&#xD;
+  It looks as if we are going to need to parse the leaves.  Frege&#xD;
+  refers to "Inhaltsgleichheit", which for the moment I am going to&#xD;
+  render as "equivalence".  In Part I, at least, the only use of&#xD;
+  equivalences is for variable symbols.  But in Part II, things get&#xD;
+  more complicated.  So we allow equivalences between parenthesized &#xD;
+  propositions on the left and variables on the right.  In this case,&#xD;
+  Frege normally brackets the entire equivalence.&#xD;
+&#xD;
+  For now (we are at the end of Part II), we do not allow&#xD;
+  parenthesized propositions in the right hand side, and we require&#xD;
+  outer brackets.  Both of those restrictions feel a little ad-hoc,&#xD;
+  so they may be relaxed later.&#xD;
+&#xD;
+</comment>
+   <rule name="equivalence">
+      <alt>
+         <nonterminal name="simple-equiv"/>
+      </alt>
+      <alt>
+         <nonterminal name="bracketed-equiv"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="simple-equiv">
+      <alt>
+         <nonterminal name="expr"/>
+         <nonterminal name="s"/>
+         <nonterminal name="equiv-sign"/>
+         <nonterminal name="s"/>
+         <nonterminal name="expr"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="bracketed-equiv">
+      <alt>
+         <literal tmark="-" string="["/>
+         <nonterminal name="s"/>
+         <nonterminal name="parenthesized-prop"/>
+         <nonterminal name="s"/>
+         <nonterminal name="equiv-sign"/>
+         <nonterminal name="s"/>
+         <nonterminal name="expr"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="]"/>
+      </alt>
+   </rule>
+   <rule name="equiv-sign">
+      <alt>
+         <literal tmark="-" string="≡"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="equiv"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="EQUIV"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="=="/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Functions and argument / function application&#xD;
+</comment>
+   <comment> §10 Function and argument.&#xD;
+&#xD;
+  Frege does not distinguish, in notation or prose, between what I&#xD;
+  would call "function" and "function application".  The nonterminal&#xD;
+  'fa' can be thought of as an abbreviation for 'function application'&#xD;
+  or for 'function and argument'.  &#xD;
+&#xD;
+</comment>
+   <rule name="fa">
+      <alt>
+         <nonterminal name="functor"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <nonterminal name="arguments"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> It would feel natural to make functor an attribute, but I want the&#xD;
+  distinction between var and bound-var to be visible, to simplify the&#xD;
+  task of deciding whether to italicize or not. </comment>
+   <rule name="functor">
+      <alt>
+         <nonterminal name="var"/>
+      </alt>
+      <alt>
+         <nonterminal name="bound-var"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="arguments">
+      <alt>
+         <repeat1>
+            <nonterminal name="arg"/>
+            <sep>
+               <nonterminal name="comma"/>
+            </sep>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule name="arg">
+      <alt>
+         <nonterminal name="expr"/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Universal quantification&#xD;
+</comment>
+   <comment> §11  Universal quantification. </comment>
+   <rule name="univ">
+      <alt>
+         <literal tmark="-" string="all"/>
+         <nonterminal name="s"/>
+         <nonterminal mark="@" name="bound-var"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string="satisfy"/>
+         <nonterminal name="s"/>
+         <nonterminal name="prop-no-ifs"/>
+      </alt>
+   </rule>
+   <rule name="bound-var">
+      <alt>
+         <nonterminal name="fraktur"/>
+      </alt>
+      <alt>
+         <nonterminal name="Fraktur"/>
+      </alt>
+   </rule>
+   <comment> ****************************************************************&#xD;
+  Notations&#xD;
+  ****************************************************************</comment>
+   <comment> §24 Elaboration of equivalence as a method of introducing a new&#xD;
+  notation.  In §8, Frege mentions that one reason for specifying an&#xD;
+  equivalence is to establish a short form to abbreviate what would&#xD;
+  otherwise be tedious to write out.  In §24 he gives more details. &#xD;
+&#xD;
+  1 In place of the affirmation stroke there is a double stroke, which&#xD;
+    Frege explains as signaling a double nature of the statement&#xD;
+    (synthetic on first appearance, analytic in reappearances).&#xD;
+&#xD;
+  2 The proposition is an equivalence, with standard notation on the&#xD;
+    left and a new notation on the right.&#xD;
+&#xD;
+  For purposes of data capture, we transcribe the new notation as a&#xD;
+  function application, in which the functor is a multi-character&#xD;
+  name.  For the notations used by Frege in the book, we define&#xD;
+  specific functors here.  As a gesture towards generality, we also&#xD;
+  define a generic new-notation syntax (functors beginning with&#xD;
+  underscore).&#xD;
+&#xD;
+</comment>
+   <rule name="notation-declaration">
+      <alt>
+         <literal tmark="-" string="let us denote:"/>
+         <nonterminal name="s"/>
+         <nonterminal name="proposition"/>
+         <nonterminal name="sep"/>
+         <literal tmark="-" string="with the expression:"/>
+         <nonterminal name="s"/>
+         <nonterminal name="new-notation"/>
+         <nonterminal name="s"/>
+         <option>
+            <nonterminal name="right-label"/>
+         </option>
+      </alt>
+   </rule>
+   <comment> When the notation declaration is actually used as a premise, it&#xD;
+  becomes an analytic statement and a normal kind of proposition. It&#xD;
+  will never be a conclusion or an axiom, only a premise. </comment>
+   <rule name="analytic">
+      <alt>
+         <nonterminal name="proposition"/>
+         <nonterminal name="s"/>
+         <nonterminal name="equiv-sign"/>
+         <nonterminal name="s"/>
+         <nonterminal name="new-notation"/>
+      </alt>
+   </rule>
+   <comment> The new notation can be known or unknown. </comment>
+   <rule name="new-notation">
+      <alt>
+         <nonterminal name="known-notation"/>
+      </alt>
+      <alt>
+         <nonterminal name="unknown-notation"/>
+      </alt>
+   </rule>
+   <comment> A known notation is one Frege introduces. (We know it because we&#xD;
+  have read ahead in the book.)  We define these here for &#xD;
+  convenience: better syntax checking, and the opportunity for&#xD;
+  custom XML representations. </comment>
+   <rule mark="-" name="known-notation">
+      <alt>
+         <nonterminal name="is-inherited"/>
+      </alt>
+      <alt>
+         <nonterminal name="follows"/>
+      </alt>
+      <alt>
+         <nonterminal name="follows-or-self"/>
+      </alt>
+      <alt>
+         <nonterminal name="unambiguous"/>
+      </alt>
+   </rule>
+   <comment> The first notation Frege defines means 'property F is &#xD;
+  inherited in the f-series', where F is a unary predicate&#xD;
+  and f is a binary predicate such that f(x, y) means &#xD;
+  that applying procedure f to x yields y.  He also wants &#xD;
+  two dummy arguments with Greek letters, and from his&#xD;
+  examples it appears that a fifth argument is needed in &#xD;
+  order to specify the order of the two greek arguments in&#xD;
+  the call to f().  It's possible that there are typos in&#xD;
+  those examples, since the order of arguments never&#xD;
+  varies otherwise. </comment>
+   <rule name="is-inherited">
+      <alt>
+         <literal tmark="-" string="inherited("/>
+         <nonterminal name="s"/>
+         <nonterminal name="property"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="function"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="order-argument"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> Frege generally uses an uppercase letter for the property, and a&#xD;
+  lowercase letter for the function. But variations occur. </comment>
+   <rule name="property">
+      <alt>
+         <nonterminal name="Italic"/>
+      </alt>
+      <alt>
+         <nonterminal name="Greek-letter"/>
+      </alt>
+      <alt>
+         <nonterminal name="Fraktur"/>
+      </alt>
+      <alt>
+         <nonterminal name="conditional"/>
+      </alt>
+      <alt>
+         <nonterminal name="follows"/>
+      </alt>
+      <alt>
+         <nonterminal name="follows-or-self"/>
+      </alt>
+   </rule>
+   <rule name="function">
+      <alt>
+         <nonterminal name="var"/>
+      </alt>
+   </rule>
+   <comment> Frege explains that the small greek letters are dummy variables (but&#xD;
+  I cannot say I understand the explanation very well. </comment>
+   <rule name="dummy-var">
+      <alt>
+         <nonterminal name="greek-letter"/>
+      </alt>
+   </rule>
+   <comment> If a greek letter is used for the order argument, it means that that&#xD;
+  is the letter given first in the call to the binary function; the&#xD;
+  other dummy variable comes second.  If a number is used, it means&#xD;
+  the first/second dummy variable is given first.  </comment>
+   <rule name="order-argument">
+      <alt>
+         <nonterminal name="greek-letter"/>
+      </alt>
+      <alt>
+         <literal string="1"/>
+      </alt>
+      <alt>
+         <literal string="2"/>
+      </alt>
+   </rule>
+   <comment> Frege describes the second notation as meaning 'y follows x in the&#xD;
+f-series'.  &#xD;
+&#xD;
+I think it may be clearer to say that (x,y) is in the transitive&#xD;
+closure of relation f.  The conventional English term for the relation&#xD;
+defined here is apparently to say that y is the f-ancestor of x, which&#xD;
+like "ancestral" uses Frege's genealogical metaphor backwards.  </comment>
+   <rule name="follows">
+      <alt>
+         <literal tmark="-" string="follows-in-seq("/>
+         <nonterminal name="s"/>
+         <alts>
+            <alt>
+               <nonterminal name="var"/>
+            </alt>
+            <alt>
+               <nonterminal mark="^" name="bound-var"/>
+            </alt>
+         </alts>
+         <nonterminal name="comma"/>
+         <alts>
+            <alt>
+               <nonterminal name="var"/>
+            </alt>
+            <alt>
+               <nonterminal mark="^" name="bound-var"/>
+            </alt>
+         </alts>
+         <nonterminal name="comma"/>
+         <nonterminal name="function"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> The second notation means 'y follows x in the f-series, or is the&#xD;
+  same as y'. </comment>
+   <rule name="follows-or-self">
+      <alt>
+         <literal tmark="-" string="follows-or-same("/>
+         <nonterminal name="s"/>
+         <alts>
+            <alt>
+               <nonterminal name="var"/>
+            </alt>
+            <alt>
+               <nonterminal mark="^" name="bound-var"/>
+            </alt>
+         </alts>
+         <nonterminal name="comma"/>
+         <alts>
+            <alt>
+               <nonterminal name="var"/>
+            </alt>
+            <alt>
+               <nonterminal mark="^" name="bound-var"/>
+            </alt>
+         </alts>
+         <nonterminal name="comma"/>
+         <nonterminal name="function"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> The fourth notation means 'f is unambiguous', i.e. in modern terms f&#xD;
+  is a function. </comment>
+   <rule name="unambiguous">
+      <alt>
+         <literal tmark="-" string="unambiguous("/>
+         <nonterminal name="s"/>
+         <nonterminal name="function"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="comma"/>
+         <nonterminal name="dummy-var"/>
+         <nonterminal name="s"/>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <comment> As a nod towards generality, and to enable this grammar to&#xD;
+  be used with other new notations, we also define a rule &#xD;
+  for 'unknown' notations. For historical reasons, I'll use&#xD;
+  the name 'blort' to denote an unknown notation.&#xD;
+</comment>
+   <rule mark="-" name="unknown-notation">
+      <alt>
+         <nonterminal name="blort"/>
+      </alt>
+   </rule>
+   <comment> In kB, a blort is written like a function call in a conventional&#xD;
+  programming language: it has (what looks like) a function name and&#xD;
+  then zero or more arguments wrapped as a group in parentheses.  The&#xD;
+  one constraint is that the function name has to begin with an&#xD;
+  underscore.  For example: _foo(arg1, arg2, delta, alpha).&#xD;
+&#xD;
+  For now we allow all the same kinds of arguments as in 'fa', and&#xD;
+  also lower-case Greek.  If more is needed, rework will be needed.&#xD;
+&#xD;
+</comment>
+   <rule name="blort">
+      <alt>
+         <nonterminal mark="@" name="name"/>
+         <literal tmark="-" string="("/>
+         <nonterminal name="s"/>
+         <repeat0>
+            <nonterminal name="blarg"/>
+            <sep>
+               <nonterminal name="comma"/>
+            </sep>
+         </repeat0>
+         <literal tmark="-" string=")"/>
+      </alt>
+   </rule>
+   <rule mark="@" name="name">
+      <alt>
+         <literal string="_"/>
+         <repeat1>
+            <inclusion>
+               <member code="L"/>
+               <member code="N"/>
+               <member string="-_."/>
+            </inclusion>
+         </repeat1>
+      </alt>
+   </rule>
+   <comment> A blarg is (of course) an argument for a blort. Frege uses small&#xD;
+  Greek letters for these, as well as italics. I don't think he uses&#xD;
+  any upper-case Greek, but I won't rule it out. </comment>
+   <rule name="blarg">
+      <alt>
+         <nonterminal name="expr"/>
+      </alt>
+      <alt>
+         <nonterminal name="dummy-var"/>
+      </alt>
+   </rule>
+   <comment> ****************************************************************&#xD;
+  Low-level details&#xD;
+  ****************************************************************</comment>
+   <comment> ................................................................&#xD;
+  Whitespace, separators&#xD;
+</comment>
+   <comment> Whitespace is allowed in many places </comment>
+   <rule mark="-" name="s">
+      <alt>
+         <repeat0>
+            <nonterminal name="whitespace"/>
+         </repeat0>
+      </alt>
+   </rule>
+   <rule mark="-" name="ss">
+      <alt>
+         <repeat1>
+            <nonterminal name="whitespace"/>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule mark="-" name="whitespace">
+      <alt>
+         <inclusion tmark="-">
+            <member hex="9"/>
+            <member hex="A"/>
+            <member hex="D"/>
+            <member code="Z"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <comment> A 'separator' is just a place where a comma may or must occur.&#xD;
+  Whitespace is not allowed before the comma.  There are rules. </comment>
+   <rule mark="-" name="comma">
+      <alt>
+         <literal tmark="-" string=","/>
+         <nonterminal name="s"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="sep">
+      <alt>
+         <nonterminal name="ss"/>
+      </alt>
+      <alt>
+         <alts>
+            <alt>
+               <literal tmark="-" string=","/>
+               <nonterminal name="s"/>
+            </alt>
+         </alts>
+      </alt>
+   </rule>
+   <rule mark="-" name="end-mark">
+      <alt>
+         <literal tmark="-" string="."/>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Variables: Greek letters&#xD;
+</comment>
+   <comment> Upper-case Greek letters can be entered directly, but may also be&#xD;
+  spelled out. </comment>
+   <rule mark="-" name="Greek-letter">
+      <alt>
+         <inclusion>
+            <member from="#391" to="#03A9"/>
+            <comment> 'Α'-'Ω' </comment>
+         </inclusion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Alpha"/>
+         <insertion hex="0391">
+            <comment>'Α'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Beta"/>
+         <insertion hex="0392">
+            <comment>'Β'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Gamma"/>
+         <insertion hex="0393">
+            <comment>'Γ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Delta"/>
+         <insertion hex="0394">
+            <comment>'Δ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Epsilon"/>
+         <insertion hex="0395">
+            <comment>'Ε'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Zeta"/>
+         <insertion hex="0396">
+            <comment>'Ζ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Eta"/>
+         <insertion hex="0397">
+            <comment>'Η'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Theta"/>
+         <insertion hex="0398">
+            <comment>'Θ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Iota"/>
+         <insertion hex="0399">
+            <comment>'Ι'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Kappa"/>
+         <insertion hex="039A">
+            <comment>'Κ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Lamda"/>
+         <insertion hex="039B">
+            <comment>'Λ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Lambda"/>
+         <insertion hex="039B">
+            <comment>'Λ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Mu"/>
+         <insertion hex="039C">
+            <comment>'Μ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Nu"/>
+         <insertion hex="039D">
+            <comment>'Ν'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Xi"/>
+         <insertion hex="039E">
+            <comment>'Ξ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Omicron"/>
+         <insertion hex="039F">
+            <comment>'Ο'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Pi"/>
+         <insertion hex="03A0">
+            <comment>'Π'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Rho"/>
+         <insertion hex="03A1">
+            <comment>'Ρ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Sigma"/>
+         <insertion hex="03A3">
+            <comment>'Σ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Tau"/>
+         <insertion hex="03A4">
+            <comment>'Τ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Upsilon"/>
+         <insertion hex="03A5">
+            <comment>'Υ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Phi"/>
+         <insertion hex="03A6">
+            <comment>'Φ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Chi"/>
+         <insertion hex="03A7">
+            <comment>'Χ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Psi"/>
+         <insertion hex="03A8">
+            <comment>'Ψ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="Omega"/>
+         <insertion hex="03A9">
+            <comment>'Ω'</comment>
+         </insertion>
+      </alt>
+   </rule>
+   <comment> Lower-case greek letters are allowed as arguments&#xD;
+  in blorts defined in a notation declaration.  With&#xD;
+  luck, it will be clear what they mean. </comment>
+   <rule mark="-" name="greek-letter">
+      <alt>
+         <inclusion>
+            <member from="#03B1" to="#03C9"/>
+            <comment> 'α'-'ω' </comment>
+         </inclusion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="alpha"/>
+         <insertion hex="03B1">
+            <comment>'α'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="beta"/>
+         <insertion hex="03B2">
+            <comment>'β'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="gamma"/>
+         <insertion hex="03B3">
+            <comment>'γ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="delta"/>
+         <insertion hex="03B4">
+            <comment>'δ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="epsilon"/>
+         <insertion hex="03B5">
+            <comment>'ε'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="zeta"/>
+         <insertion hex="03B6">
+            <comment>'ζ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="eta"/>
+         <insertion hex="03B7">
+            <comment>'η'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="theta"/>
+         <insertion hex="03B8">
+            <comment>'θ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="iota"/>
+         <insertion hex="03B9">
+            <comment>'ι'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="kappa"/>
+         <insertion hex="03BA">
+            <comment>'κ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="lamda"/>
+         <insertion hex="03BB">
+            <comment>'λ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="lambda"/>
+         <insertion hex="03BB">
+            <comment>'λ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="mu"/>
+         <insertion hex="03BC">
+            <comment>'μ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="nu"/>
+         <insertion hex="03BD">
+            <comment>'ν'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="xi"/>
+         <insertion hex="03BE">
+            <comment>'ξ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="omicron"/>
+         <insertion hex="03BF">
+            <comment>'ο'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="pi"/>
+         <insertion hex="03C0">
+            <comment>'π'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="rho"/>
+         <insertion hex="03C1">
+            <comment>'ρ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="final-sigma"/>
+         <insertion hex="03C2">
+            <comment>'ς'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="sigma"/>
+         <insertion hex="03C3">
+            <comment>'σ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="tau"/>
+         <insertion hex="03C4">
+            <comment>'τ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="upsilon"/>
+         <insertion hex="03C5">
+            <comment>'υ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="phi"/>
+         <insertion hex="03C6">
+            <comment>'φ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="chi"/>
+         <insertion hex="03C7">
+            <comment>'χ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="psi"/>
+         <insertion hex="03C8">
+            <comment>'ψ'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="omega"/>
+         <insertion hex="03C9">
+            <comment>'ω'</comment>
+         </insertion>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Variables: Latin letters (italics)&#xD;
+</comment>
+   <rule mark="-" name="italic">
+      <alt>
+         <option>
+            <alts>
+               <alt>
+                  <literal tmark="-" string="*"/>
+               </alt>
+            </alts>
+         </option>
+         <inclusion>
+            <member from="a" to="z"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <rule mark="-" name="Italic">
+      <alt>
+         <option>
+            <alts>
+               <alt>
+                  <literal tmark="-" string="*"/>
+               </alt>
+            </alts>
+         </option>
+         <inclusion>
+            <member from="A" to="Z"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <comment> ................................................................&#xD;
+  Variables: Fraktur&#xD;
+</comment>
+   <comment> I would prefer to use encoded literals for all of the following,&#xD;
+  but at the moment they exercise a bug in one ixml parser.  So&#xD;
+  for the letters I actually use in test cases, we need to use&#xD;
+  quoted literals instead.  This affects characters outside the&#xD;
+  basic multilingual plane of UCS. </comment>
+   <rule mark="-" name="fraktur">
+      <alt>
+         <inclusion>
+            <member from="#1D51E" to="#1D537"/>
+         </inclusion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fa"/>
+         <insertion string="𝔞">
+            <comment>#1D51E</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fb"/>
+         <insertion hex="1D51F"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fc"/>
+         <insertion hex="1d520"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fd"/>
+         <insertion string="𝔡">
+            <comment>#1d521</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fe"/>
+         <insertion string="𝔢">
+            <comment>#1d522</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="ff"/>
+         <insertion hex="1d523"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fg"/>
+         <insertion hex="1d524"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fh"/>
+         <insertion hex="1d525"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fi"/>
+         <insertion hex="1d526"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fj"/>
+         <insertion hex="1D527"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fk"/>
+         <insertion hex="1D528"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fl"/>
+         <insertion hex="1D529"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fm"/>
+         <insertion hex="1d52A"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fn"/>
+         <insertion hex="1d52B"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fo"/>
+         <insertion hex="1d52C"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fp"/>
+         <insertion hex="1d52D"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fq"/>
+         <insertion hex="1d52E"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fr"/>
+         <insertion hex="1d52F"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fs"/>
+         <insertion hex="1d530"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="ft"/>
+         <insertion hex="1d531"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fu"/>
+         <insertion hex="1d532"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fv"/>
+         <insertion hex="1d533"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fw"/>
+         <insertion hex="1d534"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fx"/>
+         <insertion hex="1d535"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fy"/>
+         <insertion hex="1d536"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="fz"/>
+         <insertion hex="1d537"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="Fraktur">
+      <alt>
+         <inclusion>
+            <member from="#1d504" to="#1d51d"/>
+            <comment> not all letters are present! </comment>
+         </inclusion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FA"/>
+         <insertion hex="1D504">
+            <comment>'𝔄'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FB"/>
+         <insertion hex="1D505">
+            <comment>'𝔅'</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FC"/>
+         <insertion hex="1D506">
+            <comment>𝔆</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FD"/>
+         <insertion hex="1D507">
+            <comment>𝔇</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FE"/>
+         <insertion hex="1D508">
+            <comment>𝔈</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FF"/>
+         <insertion string="𝔉">
+            <comment>#1D509</comment>
+            <comment>𝔉</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FG"/>
+         <insertion hex="1D50A">
+            <comment>𝔊</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FH"/>
+         <insertion hex="1D50B">
+            <comment>𝔈</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FI"/>
+         <insertion hex="1D50C">
+            <comment>𝔌</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FJ"/>
+         <insertion hex="1D50D">
+            <comment>𝔍</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FK"/>
+         <insertion hex="1D50E">
+            <comment>𝔎</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FL"/>
+         <insertion hex="1D50F">
+            <comment>𝔏</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FM"/>
+         <insertion hex="1D510">
+            <comment>𝔐</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FN"/>
+         <insertion hex="1D511">
+            <comment>𝔑</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FO"/>
+         <insertion hex="1D512">
+            <comment>𝔒</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FP"/>
+         <insertion hex="1D513">
+            <comment>𝔓</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FQ"/>
+         <insertion hex="1D514">
+            <comment>𝔔</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FR"/>
+         <insertion hex="1D515">
+            <comment>𝔕</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FS"/>
+         <insertion hex="1D516">
+            <comment>𝔖</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FT"/>
+         <insertion hex="1D517">
+            <comment>𝔗</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FU"/>
+         <insertion hex="1D518">
+            <comment>𝔘</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FV"/>
+         <insertion hex="1D519">
+            <comment>𝔙</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FW"/>
+         <insertion hex="1D51A">
+            <comment>𝔚</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FX"/>
+         <insertion hex="1D51B">
+            <comment>𝔛</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FY"/>
+         <insertion hex="1D51C">
+            <comment>𝔜</comment>
+         </insertion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="FZ"/>
+         <insertion hex="1D51D">
+            <comment>𝔝</comment>
+         </insertion>
+      </alt>
+   </rule>
+</ixml>

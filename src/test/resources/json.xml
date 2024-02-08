@@ -1,0 +1,263 @@
+<ixml>
+   <rule mark="-" name="json">
+      <alt>
+         <nonterminal name="ws"/>
+         <nonterminal mark="-" name="value"/>
+         <nonterminal name="ws"/>
+      </alt>
+   </rule>
+   <rule name="value">
+      <alt>
+         <nonterminal name="map"/>
+      </alt>
+      <alt>
+         <nonterminal name="array"/>
+      </alt>
+      <alt>
+         <nonterminal name="number"/>
+      </alt>
+      <alt>
+         <nonterminal name="string"/>
+      </alt>
+      <alt>
+         <nonterminal name="boolean"/>
+      </alt>
+      <alt>
+         <nonterminal name="null"/>
+      </alt>
+   </rule>
+   <rule name="boolean">
+      <alt>
+         <literal string="false"/>
+      </alt>
+      <alt>
+         <literal string="true"/>
+      </alt>
+   </rule>
+   <rule name="null">
+      <alt>
+         <literal tmark="-" string="null"/>
+      </alt>
+   </rule>
+   <rule name="map">
+      <alt>
+         <literal tmark="-" string="{"/>
+         <nonterminal name="ws"/>
+         <repeat0>
+            <alts>
+               <alt>
+                  <nonterminal name="member"/>
+                  <nonterminal name="ws"/>
+               </alt>
+            </alts>
+            <sep>
+               <alts>
+                  <alt>
+                     <literal tmark="-" string=","/>
+                     <nonterminal name="ws"/>
+                  </alt>
+               </alts>
+            </sep>
+         </repeat0>
+         <literal tmark="-" string="}"/>
+      </alt>
+   </rule>
+   <rule name="member">
+      <alt>
+         <nonterminal name="key"/>
+         <nonterminal name="ws"/>
+         <literal tmark="-" string=":"/>
+         <nonterminal name="ws"/>
+         <nonterminal name="value"/>
+      </alt>
+   </rule>
+   <rule name="key">
+      <alt>
+         <nonterminal mark="-" name="string"/>
+      </alt>
+   </rule>
+   <rule name="array">
+      <alt>
+         <literal tmark="-" string="["/>
+         <nonterminal name="ws"/>
+         <repeat0>
+            <alts>
+               <alt>
+                  <nonterminal mark="-" name="value"/>
+                  <nonterminal name="ws"/>
+               </alt>
+            </alts>
+            <sep>
+               <alts>
+                  <alt>
+                     <literal tmark="-" string=","/>
+                     <nonterminal name="ws"/>
+                  </alt>
+               </alts>
+            </sep>
+         </repeat0>
+         <literal tmark="-" string="]"/>
+      </alt>
+   </rule>
+   <rule name="number">
+      <alt>
+         <option>
+            <literal string="-"/>
+         </option>
+         <nonterminal name="int"/>
+         <option>
+            <nonterminal name="frac"/>
+         </option>
+         <option>
+            <nonterminal name="exp"/>
+         </option>
+      </alt>
+   </rule>
+   <rule mark="-" name="digit1-9">
+      <alt>
+         <inclusion>
+            <member from="1" to="9"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <rule mark="-" name="e">
+      <alt>
+         <inclusion>
+            <member string="eE"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <rule mark="-" name="exp">
+      <alt>
+         <nonterminal name="e"/>
+         <option>
+            <inclusion>
+               <member string="-+"/>
+            </inclusion>
+         </option>
+         <repeat1>
+            <nonterminal name="DIGIT"/>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule mark="-" name="frac">
+      <alt>
+         <literal string="."/>
+         <repeat1>
+            <nonterminal name="DIGIT"/>
+         </repeat1>
+      </alt>
+   </rule>
+   <rule mark="-" name="int">
+      <alt>
+         <literal string="0"/>
+      </alt>
+      <alt>
+         <nonterminal name="digit1-9"/>
+         <repeat0>
+            <nonterminal name="DIGIT"/>
+         </repeat0>
+      </alt>
+   </rule>
+   <rule name="string">
+      <alt>
+         <literal tmark="-" string="&quot;"/>
+         <repeat0>
+            <nonterminal name="char"/>
+         </repeat0>
+         <literal tmark="-" string="&quot;"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="char">
+      <alt>
+         <exclusion>
+            <member string="&quot;\"/>
+            <member hex="9"/>
+            <member hex="a"/>
+            <member hex="d"/>
+         </exclusion>
+      </alt>
+      <alt>
+         <literal tmark="-" string="\"/>
+         <nonterminal name="escaped"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="escaped">
+      <alt>
+         <literal string="&quot;"/>
+      </alt>
+      <alt>
+         <literal string="\"/>
+      </alt>
+      <alt>
+         <literal string="/"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="b"/>
+         <insertion hex="8"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="f"/>
+         <insertion hex="c"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="n"/>
+         <insertion hex="a"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="r"/>
+         <insertion hex="d"/>
+      </alt>
+      <alt>
+         <literal tmark="-" string="t"/>
+         <insertion hex="9"/>
+      </alt>
+      <alt>
+         <nonterminal name="unicode"/>
+      </alt>
+   </rule>
+   <rule name="unicode">
+      <alt>
+         <literal tmark="-" string="u"/>
+         <nonterminal name="code"/>
+      </alt>
+   </rule>
+   <rule mark="@" name="code">
+      <alt>
+         <nonterminal name="HEXDIG"/>
+         <nonterminal name="HEXDIG"/>
+         <nonterminal name="HEXDIG"/>
+         <nonterminal name="HEXDIG"/>
+      </alt>
+   </rule>
+   <rule mark="-" name="DIGIT">
+      <alt>
+         <inclusion>
+            <member from="0" to="9"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <rule mark="-" name="HEXDIG">
+      <alt>
+         <nonterminal name="DIGIT"/>
+      </alt>
+      <alt>
+         <inclusion>
+            <member from="a" to="f"/>
+            <member from="A" to="F"/>
+         </inclusion>
+      </alt>
+   </rule>
+   <rule mark="-" name="ws">
+      <alt>
+         <repeat0>
+            <inclusion tmark="-">
+               <member string=" "/>
+               <member hex="9"/>
+               <member hex="a"/>
+               <member hex="d"/>
+            </inclusion>
+         </repeat0>
+      </alt>
+   </rule>
+</ixml>

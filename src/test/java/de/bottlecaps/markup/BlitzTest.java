@@ -6,7 +6,12 @@ import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -131,6 +136,39 @@ public class BlitzTest extends TestBase {
     Parser parser = generate(resourceContent("address.ixml"));
     String xml = parser.parse(resourceContent("address.input"), Option.INDENT);
     assertEquals(normalizeEol(resourceContent("address.xml")), xml);
+  }
+
+  @Test
+  public void testMultiThreadParsing() throws Throwable {
+    Parser parser = generate(Blitz.ixmlGrammar(), Option.INDENT);
+    AtomicReference<Throwable> throwable = new AtomicReference<>();
+    long timeLimit = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(3);
+    List<Thread> threads = Arrays.asList("ixml", "json", "frege").stream()
+      .map(grammar ->
+        new Thread(() -> {
+          while (System.currentTimeMillis() < timeLimit && throwable.get() == null) {
+            try {
+              String resource = grammar == "ixml" ? Blitz.IXML_GRAMMAR_RESOURCE : grammar + ".ixml";
+              String xml = parser.parse(resourceContent(resource), Option.INDENT);
+              assertEquals(normalizeEol(resourceContent(grammar + ".xml")), xml);
+            }
+            catch (Throwable t) {
+              throwable.compareAndSet(null, t);
+            }
+          }
+        }))
+      .collect(Collectors.toList());
+    threads.forEach(Thread::start);
+    threads.forEach(t -> {
+      try {
+        t.join();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+      }
+    });
+    if (throwable.get() != null)
+      throw throwable.get();
   }
 
   @Test
