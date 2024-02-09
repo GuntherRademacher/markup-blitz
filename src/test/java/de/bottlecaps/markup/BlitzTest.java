@@ -158,17 +158,18 @@ public class BlitzTest extends TestBase {
           }
         }))
       .collect(Collectors.toList());
-    threads.forEach(Thread::start);
-    threads.forEach(t -> {
-      try {
-        t.join();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-      }
-    });
+    for (Thread thread : threads)
+      thread.start();
+    for (Thread thread : threads)
+      thread.join();
     if (throwable.get() != null)
       throw throwable.get();
+  }
+
+  @Test
+  public void testCrLf() {
+    Parser parser = generate("S:  ~[]*.");
+    assertEquals("<S>&#xD;\n</S>", parser.parse("\r\n"));
   }
 
   @Test
