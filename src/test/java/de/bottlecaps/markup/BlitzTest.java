@@ -149,7 +149,7 @@ public class BlitzTest extends TestBase {
           while (System.currentTimeMillis() < timeLimit && throwable.get() == null) {
             try {
               String resource = grammar == "ixml" ? Blitz.IXML_GRAMMAR_RESOURCE : grammar + ".ixml";
-              String xml = parser.parse(resourceContent(resource), Option.INDENT);
+              String xml = parser.parse(normalizeEol(resourceContent(resource)), Option.INDENT);
               assertEquals(normalizeEol(resourceContent(grammar + ".xml")), xml);
             }
             catch (Throwable t) {
