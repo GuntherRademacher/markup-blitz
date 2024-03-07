@@ -402,32 +402,34 @@ public class IxmlCommunityTest extends TestBase {
     }
 
     if (testCase.isGrammarTest()) {
-      assertNull(input, "unexpected input for grammar test " + testCase.getName());
-      assertEquals(1, testCase.getOutputs().size(), "expected a single reference output for grammar test");
+      assertNull(input, "Unexpected input for grammar test " + testCase.getName());
+      assertEquals(1, testCase.getOutputs().size(), "Expected a single reference output for grammar test");
       if (ixmlParser == null) {
         String ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
         ixmlParser = generate(ixmlIxmlResourceContent);
       }
-      String xmlRepresentation = ixmlParser.parse(testCase.getGrammar());
-      if (! deepEqual(testCase.getOutputs().get(0), xmlRepresentation))
-        assertEquals(testCase.getOutputs().get(0), xmlRepresentation);
+      String actual = ixmlParser.parse(testCase.getGrammar());
+      String expected = testCase.getOutputs().get(0);
+      if (! (actual.equals(expected) || deepEqual(expected, actual)))
+        assertEquals(expected, actual, "Unexpected xml grammar output");
     }
     else {
-      assertNotNull(input, "missing input");
+      assertNotNull(input, "Missing input");
       try {
-        String xml = parser.parse(input);
-        if (xml.startsWith("<ixml xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"failed\""))
-          throw new BlitzException(xml);
+        String actual = parser.parse(input);
+        if (actual.startsWith("<ixml xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"failed\""))
+          throw new BlitzException(actual);
         assertEquals(TestCase.Assertion.assert_xml, testCase.getAssertion());
-        assertTrue(testCase.getOutputs().size() > 0, "missing reference output");
-        if (! testCase.getOutputs().stream().anyMatch(o -> deepEqual(o, xml))) {
+        assertTrue(testCase.getOutputs().size() > 0, "Missing reference output");
+        if (! testCase.getOutputs().stream()
+            .anyMatch(expected -> actual.equals(expected) || deepEqual(expected, actual))) {
           if (testCase.getOutputs().size() == 1) {
             String expected = testCase.getOutputs().get(0);
             if (! expected.equals("<tbd/>\n"))
-              assertEquals(expected, xml);
+              assertEquals(expected, actual, "Unexpected parsing result");
           }
           else {
-            assertEquals(testCase.getOutputs(), xml);
+            assertEquals(testCase.getOutputs(), actual, "Unexpected parsing result");
           }
         }
       }
