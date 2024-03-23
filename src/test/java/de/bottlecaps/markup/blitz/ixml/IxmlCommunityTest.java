@@ -61,7 +61,7 @@ public class IxmlCommunityTest extends TestBase {
   private static enum SkipReason {
     SUCCESS_BUT_TOO_LONG("Test runs successfully, but takes too long to be run with each execution."),
     SUCCESS_BUT_TOO_MUCH_MEMORY("Test runs successfully, but uses too much memory to be run with each execution."),
-    DEFUNCT("Test case is not correct in ixml project."),
+    BROKEN("Test case is not correct in ixml project."),
     ;
     private String detail;
 
@@ -86,7 +86,7 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
 
     // waiting for https://github.com/invisibleXML/ixml/pull/241
-    skipReasons.put("Tests producing parse trees/version-decl-two", SkipReason.DEFUNCT);
+    skipReasons.put("Tests producing parse trees/version-decl-two", SkipReason.BROKEN);
   }
 
   public static enum Catalog {
@@ -380,7 +380,7 @@ public class IxmlCommunityTest extends TestBase {
   private void test(TestCase testCase) {
     skipReasons.forEach((prefix, skipReason) -> {
       boolean runTest = ! testCase.getName().startsWith(prefix)
-          || allTests && skipReason != SkipReason.DEFUNCT;
+          || allTests && skipReason != SkipReason.BROKEN;
       assumeTrue(runTest, () -> "Test was skipped: [" + skipReason + "] " + skipReason.detail);
     });
     assumeTrue(null == testCase.getSkippedBecause(), () -> testCase.getSkippedBecause());
