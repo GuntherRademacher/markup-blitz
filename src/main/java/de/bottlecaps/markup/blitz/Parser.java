@@ -48,6 +48,7 @@ public class Parser
   private final int[] forks;
   private final BitSet[] expectedTokens;
   private final boolean isVersionMismatch;
+  private final boolean shortestMatch;
 
   private Writer err = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
 
@@ -61,7 +62,8 @@ public class Parser
       RangeSet[] terminal,
       int[] forks,
       BitSet[] expectedTokens,
-      boolean isVersionMismatch) {
+      boolean isVersionMismatch,
+      boolean shortestMatch) {
 
     this.defaultOptions = defaultOptions;
     this.asciiMap = asciiMap;
@@ -77,6 +79,7 @@ public class Parser
     this.forks = forks;
     this.expectedTokens = expectedTokens;
     this.isVersionMismatch = isVersionMismatch;
+    this.shortestMatch = shortestMatch;
   }
 
   /**
@@ -741,10 +744,18 @@ public class Parser
           }
           else if (thread.status == Status.ACCEPTED) {
             if (accepted != null) {
-              if (thread.e0 <= accepted.e0) {
+              if (thread.e0 == accepted.e0) {
                 if (accepted.deferredEvent == null || accepted.deferredEvent.getQueueSize() <= thread.deferredEvent.getQueueSize())
                   thread = accepted;
                 thread.isAmbiguous = true;
+              }
+              else if (shortestMatch) {
+                if (thread.e0 > accepted.e0)
+                  thread = accepted;
+              }
+              else {
+                if (thread.e0 < accepted.e0)
+                  thread = accepted;
               }
             }
             accepted = thread;
@@ -758,18 +769,22 @@ public class Parser
         }
         while ((thread = currentThreads.poll()) != null);
 
-        if (otherThreads.isEmpty()) {
-          if (accepted.deferredEvent != null) {
-            accepted.deferredEvent.release(eventHandler);
-            accepted.deferredEvent = null;
-          }
-          return accepted;
-        }
+        if (otherThreads.isEmpty())
+          break;
 
         thread = otherThreads.remove();
-        if (thread.e0 > pos)
+        if (pos < thread.e0) {
           pos = thread.e0;
+          if (shortestMatch && accepted != null && pos > accepted.e0)
+            break;
+        }
       }
+
+      if (accepted.deferredEvent != null) {
+        accepted.deferredEvent.release(eventHandler);
+        accepted.deferredEvent = null;
+      }
+      return accepted;
     }
 
     private String getErrorMessage(ParseException e) {

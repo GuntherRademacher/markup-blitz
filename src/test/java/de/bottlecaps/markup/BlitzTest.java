@@ -771,7 +771,7 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
-  public void testPartialParse() {
+  public void testLongestMatch() {
     Parser parser = generate("S: 'a'.", Option.LONGEST_MATCH);
     assertEquals("<S>a</S>", parser.parse("a"));
     assertEquals("<S>a</S>", parser.parse("aa"));
@@ -800,11 +800,8 @@ public class BlitzTest extends TestBase {
     assertEquals("<S>a</S>", parser.parse("ab"));
     assertEquals("<S>aa</S>", parser.parse("aab"));
     assertEquals("<S>aaa</S>", parser.parse("aaab"));
-  }
 
-  @Test
-  public void testLongestMatch() {
-    Parser parser = generate(
+    parser = generate(
           "expression: expr.\n"
         + "-expr: term; sum; diff.\n"
         + "sum: expr, -\"+\", term.\n"
@@ -848,6 +845,78 @@ public class BlitzTest extends TestBase {
         + "         </sum>\n"
         + "      </bracketed>\n"
         + "   </prod>\n"
+        + "</expression>",
+        parser.parse(
+            "(a+1)*(a+2)*(a+3"));
+  }
+
+  @Test
+  public void testShortestMatch() {
+    Parser parser = generate("S: 'a'.", Option.SHORTEST_MATCH);
+    assertEquals("<S>a</S>", parser.parse("a"));
+    assertEquals("<S>a</S>", parser.parse("aa"));
+    assertEquals("<S>a</S>", parser.parse("ab"));
+
+    parser = generate("S: 'a'?.", Option.SHORTEST_MATCH);
+    assertEquals("<S/>", parser.parse(""));
+    assertEquals("<S/>", parser.parse("a"));
+    assertEquals("<S/>", parser.parse("aa"));
+    assertEquals("<S/>", parser.parse("ab"));
+
+    parser = generate("S: 'a'+.", Option.SHORTEST_MATCH);
+    assertEquals("<S>a</S>", parser.parse("a"));
+    assertEquals("<S>a</S>", parser.parse("aa"));
+    assertEquals("<S>a</S>", parser.parse("aaa"));
+    assertEquals("<S>a</S>", parser.parse("ab"));
+    assertEquals("<S>a</S>", parser.parse("aab"));
+    assertEquals("<S>a</S>", parser.parse("aaab"));
+
+    parser = generate("S: 'a'*.", Option.SHORTEST_MATCH);
+    assertEquals("<S/>", parser.parse(""));
+    assertEquals("<S/>", parser.parse("a"));
+    assertEquals("<S/>", parser.parse("aa"));
+    assertEquals("<S/>", parser.parse("aaa"));
+    assertEquals("<S/>", parser.parse("b"));
+    assertEquals("<S/>", parser.parse("ab"));
+    assertEquals("<S/>", parser.parse("aab"));
+    assertEquals("<S/>", parser.parse("aaab"));
+
+    parser = generate(
+          "expression: expr.\n"
+        + "-expr: term; sum; diff.\n"
+        + "sum: expr, -\"+\", term.\n"
+        + "diff: expr, \"-\", term.\n"
+        + "-term: factor; prod; div.\n"
+        + "prod: term, -\"*\", factor.\n"
+        + "div: term, \"/\", factor.\n"
+        + "-factor: id; number; bracketed.\n"
+        + "bracketed: -\"(\", expr, -\")\".\n"
+        + "id: @name.\n"
+        + "name: letter+.\n"
+        + "number: @value.\n"
+        + "value: digit+.\n"
+        + "-letter: [\"a\"-\"z\"].\n"
+        + "-digit: [\"0\"-\"9\"].",
+        Option.INDENT, Option.SHORTEST_MATCH);
+    assertEquals(
+          "<expression>\n"
+        + "   <bracketed>\n"
+        + "      <sum>\n"
+        + "         <id name=\"a\"/>\n"
+        + "         <number value=\"1\"/>\n"
+        + "      </sum>\n"
+        + "   </bracketed>\n"
+        + "</expression>",
+      parser.parse(
+          "(a+1)*$%&$&"));
+    assertEquals(
+          "<expression>\n"
+        + "   <bracketed>\n"
+        + "      <sum>\n"
+        + "         <id name=\"a\"/>\n"
+        + "         <number value=\"1\"/>\n"
+        + "      </sum>\n"
+        + "   </bracketed>\n"
         + "</expression>",
         parser.parse(
             "(a+1)*(a+2)*(a+3"));

@@ -35,7 +35,8 @@ public class Blitz {
     /**    Parser option: Generate XML with indentation.             */ INDENT,
     /**    Parser option: Print parser trace.                        */ TRACE,
     /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
-    /** Generator option: Partial parsing to find the longest match. */ LONGEST_MATCH,
+    /** Generator option: Partial parsing, accepting longest match.  */ LONGEST_MATCH,
+    /** Generator option: Partial parsing, accepting shortest match. */ SHORTEST_MATCH,
     /** Generator option: Print timing information.                  */ TIMING,
     /** Generator option: Print information on intermediate results. */ VERBOSE;
   }
@@ -118,6 +119,8 @@ public class Blitz {
         options.add(Option.FAIL_ON_ERROR);
       else if (args[i].equals("--longest-match"))
         options.add(Option.LONGEST_MATCH);
+      else if (args[i].equals("--shortest-match"))
+        options.add(Option.SHORTEST_MATCH);
       else if (args[i].equals("--timing"))
         options.add(Option.TIMING);
       else if (args[i].equals("--verbose"))
@@ -159,17 +162,18 @@ public class Blitz {
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
-    System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
-    System.err.println("                     When omitted, the ixml grammar will be used.");
-    System.err.println("  <INPUT>            the input (literal, file name or URL).");
+    System.err.println("  <GRAMMAR>           the grammar (literal, file name or URL), in ixml notation.");
+    System.err.println("                      When omitted, the ixml grammar will be used.");
+    System.err.println("  <INPUT>             the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  <OPTION>:");
-    System.err.println("    --indent         generate resulting xml with indentation.");
-    System.err.println("    --trace          print parser trace.");
-    System.err.println("    --fail-on-error  throw an exception instead of returning an error document.");
-    System.err.println("    --longest-match  partial parsing, finding the longest match.");
-    System.err.println("    --timing         print timing information.");
-    System.err.println("    --verbose        print intermediate results.");
+    System.err.println("    --indent          generate resulting xml with indentation.");
+    System.err.println("    --trace           print parser trace.");
+    System.err.println("    --fail-on-error   throw an exception instead of returning an error document.");
+    System.err.println("    --longest-match   partial parsing, accepting the longest match.");
+    System.err.println("    --shortest-match  partial parsing, accepting the shortest match.");
+    System.err.println("    --timing          print timing information.");
+    System.err.println("    --verbose         print intermediate results.");
     System.err.println();
     System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
     System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");

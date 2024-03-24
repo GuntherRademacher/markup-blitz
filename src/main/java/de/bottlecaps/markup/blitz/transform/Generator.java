@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.bottlecaps.markup.Blitz.Option;
+import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -78,6 +79,9 @@ public class Generator {
   }
 
   public static Parser generate(Grammar g, Set<Option> options) {
+    if (options.contains(Option.LONGEST_MATCH) && options.contains(Option.SHORTEST_MATCH))
+      throw new BlitzException("Options LONGEST_MATCH and SHORTEST_MATCH must not be specified at the same time.");
+
     Generator ci  = new Generator();
     ci.verbose = options.contains(Option.VERBOSE);
     ci.grammar = g;
@@ -89,7 +93,10 @@ public class Generator {
       System.err.println(g);
     }
 
-    ci.new SymbolCodeAssigner(options.contains(Option.LONGEST_MATCH)).visit(g);
+    boolean shortestMatch = options.contains(Option.SHORTEST_MATCH);
+    boolean longestMatch = options.contains(Option.LONGEST_MATCH);
+    boolean partialMatch = shortestMatch || longestMatch;
+    ci.new SymbolCodeAssigner(partialMatch).visit(g);
 
     if (options.contains(Option.VERBOSE)) {
       System.err.println();
@@ -105,7 +112,7 @@ public class Generator {
     Integer endToken = ci.terminalCode.get(Charset.END.getRangeSet());
     State initialState = ci.new State();
     TokenSet initialItemLookahead = new TokenSet(endToken);
-    if (options.contains(Option.LONGEST_MATCH))
+    if (partialMatch)
       for (int t = 0; t < ci.terminalCode.size(); ++t)
         initialItemLookahead.add(t);
     initialState.put(startNode, initialItemLookahead);
@@ -196,7 +203,8 @@ public class Generator {
         ci.terminal,
         ci.forks,
         expectedTokens,
-        ci.grammar.isMismatch());
+        ci.grammar.isMismatch(),
+        shortestMatch);
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
@@ -718,9 +726,8 @@ public class Generator {
   private class SymbolCodeAssigner extends Visitor {
     private RangeSet unused;
 
-    public SymbolCodeAssigner(boolean longestMatch) {
-      if (longestMatch)
-        unused = UnicodeCategory.ALPHABET;
+    public SymbolCodeAssigner(boolean partialMatch) {
+      unused = partialMatch ? UnicodeCategory.ALPHABET : null;
     }
 
     @Override

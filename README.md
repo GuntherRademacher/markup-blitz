@@ -72,17 +72,18 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
 
-  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.
-                     When omitted, the ixml grammar will be used.
-  <INPUT>            the input (literal, file name or URL).
+  <GRAMMAR>           the grammar (literal, file name or URL), in ixml notation.
+                      When omitted, the ixml grammar will be used.
+  <INPUT>             the input (literal, file name or URL).
 
   <OPTION>:
-    --indent         generate resulting xml with indentation.
-    --trace          print parser trace.
-    --fail-on-error  throw an exception instead of returning an error document.
-    --longest-match  partial parsing, finding the longest match.
-    --timing         print timing information.
-    --verbose        print intermediate results.
+    --indent          generate resulting xml with indentation.
+    --trace           print parser trace.
+    --fail-on-error   throw an exception instead of returning an error document.
+    --longest-match   partial parsing, accepting the longest match.
+    --shortest-match  partial parsing, accepting the shortest match.
+    --timing          print timing information.
+    --verbose         print intermediate results.
 
   A literal grammar or input must be preceded by an exclamation point (!).
   All inputs must be presented in UTF-8 encoding, and output is written in
@@ -134,7 +135,8 @@ public enum Option {
   /**    Parser option: Generate XML with indentation.             */ INDENT,
   /**    Parser option: Print parser trace.                        */ TRACE,
   /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
-  /** Generator option: Partial parsing to find the longest match. */ LONGEST_MATCH,
+  /** Generator option: Partial parsing, accepting longest match.  */ LONGEST_MATCH,
+  /** Generator option: Partial parsing, accepting shortest match. */ SHORTEST_MATCH,
   /** Generator option: Print timing information.                  */ TIMING,
   /** Generator option: Print information on intermediate results. */ VERBOSE;
 }
