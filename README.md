@@ -80,6 +80,7 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
     --indent         generate resulting xml with indentation.
     --trace          print parser trace.
     --fail-on-error  throw an exception instead of returning an error document.
+    --longest-match  partial parsing, finding the longest match.
     --timing         print timing information.
     --verbose        print intermediate results.
 
@@ -133,6 +134,7 @@ public enum Option {
   /**    Parser option: Generate XML with indentation.             */ INDENT,
   /**    Parser option: Print parser trace.                        */ TRACE,
   /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
+  /** Generator option: Partial parsing to find the longest match. */ LONGEST_MATCH,
   /** Generator option: Print timing information.                  */ TIMING,
   /** Generator option: Print information on intermediate results. */ VERBOSE;
 }

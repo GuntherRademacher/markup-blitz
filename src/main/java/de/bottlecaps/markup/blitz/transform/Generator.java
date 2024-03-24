@@ -89,7 +89,7 @@ public class Generator {
       System.err.println(g);
     }
 
-    ci.new SymbolCodeAssigner().visit(g);
+    ci.new SymbolCodeAssigner(options.contains(Option.LONGEST_MATCH)).visit(g);
 
     if (options.contains(Option.VERBOSE)) {
       System.err.println();
@@ -104,7 +104,11 @@ public class Generator {
     Term startNode = g.getRules().values().iterator().next().getAlts().getAlts().get(0).getTerms().get(0);
     Integer endToken = ci.terminalCode.get(Charset.END.getRangeSet());
     State initialState = ci.new State();
-    initialState.put(startNode, new TokenSet(endToken));
+    TokenSet initialItemLookahead = new TokenSet(endToken);
+    if (options.contains(Option.LONGEST_MATCH))
+      for (int t = 0; t < ci.terminalCode.size(); ++t)
+        initialItemLookahead.add(t);
+    initialState.put(startNode, initialItemLookahead);
     initialState.id = 0;
     ci.states.put(initialState, initialState);
     ci.statesTodo.add(initialState);
@@ -712,6 +716,13 @@ public class Generator {
   }
 
   private class SymbolCodeAssigner extends Visitor {
+    private RangeSet unused;
+
+    public SymbolCodeAssigner(boolean longestMatch) {
+      if (longestMatch)
+        unused = UnicodeCategory.ALPHABET;
+    }
+
     @Override
     public void visit(Grammar g) {
       nonterminalCode = new LinkedHashMap<>();
@@ -722,6 +733,12 @@ public class Generator {
       );
       terminalCode.put(Charset.END.getRangeSet(), terminalCode.size());
       super.visit(g);
+      if (unused != null && ! unused.isEmpty()) {
+        int code = terminalCode.size();
+        terminalCode.put(unused, code);
+        for (Range range : unused)
+          terminalCodeByRange.put(range, code);
+      }
       nonterminal = nonterminalCode.keySet().stream()
           .map(name -> UnicodeCategory.isXmlName(name) ? name : " " + name)
           .toArray(String[]::new);
@@ -744,6 +761,8 @@ public class Generator {
         terminalCode.put(r, code);
         for (Range range : r)
           terminalCodeByRange.put(range, code);
+        if (unused != null)
+          unused = unused.minus(r);
       }
     }
   }

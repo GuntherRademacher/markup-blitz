@@ -697,6 +697,7 @@ public class Parser
       ParsingThread thread = new ParsingThread();
       int pos = 0;
       boolean stalled = false;
+      ParsingThread accepted = null;
 
       for (;;) {
         while (thread.equals(otherThreads.peek())) {
@@ -708,17 +709,11 @@ public class Parser
           thread.isAmbiguous = true;
         }
 
-        boolean isUnambiguous = otherThreads.isEmpty();
+        boolean isUnambiguous = accepted == null && otherThreads.isEmpty();
 
         if (isUnambiguous && thread.deferredEvent != null) {
           thread.deferredEvent.release(eventHandler);
           thread.deferredEvent = null;
-        }
-
-        if (thread.status == Status.ACCEPTED) {
-          if (! isUnambiguous)
-            throw new IllegalStateException();
-          return thread;
         }
 
         Arrays.fill(thread.forkCount, (byte) 0);
@@ -744,14 +739,32 @@ public class Parser
               currentThreads.add(new ParsingThread(thread, forks[2 * fork + 1]));
             }
           }
+          else if (thread.status == Status.ACCEPTED) {
+            if (accepted != null) {
+              if (thread.e0 <= accepted.e0) {
+                if (accepted.deferredEvent == null || accepted.deferredEvent.getQueueSize() <= thread.deferredEvent.getQueueSize())
+                  thread = accepted;
+                thread.isAmbiguous = true;
+              }
+            }
+            accepted = thread;
+          }
           else if (thread.status != Status.ERROR) {
             otherThreads.add(thread);
           }
-          else if (otherThreads.isEmpty() && currentThreads.isEmpty()) {
+          else if (accepted == null && otherThreads.isEmpty() && currentThreads.isEmpty()) {
             throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1, stalled);
           }
         }
         while ((thread = currentThreads.poll()) != null);
+
+        if (otherThreads.isEmpty()) {
+          if (accepted.deferredEvent != null) {
+            accepted.deferredEvent.release(eventHandler);
+            accepted.deferredEvent = null;
+          }
+          return accepted;
+        }
 
         thread = otherThreads.remove();
         if (thread.e0 > pos)

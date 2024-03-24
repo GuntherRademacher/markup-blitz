@@ -35,6 +35,7 @@ public class Blitz {
     /**    Parser option: Generate XML with indentation.             */ INDENT,
     /**    Parser option: Print parser trace.                        */ TRACE,
     /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
+    /** Generator option: Partial parsing to find the longest match. */ LONGEST_MATCH,
     /** Generator option: Print timing information.                  */ TIMING,
     /** Generator option: Print information on intermediate results. */ VERBOSE;
   }
@@ -115,6 +116,8 @@ public class Blitz {
         options.add(Option.TRACE);
       else if (args[i].equals("--fail-on-error"))
         options.add(Option.FAIL_ON_ERROR);
+      else if (args[i].equals("--longest-match"))
+        options.add(Option.LONGEST_MATCH);
       else if (args[i].equals("--timing"))
         options.add(Option.TIMING);
       else if (args[i].equals("--verbose"))
@@ -164,6 +167,7 @@ public class Blitz {
     System.err.println("    --indent         generate resulting xml with indentation.");
     System.err.println("    --trace          print parser trace.");
     System.err.println("    --fail-on-error  throw an exception instead of returning an error document.");
+    System.err.println("    --longest-match  partial parsing, finding the longest match.");
     System.err.println("    --timing         print timing information.");
     System.err.println("    --verbose        print intermediate results.");
     System.err.println();
