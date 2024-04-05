@@ -20,7 +20,7 @@
                                                             ?>
                                 s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
        naming::= mark name ( s '>' s alias )?
-         name::=                                            <?java nameBuilder.setLength(0);?> 
+         name::=                                            <?java nameBuilder.setLength(0);?>
                  namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
                            ( namefollower                   <?java nameBuilder.append(input.subSequence(b0, e0));?>
                                           )*                <?java
@@ -40,7 +40,7 @@
                                                                 de.bottlecaps.markup.blitz.Errors.S12.thro(grammar.getVersion() + " does not support renaming");
                                                               savedName = name;
                                                             ?>
-                 name                                       <?java 
+                 name                                       <?java
                                                               alias = name;
                                                               name = savedName;
                                                             ?>
@@ -662,7 +662,7 @@
                | '.'
                | #x00B7
                | #x203F
-               | #x2040               
+               | #x2040
 // \p{Nd}
                | [0-9]
                | [#x0660-#x0669]

@@ -1,4 +1,4 @@
-{ Grammar and test cases taken from 
+{ Grammar and test cases taken from
   Sperberg-McQueen, C. M. “Keyboarding Frege's concept writing: A case study in the use of invisible
   XML.” Presented at Balisage: The Markup Conference 2023, Washington, DC, July 31 - August 4, 2023.
   In Proceedings of Balisage: The Markup Conference 2023. Balisage Series on Markup Technologies,
@@ -38,16 +38,16 @@ Verlag von Louis Nebert, 1879. }
 { ****************************************************************
   Top level
   ****************************************************************}
-  
+
 { What we are transcribing -- an inline expression that needs special
   attention, or a typographic display -- can be any of several things:
 
   - a formula expressing a proposition, either with an affirmative
     judgement (nonterminal 'yes') or without (nonterminal 'maybe'),
 
-  - the declaration of a new notation, or 
+  - the declaration of a new notation, or
 
-  - an inference (one or more premises, and one or more inference 
+  - an inference (one or more premises, and one or more inference
     steps, or
 
   - a basic formula without a content stroke (perhaps not strictly
@@ -56,11 +56,11 @@ Verlag von Louis Nebert, 1879. }
 
   If there are other kinds of expressions, I've missed them so far.
 
-  After any of these, we allow an optional end-mark.  
+  After any of these, we allow an optional end-mark.
 
 }
 
--begriffsschrift: s, 
+-begriffsschrift: s,
                   (formula
                   ; inference
                   ; notation-declaration
@@ -227,7 +227,7 @@ nil: -'nil'.
 { A 'mention' formula is a basic statement with no content stroke.
   The name reflects the fact that these formulas appear (§10, §24)
   as objects of metalinguistic discussion, typically in sentences
-  of the form "[formula] denotes ..." or "the abbreviated form 
+  of the form "[formula] denotes ..." or "the abbreviated form
   [formula] can always be replaced by the full form [formula]".
 
   The keyword 'expr' used here is intended to suggest reading a
@@ -237,7 +237,7 @@ nil: -'nil'.
 mention: -'expr', s, leaf.
 
 { ................................................................
-  Expressions 
+  Expressions
 }
 
 { Expressions are used for basic statements, function arguments,
@@ -251,8 +251,8 @@ mention: -'expr', s, leaf.
 
   Bound variables are syntactically distinct from variables with
   implicit universal quantification (bound variables are Fraktur,
-  others italic). We carry that distinction into the syntax here, just 
-  in case we ever need it.  
+  others italic). We carry that distinction into the syntax here, just
+  in case we ever need it.
 
   Bound variables do not, as far as I know, ever show up as basic
   statements, but I don't see anything in Frege's explanations that
@@ -271,7 +271,7 @@ mention: -'expr', s, leaf.
 
 { Details of variables are banished down to the 'Low-level details'
   section at the bottom of the grammar. }
-  
+
 var:  Greek-letter; greek-letter; italic; Italic.
 
 { In the general case, the leaf expressions may come from any notation
@@ -326,7 +326,7 @@ conclusion: formula.
   These are NOT given explicitly, only be reference.}
 
 infstep: -'from which', s,
-         (-'via', s, premise-references, s)?, 
+         (-'via', s, premise-references, s)?,
          -'we infer:', s,
          (pagebreak, s)?,
          conclusion.
@@ -351,7 +351,7 @@ pagebreak: -'|p', s, @n, s, -'|'.
   As far as I can see, 102 is the only formula that actually uses
   multiple premises by reference in a single inference step.  It uses
   no substitutions.  In Frege's book, then, a premise reference
-  can EITHER have multiple references without substitutions or a 
+  can EITHER have multiple references without substitutions or a
   single reference with optional substitutions.
 
 }
@@ -407,13 +407,13 @@ given:  proposition.
 not: -'not', s, prop-no-ifs.
 
 
-{ §8 Equivalence sign.  
+{ §8 Equivalence sign.
 
   It looks as if we are going to need to parse the leaves.  Frege
   refers to "Inhaltsgleichheit", which for the moment I am going to
   render as "equivalence".  In Part I, at least, the only use of
   equivalences is for variable symbols.  But in Part II, things get
-  more complicated.  So we allow equivalences between parenthesized 
+  more complicated.  So we allow equivalences between parenthesized
   propositions on the left and variables on the right.  In this case,
   Frege normally brackets the entire equivalence.
 
@@ -443,7 +443,7 @@ equiv-sign: -'≡'; -'equiv'; -'EQUIV'; -'=='.
   Frege does not distinguish, in notation or prose, between what I
   would call "function" and "function application".  The nonterminal
   'fa' can be thought of as an abbreviation for 'function application'
-  or for 'function and argument'.  
+  or for 'function and argument'.
 
 }
 
@@ -478,7 +478,7 @@ bound-var: fraktur; Fraktur.
 { §24 Elaboration of equivalence as a method of introducing a new
   notation.  In §8, Frege mentions that one reason for specifying an
   equivalence is to establish a short form to abbreviate what would
-  otherwise be tedious to write out.  In §24 he gives more details. 
+  otherwise be tedious to write out.  In §24 he gives more details.
 
   1 In place of the affirmation stroke there is a double stroke, which
     Frege explains as signaling a double nature of the statement
@@ -511,7 +511,7 @@ analytic: proposition, s, equiv-sign, s, new-notation.
 new-notation: known-notation; unknown-notation.
 
 { A known notation is one Frege introduces. (We know it because we
-  have read ahead in the book.)  We define these here for 
+  have read ahead in the book.)  We define these here for
   convenience: better syntax checking, and the opportunity for
   custom XML representations. }
 
@@ -520,17 +520,17 @@ new-notation: known-notation; unknown-notation.
                ; follows-or-self
                ; unambiguous.
 
-{ The first notation Frege defines means 'property F is 
+{ The first notation Frege defines means 'property F is
   inherited in the f-series', where F is a unary predicate
-  and f is a binary predicate such that f(x, y) means 
-  that applying procedure f to x yields y.  He also wants 
+  and f is a binary predicate such that f(x, y) means
+  that applying procedure f to x yields y.  He also wants
   two dummy arguments with Greek letters, and from his
-  examples it appears that a fifth argument is needed in 
+  examples it appears that a fifth argument is needed in
   order to specify the order of the two greek arguments in
   the call to f().  It's possible that there are typos in
   those examples, since the order of arguments never
   varies otherwise. }
-  
+
 is-inherited: -'inherited(', s,
               property, comma,
               function, comma,
@@ -549,19 +549,19 @@ function:  var.
 
 { Frege explains that the small greek letters are dummy variables (but
   I cannot say I understand the explanation very well. }
-  
+
 dummy-var: greek-letter.
 
 { If a greek letter is used for the order argument, it means that that
   is the letter given first in the call to the binary function; the
   other dummy variable comes second.  If a number is used, it means
   the first/second dummy variable is given first.  }
-  
+
 order-argument: greek-letter; '1'; '2'.
 
 
 { Frege describes the second notation as meaning 'y follows x in the
-f-series'.  
+f-series'.
 
 I think it may be clearer to say that (x,y) is in the transitive
 closure of relation f.  The conventional English term for the relation
@@ -598,7 +598,7 @@ unambiguous: -'unambiguous(', s,
 
 
 { As a nod towards generality, and to enable this grammar to
-  be used with other new notations, we also define a rule 
+  be used with other new notations, we also define a rule
   for 'unknown' notations. For historical reasons, I'll use
   the name 'blort' to denote an unknown notation.
 }
@@ -615,7 +615,7 @@ unambiguous: -'unambiguous(', s,
   also lower-case Greek.  If more is needed, rework will be needed.
 
 }
-  
+
 blort: @name, -'(', s, blarg**comma, -')'.
 
 @name:  '_', [L; N; '-_.']+.
@@ -623,7 +623,7 @@ blort: @name, -'(', s, blarg**comma, -')'.
 { A blarg is (of course) an argument for a blort. Frege uses small
   Greek letters for these, as well as italics. I don't think he uses
   any upper-case Greek, but I won't rule it out. }
-  
+
 blarg:  expr; dummy-var.
 
 
@@ -655,7 +655,7 @@ blarg:  expr; dummy-var.
 
 { Upper-case Greek letters can be entered directly, but may also be
   spelled out. }
-  
+
 -Greek-letter: [#391 - #03A9] { 'Α'-'Ω' }
             ; -'Alpha', + #0391 {'Α'}
             ; -'Beta', + #0392 {'Β'}
@@ -687,7 +687,7 @@ blarg:  expr; dummy-var.
 { Lower-case greek letters are allowed as arguments
   in blorts defined in a notation declaration.  With
   luck, it will be clear what they mean. }
-  
+
 -greek-letter: [#03B1 - #03C9] { 'α'-'ω' }
             ; -'alpha', + #03B1 {'α'}
             ; -'beta', + #03B2 {'β'}
@@ -733,7 +733,7 @@ blarg:  expr; dummy-var.
   for the letters I actually use in test cases, we need to use
   quoted literals instead.  This affects characters outside the
   basic multilingual plane of UCS. }
-  
+
 -fraktur: [#1D51E - #1D537]
         ; -'fa', + '𝔞' {#1D51E}
         ; -'fb', + #1D51F

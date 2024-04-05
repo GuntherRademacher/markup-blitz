@@ -1,4 +1,4 @@
-address: person, lf, street, lf, postcode, city, lf, country, lf; 
+address: person, lf, street, lf, postcode, city, lf, country, lf;
          person, lf, street, lf, city, postcode, lf, country, lf.
 person: (title, S?)?, (initials; given, S), surname, S?.
 title: "Mr."; "Mrs."; "Dr."; "Ms.".
@@ -11,7 +11,7 @@ street: no, S?, streetname; streetname, S?, no, S?.
 streetname: name, S; name, S, name.
 city: name, S; name, S, name, S.
 country: name, S?; name, S, name, S?.
-postcode: digits, S, LETTER, LETTER, S?; 
+postcode: digits, S, LETTER, LETTER, S?;
           LETTER, LETTER, digits, S, digit, LETTER, LETTER, S?.
 no: digits.
 -LETTER: ["A"-"Z"].

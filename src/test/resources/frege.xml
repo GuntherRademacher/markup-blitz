@@ -1,5 +1,5 @@
 <ixml>
-   <comment> Grammar and test cases taken from 
+   <comment> Grammar and test cases taken from
   Sperberg-McQueen, C. M. “Keyboarding Frege's concept writing: A case study in the use of invisible
   XML.” Presented at Balisage: The Markup Conference 2023, Washington, DC, July 31 - August 4, 2023.
   In Proceedings of Balisage: The Markup Conference 2023. Balisage Series on Markup Technologies,
@@ -40,9 +40,9 @@ Verlag von Louis Nebert, 1879. </comment>
   - a formula expressing a proposition, either with an affirmative
     judgement (nonterminal 'yes') or without (nonterminal 'maybe'),
 
-  - the declaration of a new notation, or 
+  - the declaration of a new notation, or
 
-  - an inference (one or more premises, and one or more inference 
+  - an inference (one or more premises, and one or more inference
     steps, or
 
   - a basic formula without a content stroke (perhaps not strictly
@@ -51,7 +51,7 @@ Verlag von Louis Nebert, 1879. </comment>
 
   If there are other kinds of expressions, I've missed them so far.
 
-  After any of these, we allow an optional end-mark.  
+  After any of these, we allow an optional end-mark.
 
 </comment>
    <rule mark="-" name="begriffsschrift">
@@ -357,7 +357,7 @@ Verlag von Louis Nebert, 1879. </comment>
    <comment> A 'mention' formula is a basic statement with no content stroke.
   The name reflects the fact that these formulas appear (§10, §24)
   as objects of metalinguistic discussion, typically in sentences
-  of the form "[formula] denotes ..." or "the abbreviated form 
+  of the form "[formula] denotes ..." or "the abbreviated form
   [formula] can always be replaced by the full form [formula]".
 
   The keyword 'expr' used here is intended to suggest reading a
@@ -371,7 +371,7 @@ Verlag von Louis Nebert, 1879. </comment>
       </alt>
    </rule>
    <comment> ................................................................
-  Expressions 
+  Expressions
 </comment>
    <comment> Expressions are used for basic statements, function arguments,
   either side of an equivalence, and the left-hand side of a
@@ -384,8 +384,8 @@ Verlag von Louis Nebert, 1879. </comment>
 
   Bound variables are syntactically distinct from variables with
   implicit universal quantification (bound variables are Fraktur,
-  others italic). We carry that distinction into the syntax here, just 
-  in case we ever need it.  
+  others italic). We carry that distinction into the syntax here, just
+  in case we ever need it.
 
   Bound variables do not, as far as I know, ever show up as basic
   statements, but I don't see anything in Frege's explanations that
@@ -577,7 +577,7 @@ the page break, though transcribed before it. </comment>
   As far as I can see, 102 is the only formula that actually uses
   multiple premises by reference in a single inference step.  It uses
   no substitutions.  In Frege's book, then, a premise reference
-  can EITHER have multiple references without substitutions or a 
+  can EITHER have multiple references without substitutions or a
   single reference with optional substitutions.
 
 </comment>
@@ -708,13 +708,13 @@ the page break, though transcribed before it. </comment>
          <nonterminal name="prop-no-ifs"/>
       </alt>
    </rule>
-   <comment> §8 Equivalence sign.  
+   <comment> §8 Equivalence sign.
 
   It looks as if we are going to need to parse the leaves.  Frege
   refers to "Inhaltsgleichheit", which for the moment I am going to
   render as "equivalence".  In Part I, at least, the only use of
   equivalences is for variable symbols.  But in Part II, things get
-  more complicated.  So we allow equivalences between parenthesized 
+  more complicated.  So we allow equivalences between parenthesized
   propositions on the left and variables on the right.  In this case,
   Frege normally brackets the entire equivalence.
 
@@ -776,7 +776,7 @@ the page break, though transcribed before it. </comment>
   Frege does not distinguish, in notation or prose, between what I
   would call "function" and "function application".  The nonterminal
   'fa' can be thought of as an abbreviation for 'function application'
-  or for 'function and argument'.  
+  or for 'function and argument'.
 
 </comment>
    <rule name="fa">
@@ -845,7 +845,7 @@ the page break, though transcribed before it. </comment>
    <comment> §24 Elaboration of equivalence as a method of introducing a new
   notation.  In §8, Frege mentions that one reason for specifying an
   equivalence is to establish a short form to abbreviate what would
-  otherwise be tedious to write out.  In §24 he gives more details. 
+  otherwise be tedious to write out.  In §24 he gives more details.
 
   1 In place of the affirmation stroke there is a double stroke, which
     Frege explains as signaling a double nature of the statement
@@ -899,7 +899,7 @@ the page break, though transcribed before it. </comment>
       </alt>
    </rule>
    <comment> A known notation is one Frege introduces. (We know it because we
-  have read ahead in the book.)  We define these here for 
+  have read ahead in the book.)  We define these here for
   convenience: better syntax checking, and the opportunity for
   custom XML representations. </comment>
    <rule mark="-" name="known-notation">
@@ -916,12 +916,12 @@ the page break, though transcribed before it. </comment>
          <nonterminal name="unambiguous"/>
       </alt>
    </rule>
-   <comment> The first notation Frege defines means 'property F is 
+   <comment> The first notation Frege defines means 'property F is
   inherited in the f-series', where F is a unary predicate
-  and f is a binary predicate such that f(x, y) means 
-  that applying procedure f to x yields y.  He also wants 
+  and f is a binary predicate such that f(x, y) means
+  that applying procedure f to x yields y.  He also wants
   two dummy arguments with Greek letters, and from his
-  examples it appears that a fifth argument is needed in 
+  examples it appears that a fifth argument is needed in
   order to specify the order of the two greek arguments in
   the call to f().  It's possible that there are typos in
   those examples, since the order of arguments never
@@ -993,7 +993,7 @@ the page break, though transcribed before it. </comment>
       </alt>
    </rule>
    <comment> Frege describes the second notation as meaning 'y follows x in the
-f-series'.  
+f-series'.
 
 I think it may be clearer to say that (x,y) is in the transitive
 closure of relation f.  The conventional English term for the relation
@@ -1079,7 +1079,7 @@ like "ancestral" uses Frege's genealogical metaphor backwards.  </comment>
       </alt>
    </rule>
    <comment> As a nod towards generality, and to enable this grammar to
-  be used with other new notations, we also define a rule 
+  be used with other new notations, we also define a rule
   for 'unknown' notations. For historical reasons, I'll use
   the name 'blort' to denote an unknown notation.
 </comment>
