@@ -87,6 +87,18 @@ public class IxmlCommunityTest extends TestBase {
 
     // waiting for https://github.com/invisibleXML/ixml/pull/241
     skipReasons.put("Tests producing parse trees/version-decl-two", SkipReason.BROKEN);
+
+    // waiting for https://github.com/invisibleXML/ixml/pull/245
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-06", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-07", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-08", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-09", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-10", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-ORP", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORS", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORB", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORG", SkipReason.BROKEN);
+    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORP", SkipReason.BROKEN);
   }
 
   public static enum Catalog {
@@ -428,7 +440,7 @@ public class IxmlCommunityTest extends TestBase {
             .anyMatch(expected -> actual.equals(expected) || deepEqual(expected, actual))) {
           if (testCase.getOutputs().size() == 1) {
             String expected = testCase.getOutputs().get(0);
-            if (! expected.equals("<tbd/>\n"))
+            if (! expected.startsWith("<tbd/>"))
               assertEquals(expected, actual, "Unexpected parsing result");
           }
           else {

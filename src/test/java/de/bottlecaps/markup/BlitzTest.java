@@ -168,8 +168,14 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testCrLf() {
-    Parser parser = generate("S:  ~[]*.");
-    assertEquals("<S>&#xD;\n</S>", parser.parse("\r\n"));
+    final String grammar = "S:  ~[]*.";
+    final String crLf = "\r\n";
+    Parser parser = generate(grammar);
+    assertEquals("<S>\n</S>", parser.parse(crLf));
+    parser = generate("ixml version '1.0'. " + grammar);
+    assertEquals("<S>&#xD;\n</S>", parser.parse(crLf));
+    parser = generate("ixml version '1.1'. " + grammar);
+    assertEquals("<S>\n</S>", parser.parse(crLf));
   }
 
   @Test
