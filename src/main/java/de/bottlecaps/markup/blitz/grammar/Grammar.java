@@ -51,7 +51,7 @@ public final class Grammar extends Node {
     this.versionString = versionString;
     this.rules = new LinkedHashMap<>();
     if (version != null) {
-      this.version = Version.UNSPECIFIED;
+      this.version = version;
       this.mismatch = mismatch;
     }
     else if (this.versionString == null) {
