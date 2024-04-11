@@ -648,15 +648,18 @@ public class Parser
         if (startSymbol.children.length != 1)
           Errors.D06.thro(); // not exactly one element
 
-        if (thread.isAmbiguous || isVersionMismatch) {
-          String state = thread.isAmbiguous && isVersionMismatch
-              ? "ambiguous version-mismatch"
-              : thread.isAmbiguous
-                  ? "ambiguous"
-                  : "version-mismatch";
+        boolean isPrefix = thread.e0 <= size;
+        if (thread.isAmbiguous || isVersionMismatch || isPrefix) {
+          List<String> state = new ArrayList<>();
+          if (thread.isAmbiguous)
+            state.add("ambiguous");
+          if (isPrefix)
+            state.add("prefix");
+          if (isVersionMismatch)
+            state.add("version-mismatch");
           nonterminal.addChildren(new Symbol[] {
               Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-              Nonterminal.attribute("ixml:state", state)
+              Nonterminal.attribute("ixml:state", String.join(" ", state))
           });
         }
       }

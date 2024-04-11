@@ -780,32 +780,32 @@ public class BlitzTest extends TestBase {
   public void testLongestMatch() {
     Parser parser = generate("S: 'a'.", Option.LONGEST_MATCH);
     assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>a</S>", parser.parse("aa"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'?.", Option.LONGEST_MATCH);
     assertEquals("<S/>", parser.parse(""));
     assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>a</S>", parser.parse("aa"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'+.", Option.LONGEST_MATCH);
     assertEquals("<S>a</S>", parser.parse("a"));
     assertEquals("<S>aa</S>", parser.parse("aa"));
     assertEquals("<S>aaa</S>", parser.parse("aaa"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
-    assertEquals("<S>aa</S>", parser.parse("aab"));
-    assertEquals("<S>aaa</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aa</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aaa</S>", parser.parse("aaab"));
 
     parser = generate("S: 'a'*.", Option.LONGEST_MATCH);
     assertEquals("<S/>", parser.parse(""));
     assertEquals("<S>a</S>", parser.parse("a"));
     assertEquals("<S>aa</S>", parser.parse("aa"));
     assertEquals("<S>aaa</S>", parser.parse("aaa"));
-    assertEquals("<S/>", parser.parse("b"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
-    assertEquals("<S>aa</S>", parser.parse("aab"));
-    assertEquals("<S>aaa</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("b"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aa</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aaa</S>", parser.parse("aaab"));
 
     parser = generate(
           "expression: expr.\n"
@@ -825,7 +825,7 @@ public class BlitzTest extends TestBase {
         + "-digit: [\"0\"-\"9\"].",
         Option.INDENT, Option.LONGEST_MATCH);
     assertEquals(
-          "<expression>\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
@@ -836,7 +836,7 @@ public class BlitzTest extends TestBase {
       parser.parse(
           "(a+1)*$%&$&"));
     assertEquals(
-          "<expression>\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
         + "   <prod>\n"
         + "      <bracketed>\n"
         + "         <sum>\n"
@@ -860,32 +860,32 @@ public class BlitzTest extends TestBase {
   public void testShortestMatch() {
     Parser parser = generate("S: 'a'.", Option.SHORTEST_MATCH);
     assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>a</S>", parser.parse("aa"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'?.", Option.SHORTEST_MATCH);
     assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S/>", parser.parse("a"));
-    assertEquals("<S/>", parser.parse("aa"));
-    assertEquals("<S/>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("ab"));
 
     parser = generate("S: 'a'+.", Option.SHORTEST_MATCH);
     assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>a</S>", parser.parse("aa"));
-    assertEquals("<S>a</S>", parser.parse("aaa"));
-    assertEquals("<S>a</S>", parser.parse("ab"));
-    assertEquals("<S>a</S>", parser.parse("aab"));
-    assertEquals("<S>a</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aaab"));
 
     parser = generate("S: 'a'*.", Option.SHORTEST_MATCH);
     assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S/>", parser.parse("a"));
-    assertEquals("<S/>", parser.parse("aa"));
-    assertEquals("<S/>", parser.parse("aaa"));
-    assertEquals("<S/>", parser.parse("b"));
-    assertEquals("<S/>", parser.parse("ab"));
-    assertEquals("<S/>", parser.parse("aab"));
-    assertEquals("<S/>", parser.parse("aaab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("b"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aaab"));
 
     parser = generate(
           "expression: expr.\n"
@@ -905,7 +905,7 @@ public class BlitzTest extends TestBase {
         + "-digit: [\"0\"-\"9\"].",
         Option.INDENT, Option.SHORTEST_MATCH);
     assertEquals(
-          "<expression>\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
@@ -916,7 +916,7 @@ public class BlitzTest extends TestBase {
       parser.parse(
           "(a+1)*$%&$&"));
     assertEquals(
-          "<expression>\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
