@@ -217,8 +217,11 @@ public class Generator {
 
   private int[] supplementaryMap(final int firstValue) {
     Range firstKey = terminalCodeByRange.floorKey(new Range(firstValue));
-    if (firstKey == null)
-      return new int[0];
+    if (firstKey == null) {
+      if (terminalCodeByRange.isEmpty())
+        return new int[0];
+      firstKey = terminalCodeByRange.firstKey();
+    }
     if (firstValue > firstKey.getLastCodepoint()) {
       firstKey = terminalCodeByRange.higherKey(firstKey);
       if (firstKey == null)

@@ -597,10 +597,6 @@ public class BlitzTest extends TestBase {
         + "</formula>",
       parser.parse(
           "not all fd satisfy not all fa satisfy Phi(fa, fd)"));
-//    assertEquals(
-//        "",
-//      parser.parse(
-//          ""));
     assertEquals(
           "<formula>\n"
         + "   <maybe>\n"
@@ -779,33 +775,33 @@ public class BlitzTest extends TestBase {
   @Test
   public void testLongestMatch() {
     Parser parser = generate("S: 'a'.", Option.LONGEST_MATCH);
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'?.", Option.LONGEST_MATCH);
-    assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'+.", Option.LONGEST_MATCH);
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>aa</S>", parser.parse("aa"));
-    assertEquals("<S>aaa</S>", parser.parse("aaa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aa</S>", parser.parse("aab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aaa</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaab"));
 
     parser = generate("S: 'a'*.", Option.LONGEST_MATCH);
-    assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S>aa</S>", parser.parse("aa"));
-    assertEquals("<S>aaa</S>", parser.parse("aaa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("b"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aa</S>", parser.parse("aab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">aaa</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("b"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaab"));
 
     parser = generate(
           "expression: expr.\n"
@@ -825,7 +821,7 @@ public class BlitzTest extends TestBase {
         + "-digit: [\"0\"-\"9\"].",
         Option.INDENT, Option.LONGEST_MATCH);
     assertEquals(
-          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"5\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
@@ -836,7 +832,7 @@ public class BlitzTest extends TestBase {
       parser.parse(
           "(a+1)*$%&$&"));
     assertEquals(
-          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"11\">\n"
         + "   <prod>\n"
         + "      <bracketed>\n"
         + "         <sum>\n"
@@ -859,33 +855,33 @@ public class BlitzTest extends TestBase {
   @Test
   public void testShortestMatch() {
     Parser parser = generate("S: 'a'.", Option.SHORTEST_MATCH);
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
     parser = generate("S: 'a'?.", Option.SHORTEST_MATCH);
-    assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("ab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("ab"));
 
     parser = generate("S: 'a'+.", Option.SHORTEST_MATCH);
-    assertEquals("<S>a</S>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aaa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("ab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">a</S>", parser.parse("aaab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aaab"));
 
     parser = generate("S: 'a'*.", Option.SHORTEST_MATCH);
-    assertEquals("<S/>", parser.parse(""));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("a"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aaa"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("b"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("ab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aab"));
-    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\"/>", parser.parse("aaab"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aaa"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("b"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("ab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aab"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aaab"));
 
     parser = generate(
           "expression: expr.\n"
@@ -905,7 +901,7 @@ public class BlitzTest extends TestBase {
         + "-digit: [\"0\"-\"9\"].",
         Option.INDENT, Option.SHORTEST_MATCH);
     assertEquals(
-          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"5\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
@@ -916,7 +912,7 @@ public class BlitzTest extends TestBase {
       parser.parse(
           "(a+1)*$%&$&"));
     assertEquals(
-          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\">\n"
+          "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"5\">\n"
         + "   <bracketed>\n"
         + "      <sum>\n"
         + "         <id name=\"a\"/>\n"
@@ -926,6 +922,30 @@ public class BlitzTest extends TestBase {
         + "</expression>",
         parser.parse(
             "(a+1)*(a+2)*(a+3"));
+  }
+
+  @Test
+  public void testFirstMatch() {
+    Parser parser = generate("S: 'abc'.", Blitz.Option.FIRST_MATCH);
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\">abc</S>", parser.parse("abc"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">abc</S>", parser.parse("dabc"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">abc</S>", parser.parse("aabc"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">abc</S>", parser.parse("aaabc"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">abc</S>", parser.parse("ababc"));
+
+    parser = generate("S: #1f642, #1f609, #1f600.", Blitz.Option.FIRST_MATCH);
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("a\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("ab\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83E\uDD15\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+
+    parser = generate("S: #1f642, #1f609, #1f600.", Blitz.Option.FIRST_MATCH, Blitz.Option.LONGEST_MATCH);
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("a\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("ab\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83E\uDD15\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
   }
 
 //  @Test

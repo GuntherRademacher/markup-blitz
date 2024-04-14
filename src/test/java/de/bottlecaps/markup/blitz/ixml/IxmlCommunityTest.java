@@ -387,8 +387,6 @@ public class IxmlCommunityTest extends TestBase {
     }
   }
 
-  static int n = 0;
-
   private void test(TestCase testCase) {
     skipReasons.forEach((prefix, skipReason) -> {
       boolean runTest = ! testCase.getName().startsWith(prefix)
@@ -434,7 +432,8 @@ public class IxmlCommunityTest extends TestBase {
         String actual = parser.parse(input);
         if (actual.startsWith("<ixml xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"failed\""))
           throw new BlitzException(actual);
-        assertEquals(TestCase.Assertion.assert_xml, testCase.getAssertion());
+        assertEquals(testCase.getAssertion(), TestCase.Assertion.assert_xml,
+            "Parsed successfully, but was expecting failure");
         assertTrue(testCase.getOutputs().size() > 0, "Missing reference output");
         if (! testCase.getOutputs().stream()
             .anyMatch(expected -> actual.equals(expected) || deepEqual(expected, actual))) {

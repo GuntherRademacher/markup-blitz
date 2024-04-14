@@ -16,6 +16,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzIxmlException;
@@ -31,6 +32,7 @@ import de.bottlecaps.markup.blitz.transform.CompressedMap;
 public class Parser
 {
   public static final String IXML_NAMESPACE = "http://invisiblexml.org/NS";
+  public static final String BLITZ_NAMESPACE = "http://de.bottlecaps/markup/blitz/NS";
 
   private static final int STALL_THRESHOLD = 8;
 
@@ -133,12 +135,11 @@ public class Parser
 
   private static class ParseException extends Exception {
     private static final long serialVersionUID = 1L;
-    private int begin, end, offending, state;
+    private int begin, offending, state;
     private boolean wasStalled;
 
     public ParseException(int begin, int end, int state, int offending, boolean wasStalled) {
       this.begin = begin;
-      this.end = end;
       this.state = state;
       this.offending = offending;
       this.wasStalled = wasStalled;
@@ -152,7 +153,6 @@ public class Parser
     }
 
     public int getBegin() {return begin;}
-    public int getEnd() {return end;}
     public int getState() {return state;}
     public int getOffending() {return offending;}
     public boolean wasStalled() {return wasStalled;}
@@ -587,6 +587,7 @@ public class Parser
     private int size = 0;
     private int maxId = 0;
     private boolean trace;
+    private boolean firstMatch;
 
     public ParsingContext(String input) {
       this.input = input;
@@ -598,33 +599,49 @@ public class Parser
       Set<Option> currentOptions = options.length == 0
           ? defaultOptions
           : Set.of(options);
-      StringBuilder w = new StringBuilder();
-      XmlSerializer s = new XmlSerializer(w, currentOptions.contains(Option.INDENT));
-      eventHandler = new ParseTreeBuilder();
+
       try {
+        firstMatch = currentOptions.contains(Option.FIRST_MATCH);
         trace = currentOptions.contains(Option.TRACE);
         if (trace)
           writeTrace("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">\n<trace>\n");
-        size = input.length();
-        maxId = 0;
-        ParsingThread thread;
+        ParsingThread thread = null;
+        int skipped = 0;
         try {
-          thread = parse();
-        }
-        catch (ParseException pe) {
-          int begin = pe.getBegin();
-          String prefix = input.substring(0, begin);
-          int offending = pe.getOffending();
-          int line = prefix.replaceAll("[^\n]", "").length() + 1;
-          int column = prefix.length() - prefix.lastIndexOf('\n');
-          throw new BlitzParseException(
-              "Failed to parse input:\n" + getErrorMessage(pe),
-              offending >= 0 ? terminal[offending].shortName()
-                             : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
-                                                       : "$",
-              line,
-              column
-          );
+          size = input.length();
+          maxId = 0;
+          int startOffset = 0;
+          for (;;) {
+            eventHandler = new ParseTreeBuilder();
+            try {
+              thread = new ParsingThread();
+              skipped += thread.init(startOffset);
+              startOffset = thread.e1;
+              thread = parse(thread);
+              break;
+            }
+            catch (ParseException pe) {
+              if (firstMatch && startOffset < size) {
+                if (trace)
+                  writeTrace("  <parse offset=\"" + startOffset + " action=\"restart\"/>\n");
+                ++skipped;
+                continue;
+              }
+              int begin = pe.getBegin();
+              String prefix = input.substring(0, begin);
+              int offending = pe.getOffending();
+              int line = prefix.replaceAll("[^\n]", "").length() + 1;
+              int column = prefix.length() - prefix.lastIndexOf('\n');
+              throw new BlitzParseException(
+                  "Failed to parse input:\n" + getErrorMessage(pe),
+                  offending >= 0 ? terminal[offending].shortName()
+                                 : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
+                                                           : "$",
+                  line,
+                  column
+              );
+            }
+          }
         }
         finally {
           if (trace) {
@@ -657,10 +674,19 @@ public class Parser
             state.add("prefix");
           if (isVersionMismatch)
             state.add("version-mismatch");
-          nonterminal.addChildren(new Symbol[] {
-              Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-              Nonterminal.attribute("ixml:state", String.join(" ", state))
-          });
+          nonterminal.addChild(Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE));
+          nonterminal.addChild(Nonterminal.attribute("ixml:state", String.join(" ", state)));
+        }
+
+        if (currentOptions.contains(Blitz.Option.FIRST_MATCH) ||
+            defaultOptions.contains(Blitz.Option.LONGEST_MATCH) ||
+            defaultOptions.contains(Blitz.Option.SHORTEST_MATCH)) {
+          nonterminal.addChild(Nonterminal.attribute("xmlns:blitz", BLITZ_NAMESPACE));
+          if (currentOptions.contains(Blitz.Option.FIRST_MATCH))
+            nonterminal.addChild(Nonterminal.attribute("blitz:offset", Integer.toString(skipped)));
+          if (defaultOptions.contains(Blitz.Option.LONGEST_MATCH) ||
+              defaultOptions.contains(Blitz.Option.SHORTEST_MATCH))
+            nonterminal.addChild(Nonterminal.attribute("blitz:length", Integer.toString(thread.length - 1)));
         }
       }
       catch (BlitzIxmlException e) {
@@ -696,14 +722,16 @@ public class Parser
           System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
         }
       }
+
+      StringBuilder w = new StringBuilder();
+      XmlSerializer s = new XmlSerializer(w, currentOptions.contains(Option.INDENT));
       eventHandler.serialize(s);
       return w.toString();
     }
 
-    private ParsingThread parse() throws ParseException {
+    private ParsingThread parse(ParsingThread thread) throws ParseException {
       Queue<ParsingThread> currentThreads = new LinkedList<>();
       Queue<ParsingThread> otherThreads = new PriorityQueue<>();
-      ParsingThread thread = new ParsingThread();
       int pos = 0;
       boolean stalled = false;
       ParsingThread accepted = null;
@@ -799,13 +827,11 @@ public class Parser
       String found = e.getOffending() < 0
                    ? null
                    : terminal[e.getOffending()].shortName();
-      int size = e.getEnd() - e.getBegin();
       message += (found == null ? "" : ", found " + found)
               + "\nwhile expecting "
               + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
               + "\n"
-              + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ");
-      message += "at " + lineAndColumn(e.getBegin()) + ":\n..."
+              + "at " + lineAndColumn(e.getBegin()) + ":\n..."
               + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
               + "...";
       if (e.wasStalled())
@@ -826,6 +852,8 @@ public class Parser
       public DeferredEvent deferredEvent;
       public Status status;
       public final int id;
+//      public int actualOffset;
+      public int length;
       public int state;
       public int action;
       public int b0, e0;
@@ -837,10 +865,6 @@ public class Parser
 
       public ParsingThread() {
         forkCount = new byte[forks.length / 2];
-        b0 = 0;
-        e0 = 0;
-        b1 = 0;
-        e1 = 0;
         maxId = 0;
         id = maxId;
         isAmbiguous = false;
@@ -848,13 +872,26 @@ public class Parser
         deferredEvent = null;
         stack = new StackNode();
         state = 0;
-        l1 = match();
-        action = l1 < 0
-               ? 0
-               : terminalTransitions.get(state * numberOfTokens + l1);
+      }
+
+      public int init(int startOffset) {
+        length = 0;
+        for (b0 = startOffset; startOffset <= size; startOffset = e1) {
+          e0 = startOffset;
+          l1 = match();
+          action = l1 < 0
+              ? 0
+              : terminalTransitions.get(state * numberOfTokens + l1);
+          if (action > 0 || ! firstMatch)
+            break;
+        }
+        int skipped = length - 1;
+        length = 1;
+        return skipped;
       }
 
       public ParsingThread(ParsingThread other, int action) {
+        length = other.length;
         forkCount = Arrays.copyOf(other.forkCount, other.forkCount.length);
         this.action = action;
         status = other.status;
@@ -955,7 +992,7 @@ public class Parser
               b0 = b1;
               e0 = e1;
               c1 = -1;
-              l1 = 0;
+              l1 = -1;
             }
             stack = stack.push(state);
             state = shift;
@@ -964,7 +1001,7 @@ public class Parser
           if (reduce < 0) {
             if (trace)
               writeTrace("\"/>\n");
-            if (l1 == 0)
+            if (l1 < 0)
               l1 = match();
             action = l1 < 0
                ? 0
@@ -1001,7 +1038,9 @@ public class Parser
         if (trace)
           writeTrace("  <tokenize thread=\"" + id + "\" offset=\"" + e1 + "\"");
 
-        b1 = e1;
+        b1 = e0;
+        e1 = b1;
+        ++length;
         final int charclass;
         if (e1 >= size) {
           c1 = -1;
@@ -1032,13 +1071,18 @@ public class Parser
               }
             }
 
-            final int smpMapSize = smpMap.length / 3;
-            int lo = 0, hi = smpMapSize - 1;
-            for (int m = hi >> 1; ; m = (hi + lo) >> 1) {
-              if (smpMap[m] > c1) {hi = m - 1;}
-              else if (smpMap[smpMapSize + m] < c1) {lo = m + 1;}
-              else {charclass = smpMap[2 * smpMapSize + m]; break;}
-              if (lo > hi) {charclass = -1; break;}
+            if (smpMap.length == 0) {
+              charclass = -1;
+            }
+            else {
+              final int smpMapSize = smpMap.length / 3;
+              int lo = 0, hi = smpMapSize - 1;
+              for (int m = hi >> 1; ; m = (hi + lo) >> 1) {
+                if (smpMap[m] > c1) {hi = m - 1;}
+                else if (smpMap[smpMapSize + m] < c1) {lo = m + 1;}
+                else {charclass = smpMap[2 * smpMapSize + m]; break;}
+                if (lo > hi) {charclass = -1; break;}
+              }
             }
           }
           if (trace && c1 >= 0)
@@ -1046,7 +1090,6 @@ public class Parser
           if (charclass <= 0) {
             if (trace)
               writeTrace(" status=\"fail\" end=\"" + e1 + "\"/>\n");
-            e1 = b1;
             return -1;
           }
         }
