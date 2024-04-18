@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Set;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -26,13 +25,13 @@ import org.basex.query.QueryException;
 import org.basex.query.QueryProcessor;
 import org.basex.query.value.node.DBNode;
 
-import de.bottlecaps.markup.Blitz.Option;
+import de.bottlecaps.markup.blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 
 public class TestBase {
   private static Map<URL, String> cache = Collections.synchronizedMap(new HashMap<>());
-  private static Map<Map.Entry<String, Set<Option>>, Parser> parserCache = Collections.synchronizedMap(new HashMap<>());
+  private static Map<Map.Entry<String, Map<Option, Object>>, Parser> parserCache = Collections.synchronizedMap(new HashMap<>());
 
   protected static String cachedUrlContent(URL url) {
     return cache.computeIfAbsent(url, u -> {
@@ -61,19 +60,25 @@ public class TestBase {
     }
   }
 
-  protected static Parser generate(String grammar, Option... blitzOptions) {
-    Set<Option> options = Set.of(blitzOptions);
-    Map.Entry<String, Set<Option>> key = Map.entry(grammar, options);
+  protected static Parser generate(String grammar) {
+    return generate(grammar, Collections.emptyMap());
+  }
+
+  protected static Parser generate(String grammar, Map<Option, Object> options) {
+    Map.Entry<String, Map<Option, Object>> key = Map.entry(grammar, options);
     return parserCache.computeIfAbsent(key, k ->
-      Blitz.generate(k.getKey(), k.getValue().toArray(Option[]::new))
+      Blitz.generate(k.getKey(), k.getValue())
     );
   }
 
-  protected static Parser generateFromXml(String grammar, Option... blitzOptions) {
-    Set<Option> options = Set.of(blitzOptions);
-    Map.Entry<String, Set<Option>> key = Map.entry(grammar, options);
+  protected static Parser generateFromXml(String grammar) {
+    return generateFromXml(grammar, Collections.emptyMap());
+  }
+
+  protected static Parser generateFromXml(String grammar, Map<Option, Object> options) {
+    Map.Entry<String, Map<Option, Object>> key = Map.entry(grammar, options);
     return parserCache.computeIfAbsent(key, k ->
-      Blitz.generateFromXml(k.getKey(), k.getValue().toArray(Option[]::new))
+      Blitz.generateFromXml(k.getKey(), k.getValue())
     );
   }
 

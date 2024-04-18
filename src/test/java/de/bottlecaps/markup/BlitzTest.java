@@ -6,8 +6,13 @@ import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,7 +21,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import de.bottlecaps.markup.Blitz.Option;
+import de.bottlecaps.markup.blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 
 public class BlitzTest extends TestBase {
@@ -41,10 +46,10 @@ public class BlitzTest extends TestBase {
   @Test
   public void testInsertion() {
     Parser parser = generate(
-        "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.");
+        "S: +'a', +'b', 'c', +'d', +'e', -'f', +'g', +'h', 'i', +'j', +'k', + 'l', 'm'.",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
-        "cfim",
-        Option.INDENT);
+        "cfim");
     assertEquals(
           "<S>abcdeghijklm</S>",
         result);
@@ -89,10 +94,9 @@ public class BlitzTest extends TestBase {
         + "   value = (@name | @number), S.\n"
         + "  number = digit+.\n"
         + "  -empty = .\n"
-        + "      -S = -[\" \" | #a]*.");
-    String result = parser.parse(
-        "p { }",
-        Option.INDENT);
+        + "      -S = -[\" \" | #a]*.",
+        Map.of(Option.INDENT, true));
+    String result = parser.parse("p { }");
     Set<String> expectedResults = Set.of(
         "<css xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">\n"
         + "   <rule>\n"
@@ -118,7 +122,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxml() {
-    Parser parser = generate(Blitz.ixmlGrammar(), Option.INDENT); // , Option.TIMING);
+    Parser parser = generate(Blitz.ixmlGrammar(), Map.of(Option.INDENT, true));
     String xml = parser.parse(Blitz.ixmlGrammar());
     assertEquals(normalizeEol(resourceContent("ixml.xml")), xml);
   }
@@ -133,14 +137,14 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testAddress() {
-    Parser parser = generate(resourceContent("address.ixml"));
-    String xml = parser.parse(resourceContent("address.input"), Option.INDENT);
+    Parser parser = generate(resourceContent("address.ixml"), Map.of(Option.INDENT, true));
+    String xml = parser.parse(resourceContent("address.input"));
     assertEquals(normalizeEol(resourceContent("address.xml")), xml);
   }
 
   @Test
   public void testMultiThreadParsing() throws Throwable {
-    Parser parser = generate(Blitz.ixmlGrammar(), Option.INDENT);
+    Parser parser = generate(Blitz.ixmlGrammar(), Map.of(Option.INDENT, true));
     AtomicReference<Throwable> throwable = new AtomicReference<>();
     long timeLimit = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(3);
     List<Thread> threads = Arrays.asList("ixml", "json", "frege").stream()
@@ -149,7 +153,7 @@ public class BlitzTest extends TestBase {
           while (System.currentTimeMillis() < timeLimit && throwable.get() == null) {
             try {
               String resource = grammar == "ixml" ? Blitz.IXML_GRAMMAR_RESOURCE : grammar + ".ixml";
-              String xml = parser.parse(normalizeEol(resourceContent(resource)), Option.INDENT);
+              String xml = parser.parse(normalizeEol(resourceContent(resource)));
               assertEquals(normalizeEol(resourceContent(grammar + ".xml")), xml);
             }
             catch (Throwable t) {
@@ -180,8 +184,8 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testArith() {
-    Parser parser = generate(resourceContent("arith.ixml"));
-    String result = parser.parse(resourceContent("arith.input"), Option.INDENT);
+    Parser parser = generate(resourceContent("arith.ixml"), Map.of(Option.INDENT, true));
+    String result = parser.parse(resourceContent("arith.input"));
     assertEquals(normalizeEol(resourceContent("arith.xml")), result);
   }
 
@@ -200,10 +204,10 @@ public class BlitzTest extends TestBase {
     Parser parser = generate(
           "date: month, -',', -' '*, year . \n"
         + "@month: 'Feb', 'ruary' .\n"
-        + "year: ['0'-'9']+ .");
+        + "year: ['0'-'9']+ .",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
-        "February, 2022",
-        Option.INDENT);
+        "February, 2022");
     assertEquals(
           "<date month=\"February\">\n"
         + "   <year>2022</year>\n"
@@ -229,7 +233,8 @@ public class BlitzTest extends TestBase {
         + "-letter: [L].\n"
         + "-punctuation: [\".;:,'?!\"].\n"
         + "-s: \" \"+.\n"
-        + "-nl: -#a | -#d, -#a .");
+        + "-nl: -#a | -#d, -#a .",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
           "24 December 2021\n"
         + "Panic shopping! Panic packing! Will we make it before midnight?\n"
@@ -239,8 +244,7 @@ public class BlitzTest extends TestBase {
         + "\n"
         + "26 December 2021\n"
         + "Groan.\n"
-        + "\n",
-        Option.INDENT);
+        + "\n");
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -289,7 +293,8 @@ public class BlitzTest extends TestBase {
         + "-letter: [L].\n"
         + "-punctuation: [\".;:,'?!\"].\n"
         + "-s: \" \".\n"
-        + "-nl: -#a | -#d, -#a .");
+        + "-nl: -#a | -#d, -#a .",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
           "24 December 2021\n"
         + "Panic shopping! Panic packing! Will we make it before midnight?\n"
@@ -299,8 +304,7 @@ public class BlitzTest extends TestBase {
         + "\n"
         + "26 December 2021\n"
         + "Groan.\n"
-        + "\n",
-        Option.INDENT);
+        + "\n");
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -347,7 +351,8 @@ public class BlitzTest extends TestBase {
         + "para: char*, blank.\n"
         + "-blank: nl, nl.\n"
         + "-char: ~[#a].\n"
-        + "-nl: -#a | -#d, -#a .");
+        + "-nl: -#a | -#d, -#a .",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
           "24 December 2021\n"
         + "Panic shopping! Panic packing! Will we make it before midnight?\n"
@@ -357,8 +362,7 @@ public class BlitzTest extends TestBase {
         + "\n"
         + "26 December 2021\n"
         + "Groan.\n"
-        + "\n",
-        Option.INDENT);
+        + "\n");
     assertEquals(
           "<diary>\n"
         + "   <entry>\n"
@@ -424,10 +428,10 @@ public class BlitzTest extends TestBase {
         + "number: @value.\n"
         + "value: digit+.\n"
         + "-letter: [\"a\"-\"z\"].\n"
-        + "-digit: [\"0\"-\"9\"].");
+        + "-digit: [\"0\"-\"9\"].",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
-        "pi+(10\u00d7b)",
-        Option.INDENT);
+        "pi+(10\u00d7b)");
     assertEquals(
           "<expression>\n"
         + "   <sum>\n"
@@ -447,7 +451,7 @@ public class BlitzTest extends TestBase {
   public void testFrege() {
     Parser parser = generate(
         resourceContent("frege.ixml"),
-        Option.INDENT);
+        Map.of(Option.INDENT, true));
     assertEquals(
           "<formula>\n"
         + "   <maybe>\n"
@@ -622,10 +626,10 @@ public class BlitzTest extends TestBase {
   @Test
   public void testInsertSeparatorAlternate() {
     Parser parser = generate(
-        "S: [L]++(+':';+'=').");
+        "S: [L]++(+':';+'=').",
+        Map.of(Option.INDENT, true));
     String result = parser.parse(
-        "abc",
-        Option.INDENT);
+        "abc");
     Set<String> expectedResults = Set.of(
         "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">a=b=c</S>",
         "<S xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\">a:b:c</S>",
@@ -701,10 +705,9 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testIxmlGrammar() {
-    Parser parser = generate(Blitz.ixmlGrammar());
+    Parser parser = generate(Blitz.ixmlGrammar(), Map.of(Option.INDENT, true));
     String result = parser.parse(
-        "S: 'a'.",
-        Option.INDENT);
+        "S: 'a'.");
     assertEquals(
           "<ixml>\n"
         + "   <rule name=\"S\">\n"
@@ -731,7 +734,7 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testFailOnError() {
-    Parser parser = generate("S: 'a'.", Option.FAIL_ON_ERROR);
+    Parser parser = generate("S: 'a'.", Map.of(Option.FAIL_ON_ERROR, true));
     try {
       String result = parser.parse("b");
       Assertions.fail("Parse did not fail, returned: \n" + result);
@@ -761,7 +764,7 @@ public class BlitzTest extends TestBase {
         + "       @number: [\"0\"-\"9\"].\n"
         + "           -op: sign.\n"
         + "@sign>operator: \"+\"; \"-\".",
-        Option.INDENT); // , Option.VERBOSE);
+        Map.of(Option.INDENT, true)); // , Option.VERBOSE);
     String result = parser.parse(
         "(a+1);");
     assertEquals(
@@ -774,18 +777,18 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testLongestMatch() {
-    Parser parser = generate("S: 'a'.", Option.LONGEST_MATCH);
+    Parser parser = generate("S: 'a'.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
-    parser = generate("S: 'a'?.", Option.LONGEST_MATCH);
+    parser = generate("S: 'a'?.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
-    parser = generate("S: 'a'+.", Option.LONGEST_MATCH);
+    parser = generate("S: 'a'+.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aa"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaa"));
@@ -793,7 +796,7 @@ public class BlitzTest extends TestBase {
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aab"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"3\">aaa</S>", parser.parse("aaab"));
 
-    parser = generate("S: 'a'*.", Option.LONGEST_MATCH);
+    parser = generate("S: 'a'*.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"2\">aa</S>", parser.parse("aa"));
@@ -819,7 +822,7 @@ public class BlitzTest extends TestBase {
         + "value: digit+.\n"
         + "-letter: [\"a\"-\"z\"].\n"
         + "-digit: [\"0\"-\"9\"].",
-        Option.INDENT, Option.LONGEST_MATCH);
+        Map.of(Option.INDENT, true, Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals(
           "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"5\">\n"
         + "   <bracketed>\n"
@@ -854,18 +857,18 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testShortestMatch() {
-    Parser parser = generate("S: 'a'.", Option.SHORTEST_MATCH);
+    Parser parser = generate("S: 'a'.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.SHORTEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("ab"));
 
-    parser = generate("S: 'a'?.", Option.SHORTEST_MATCH);
+    parser = generate("S: 'a'?.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.SHORTEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aa"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("ab"));
 
-    parser = generate("S: 'a'+.", Option.SHORTEST_MATCH);
+    parser = generate("S: 'a'+.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.SHORTEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aa"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aaa"));
@@ -873,7 +876,7 @@ public class BlitzTest extends TestBase {
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aab"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("aaab"));
 
-    parser = generate("S: 'a'*.", Option.SHORTEST_MATCH);
+    parser = generate("S: 'a'*.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.SHORTEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse(""));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("a"));
     assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"0\"/>", parser.parse("aa"));
@@ -899,7 +902,7 @@ public class BlitzTest extends TestBase {
         + "value: digit+.\n"
         + "-letter: [\"a\"-\"z\"].\n"
         + "-digit: [\"0\"-\"9\"].",
-        Option.INDENT, Option.SHORTEST_MATCH);
+        Map.of(Option.INDENT, true, Option.TRAILING_CONTENT_POLICY, Option.Value.SHORTEST_MATCH));
     assertEquals(
           "<expression xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"5\">\n"
         + "   <bracketed>\n"
@@ -926,37 +929,98 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testFirstMatch() {
-    Parser parser = generate("S: 'abc'.", Blitz.Option.FIRST_MATCH);
+    Parser parser = generate("S: 'abc'.", Map.of(Option.LEADING_CONTENT_POLICY, Option.Value.FIRST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\">abc</S>", parser.parse("abc"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">abc</S>", parser.parse("dabc"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">abc</S>", parser.parse("aabc"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">abc</S>", parser.parse("aaabc"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">abc</S>", parser.parse("ababc"));
 
-    parser = generate("S: #1f642, #1f609, #1f600.", Blitz.Option.FIRST_MATCH);
+    parser = generate("S: #1f642, #1f609, #1f600.", Map.of(Option.LEADING_CONTENT_POLICY, Option.Value.FIRST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("a\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("ab\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83E\uDD15\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
 
-    parser = generate("S: #1f642, #1f609, #1f600.", Blitz.Option.FIRST_MATCH, Blitz.Option.LONGEST_MATCH);
+    parser = generate("S: #1f642, #1f609, #1f600.", Map.of(Option.LEADING_CONTENT_POLICY, Option.Value.FIRST_MATCH, Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("a\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("ab\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83E\uDD15\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"0\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("a\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("ab\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00a"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"1\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00\uD83D\uDE1F"));
+    assertEquals("<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"2\" blitz:length=\"3\">\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00</S>", parser.parse("\uD83D\uDE1F\uD83E\uDD15\uD83D\uDE42\uD83D\uDE09\uD83D\uDE00\uD83D\uDE1F"));
   }
 
-//  @Test
-//  public void test() {
-//    Parser parser = generate(
-//        "");
-//    String result = parser.parse(
-//        "",
-//        Option.INDENT);
-//    assertEquals(
-//        "",
-//        result);
-//  }
+  @Test
+  public void testMain() throws IOException {
+    PrintStream sysOut = System.out;
+    PrintStream sysErr = System.err;
+    ByteArrayOutputStream outData = new ByteArrayOutputStream();
+    ByteArrayOutputStream errData = new ByteArrayOutputStream();
+    try (PrintStream out = new PrintStream(outData, true, StandardCharsets.UTF_8);
+         PrintStream err = new PrintStream(errData, true, StandardCharsets.UTF_8)) {
+      System.setOut(out);
+      System.setErr(err);
+      try {
+        Blitz.main(new String[] {
+            "--" + Option.INDENT.externalName(),
+            "--" + Option.TRACE.externalName() + ":" + true,
+            "--" + Option.TIMING.externalName() + ":" + false,
+            "--" + Option.VERBOSE.externalName() + ":" + false,
+            "--" + Option.FAIL_ON_ERROR.externalName(),
+            "--" + Option.LEADING_CONTENT_POLICY.externalName() + ":" + Option.Value.FIRST_MATCH.externalName(),
+            "--" + Option.TRAILING_CONTENT_POLICY.externalName() + ":" + Option.Value.LONGEST_MATCH.externalName(),
+            "!S:A+. A:[Ll].",
+            "!...abc..."
+        });
+      }
+      finally {
+        System.setOut(sysOut);
+        System.setErr(sysErr);
+      }
+    }
+    assertEquals(
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+      + "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"prefix\" xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:offset=\"3\" blitz:length=\"3\">\n"
+      + "   <A>a</A>\n"
+      + "   <A>b</A>\n"
+      + "   <A>c</A>\n"
+      + "</S>",
+      outData.toString(StandardCharsets.UTF_8));
+    assertEquals(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        + "<trace>\n"
+        + "  <tokenize thread=\"0\" offset=\"0\" char=\".\" codepoint=\"46\" class=\"2\" status=\"success\" result=\"#0...\" end=\"1\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"1\" char=\".\" codepoint=\"46\" class=\"2\" status=\"success\" result=\"#0...\" end=\"2\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"2\" char=\".\" codepoint=\"46\" class=\"2\" status=\"success\" result=\"#0...\" end=\"3\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"3\" char=\"a\" codepoint=\"97\" class=\"1\" status=\"success\" result=\"'a'...\" end=\"4\"/>\n"
+        + "  <parse thread=\"0\" offset=\"3\" state=\"0\" input=\"'a'...\" action=\"shift reduce\" nonterminal=\"A\" count=\"1\"/>\n"
+        + "  <parse thread=\"0\" offset=\"4\" state=\"0\" input=\"A\" action=\"shift reduce\" nonterminal=\"S\" count=\"1\"/>\n"
+        + "  <parse thread=\"0\" offset=\"4\" state=\"0\" input=\"S\" action=\"shift\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"4\" char=\"b\" codepoint=\"98\" class=\"1\" status=\"success\" result=\"'a'...\" end=\"5\"/>\n"
+        + "  <parse thread=\"0\" offset=\"4\" state=\"1\" input=\"'a'...\" action=\"fork\"/>\n"
+        + "  <parse thread=\"1\" offset=\"4\" state=\"1\" input=\"'a'...\" action=\"reduce\" nonterminal=\"_start\" count=\"1\"/>\n"
+        + "  <parse thread=\"1\" offset=\"4\" state=\"0\" input=\"_start 'a'...\" action=\"accept\"/>\n"
+        + "  <parse thread=\"0\" offset=\"4\" state=\"1\" input=\"'a'...\" action=\"shift reduce\" nonterminal=\"A\" count=\"1\"/>\n"
+        + "  <parse thread=\"0\" offset=\"5\" state=\"1\" input=\"A\" action=\"shift reduce\" nonterminal=\"S\" count=\"2\"/>\n"
+        + "  <parse thread=\"0\" offset=\"5\" state=\"0\" input=\"S\" action=\"shift\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"5\" char=\"c\" codepoint=\"99\" class=\"1\" status=\"success\" result=\"'a'...\" end=\"6\"/>\n"
+        + "  <parse thread=\"0\" offset=\"5\" state=\"1\" input=\"'a'...\" action=\"fork\"/>\n"
+        + "  <parse thread=\"0\" offset=\"5\" state=\"1\" input=\"'a'...\" action=\"shift reduce\" nonterminal=\"A\" count=\"1\"/>\n"
+        + "  <parse thread=\"0\" offset=\"6\" state=\"1\" input=\"A\" action=\"shift reduce\" nonterminal=\"S\" count=\"2\"/>\n"
+        + "  <parse thread=\"0\" offset=\"6\" state=\"0\" input=\"S\" action=\"shift\"/>\n"
+        + "  <tokenize thread=\"0\" offset=\"6\" char=\".\" codepoint=\"46\" class=\"2\" status=\"success\" result=\"#0...\" end=\"7\"/>\n"
+        + "  <parse thread=\"2\" offset=\"5\" state=\"1\" input=\"'a'...\" action=\"reduce\" nonterminal=\"_start\" count=\"1\"/>\n"
+        + "  <parse thread=\"2\" offset=\"5\" state=\"0\" input=\"_start 'a'...\" action=\"accept\"/>\n"
+        + "  <parse thread=\"0\" offset=\"6\" state=\"1\" input=\"#0...\" action=\"reduce\" nonterminal=\"_start\" count=\"1\"/>\n"
+        + "  <parse thread=\"0\" offset=\"6\" state=\"0\" input=\"_start #0...\" action=\"accept\"/>\n"
+        + "</trace>\n",
+      errData.toString(StandardCharsets.UTF_8));
+  }
+
 }

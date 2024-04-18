@@ -11,9 +11,11 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+import de.bottlecaps.markup.blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.transform.BNF;
@@ -30,30 +32,29 @@ public class Blitz {
   /** The ixml grammar resource. */
   public final static String IXML_GRAMMAR_RESOURCE = "de/bottlecaps/markup/blitz/ixml.ixml";
 
-  /** Parser and generator options. */
-  public enum Option {
-    /**    Parser option: Generate XML with indentation.             */ INDENT,
-    /**    Parser option: Print parser trace.                        */ TRACE,
-    /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
-    /**    Parser option: Partial parsing, accepting first match.    */ FIRST_MATCH,
-    /** Generator option: Partial parsing, accepting longest match.  */ LONGEST_MATCH,
-    /** Generator option: Partial parsing, accepting shortest match. */ SHORTEST_MATCH,
-    /** Generator option: Print timing information.                  */ TIMING,
-    /** Generator option: Print information on intermediate results. */ VERBOSE;
+  /**
+   * Generate a parser from an Invisible XML grammar in ixml notation.
+   *
+   * @param grammar the Invisible XML grammar in ixml notation.
+   * @return the generated parser
+   * @throws BlitzException if any error is detected while generating the parser
+   */
+  public static Parser generate(String grammar) throws BlitzException {
+    return generate(grammar, Collections.emptyMap());
   }
 
   /**
    * Generate a parser from an Invisible XML grammar in ixml notation.
    *
    * @param grammar the Invisible XML grammar in ixml notation.
-   * @param blitzOptions options for use at generation time and parsing time
+   * @param options options for use at generation time and parsing time
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generate(String grammar, Blitz.Option... blitzOptions) throws BlitzException {
+  public static Parser generate(String grammar, Map<Option, Object> options) throws BlitzException {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
-    Set<Blitz.Option> options = Set.of(blitzOptions);
-    boolean timing = options.contains(Blitz.Option.TIMING);
+    Option.validate(options);
+    boolean timing = Option.TIMING.is(true, options);
     if (timing)
       t0 = System.currentTimeMillis();
     Grammar tree = parse(grammar);
@@ -76,24 +77,24 @@ public class Blitz {
    * Generate a parser from an Invisible XML grammar in XML, passed as an InputStream.
    *
    * @param xml the Invisible XML grammar in XML
-   * @param blitzOptions options for use at generation time and parsing time
+   * @param options options for use at generation time and parsing time
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generateFromXml(InputStream xml, Option... blitzOptions) throws BlitzException {
-    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  public static Parser generateFromXml(InputStream xml, Map<Option, Object> options) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), options);
   }
 
   /**
    * Generate a parser from an Invisible XML grammar in XML, passed as a String.
    *
    * @param xml the Invisible XML grammar in XML
-   * @param blitzOptions options for use at generation time and parsing time
+   * @param options options for use at generation time and parsing time
    * @return the generated parser
    * @throws BlitzException if any error is detected while generating the parser
    */
-  public static Parser generateFromXml(String xml, Option... blitzOptions) throws BlitzException {
-    return generate(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  public static Parser generateFromXml(String xml, Map<Option, Object> options) throws BlitzException {
+    return generate(new XmlGrammarInput(xml).toIxml(), options);
   }
 
   /**
@@ -109,33 +110,22 @@ public class Blitz {
     System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
 
-    Set<Option> options = new HashSet<>();
+    Map<Option, Object> options = new HashMap<>();
     int i = 0;
-    for (; i < args.length; ++i) {
-      if (args[i].equals("--indent"))
-        options.add(Option.INDENT);
-      else if (args[i].equals("--trace"))
-        options.add(Option.TRACE);
-      else if (args[i].equals("--fail-on-error"))
-        options.add(Option.FAIL_ON_ERROR);
-      else if (args[i].equals("--first-match"))
-        options.add(Option.FIRST_MATCH);
-      else if (args[i].equals("--longest-match"))
-        options.add(Option.LONGEST_MATCH);
-      else if (args[i].equals("--shortest-match"))
-        options.add(Option.SHORTEST_MATCH);
-      else if (args[i].equals("--timing"))
-        options.add(Option.TIMING);
-      else if (args[i].equals("--verbose"))
-        options.add(Option.VERBOSE);
-      else if (args[i].startsWith("-"))
-        usage(1);
-      else
+    for (String arg : args) {
+      if (! arg.startsWith("-"))
         break;
+      ++i;
+      if (! Option.addTo(options, arg)) {
+        System.err.println("Unsupported option: " + arg);
+        System.err.println();
+        usage();
+      }
     }
 
     if (i != args.length - 2 && i != args.length - 1)
-      usage(1);
+      usage();
+
     String grammar = i == args.length - 1
         ? "!" + ixmlGrammar()
         : args[i];
@@ -144,18 +134,18 @@ public class Blitz {
     String grammarString = grammar.startsWith("!")
                          ? grammar.substring(1)
                          : urlContent(url(grammar));
-    Parser parser = generate(grammarString, options.toArray(Option[]::new));
+    Parser parser = generate(grammarString, options);
     String inputString = input.startsWith("!")
                        ? input.substring(1)
                        : urlContent(url(input));
     String result = parser.parse(inputString);
     System.out.print("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-    if (options.contains(Option.INDENT))
-      System.out.println();
+    if (Option.INDENT.is(true, options))
+      System.out.print("\n");
     System.out.print(result);
   }
 
-  private static void usage(int exitCode) {
+  private static void usage() {
     String resource = Blitz.class.getResource("/" + Blitz.class.getName().replace('.',  '/') + ".class").toString();
     final String origin = resource.startsWith("jar:")
       ? "-jar " + resource.replaceFirst("^.*/([^/]+.jar)!.*$", "$1")
@@ -165,25 +155,31 @@ public class Blitz {
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
-    System.err.println("  <GRAMMAR>           the grammar (literal, file name or URL), in ixml notation.");
-    System.err.println("                      When omitted, the ixml grammar will be used.");
-    System.err.println("  <INPUT>             the input (literal, file name or URL).");
+    System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
+    System.err.println("                     When omitted, the ixml grammar will be used.");
+    System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  <OPTION>:");
-    System.err.println("    --indent          generate resulting xml with indentation.");
-    System.err.println("    --trace           print parser trace.");
-    System.err.println("    --fail-on-error   throw an exception instead of returning an error document.");
-    System.err.println("    --longest-match   partial parsing, accepting the longest match.");
-    System.err.println("    --shortest-match  partial parsing, accepting the shortest match.");
-    System.err.println("    --timing          print timing information.");
-    System.err.println("    --verbose         print intermediate results.");
+    System.err.println("    --indent         generate resulting xml with indentation.");
+    System.err.println("    --trace          print parser trace.");
+    System.err.println("    --timing         print timing information.");
+    System.err.println("    --verbose        print intermediate results.");
+    System.err.println("    --fail-on-error  throw an exception instead of returning an error document.");
+    System.err.println("    --leading-content-policy:<VALUE>    handling of leading unmatched content.");
+    System.err.println("          <VALUE>:");
+    System.err.println("              complete-match    disallow leading unmatched content.");
+    System.err.println("              first-match       skip unmatched content, accept first match.");
+    System.err.println("    --trailing-content-policy:<VALUE>   handling of trailing unmatched content.");
+    System.err.println("          <VALUE>:");
+    System.err.println("              complete-match    disallow trailing unmatched content.");
+    System.err.println("              longest-match     accept longest match, ignore remainder.");
+    System.err.println("              shortest-match    accept shortest match, ignore remainder.");
     System.err.println();
     System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
     System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");
     System.err.println("  UTF-8 as well. Resulting XML goes to standard output, all diagnostics go");
     System.err.println("  to standard error.");
-    System.err.println();
-    System.exit(exitCode);
+    System.exit(1);
   }
 
   /**

@@ -16,7 +16,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
-import de.bottlecaps.markup.Blitz.Option;
+import de.bottlecaps.markup.blitz.Option;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
@@ -45,7 +45,7 @@ public class ClassifyCharacters extends Copy {
     super(g);
   }
 
-  public Grammar combine(Grammar g, Set<Option> options) {
+  public Grammar combine(Grammar g, Map<Option, Object> options) {
     List<Long> t = new ArrayList<>();
     t.add(System.currentTimeMillis());
 
@@ -85,7 +85,7 @@ public class ClassifyCharacters extends Copy {
 
     t.add(System.currentTimeMillis());
 
-    if (options.contains(Option.TIMING))
+    if (Option.TIMING.is(true, options))
       for (int i = 1; i < t.size(); ++i)
         System.err.println("                                                                   time: " + (t.get(i) - t.get(i - 1)) + " msec");
 

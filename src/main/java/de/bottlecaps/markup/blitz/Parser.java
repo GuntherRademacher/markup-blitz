@@ -12,12 +12,11 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
-import de.bottlecaps.markup.Blitz;
-import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzIxmlException;
 import de.bottlecaps.markup.BlitzParseException;
@@ -36,7 +35,7 @@ public class Parser
 
   private static final int STALL_THRESHOLD = 8;
 
-  private final Set<Option> defaultOptions;
+  private final Map<Option, Object> options;
   private final int[] asciiMap;
   private final CompressedMap bmpMap;
   private final int[] smpMap;
@@ -51,12 +50,13 @@ public class Parser
   private final BitSet[] expectedTokens;
   private final boolean isVersionMismatch;
   private final boolean normalizeEol;
+  private final boolean longestMatch;
   private final boolean shortestMatch;
 
   private Writer err = new OutputStreamWriter(System.err, StandardCharsets.UTF_8);
 
   public Parser(
-      Set<Option> defaultOptions,
+      Map<Option, Object> options,
       int[] asciiMap, CompressedMap bmpMap, int[] smpMap,
       CompressedMap terminalTransitions, int numberOfTokens,
       CompressedMap nonterminalTransitions, int numberOfNonterminals,
@@ -66,10 +66,9 @@ public class Parser
       int[] forks,
       BitSet[] expectedTokens,
       boolean isVersionMismatch,
-      boolean normalizeEol,
-      boolean shortestMatch) {
+      boolean normalizeEol) {
 
-    this.defaultOptions = defaultOptions;
+    this.options = options;
     this.asciiMap = asciiMap;
     this.bmpMap = bmpMap;
     this.smpMap = smpMap;
@@ -84,18 +83,18 @@ public class Parser
     this.expectedTokens = expectedTokens;
     this.isVersionMismatch = isVersionMismatch;
     this.normalizeEol = normalizeEol;
-    this.shortestMatch = shortestMatch;
+    this.longestMatch = Option.TRAILING_CONTENT_POLICY.is(Option.Value.LONGEST_MATCH, options);
+    this.shortestMatch = Option.TRAILING_CONTENT_POLICY.is(Option.Value.SHORTEST_MATCH, options);
   }
 
   /**
    * Parse the given input.
    *
    * @param input the input string
-   * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
    * @return the resulting XML
    */
-  public String parse(String input, Option... options) {
-    return new ParsingContext(input).parse(options);
+  public String parse(String input) {
+    return new ParsingContext(input).parse();
   }
 
   public void setTraceWriter(Writer w) {
@@ -593,16 +592,12 @@ public class Parser
       this.input = input;
     }
 
-    public String parse(Option... options) {
+    public String parse() {
       long t0 = System.currentTimeMillis();
 
-      Set<Option> currentOptions = options.length == 0
-          ? defaultOptions
-          : Set.of(options);
-
       try {
-        firstMatch = currentOptions.contains(Option.FIRST_MATCH);
-        trace = currentOptions.contains(Option.TRACE);
+        firstMatch = Option.LEADING_CONTENT_POLICY.is(Option.Value.FIRST_MATCH, options);
+        trace = Option.TRACE.is(true, options);
         if (trace)
           writeTrace("<?xml version=\"1.0\" encoding=\"UTF-8\"?" + ">\n<trace>\n");
         ParsingThread thread = null;
@@ -678,19 +673,16 @@ public class Parser
           nonterminal.addChild(Nonterminal.attribute("ixml:state", String.join(" ", state)));
         }
 
-        if (currentOptions.contains(Blitz.Option.FIRST_MATCH) ||
-            defaultOptions.contains(Blitz.Option.LONGEST_MATCH) ||
-            defaultOptions.contains(Blitz.Option.SHORTEST_MATCH)) {
+        if (firstMatch || longestMatch || shortestMatch) {
           nonterminal.addChild(Nonterminal.attribute("xmlns:blitz", BLITZ_NAMESPACE));
-          if (currentOptions.contains(Blitz.Option.FIRST_MATCH))
+          if (firstMatch)
             nonterminal.addChild(Nonterminal.attribute("blitz:offset", Integer.toString(skipped)));
-          if (defaultOptions.contains(Blitz.Option.LONGEST_MATCH) ||
-              defaultOptions.contains(Blitz.Option.SHORTEST_MATCH))
+          if (longestMatch || shortestMatch)
             nonterminal.addChild(Nonterminal.attribute("blitz:length", Integer.toString(thread.length - 1)));
         }
       }
       catch (BlitzIxmlException e) {
-        if (currentOptions.contains(Option.FAIL_ON_ERROR))
+        if (Option.FAIL_ON_ERROR.is(true, options))
           throw e;
         Nonterminal ixml = new Nonterminal("ixml");
         ixml.addChildren(new Symbol[] {
@@ -704,7 +696,7 @@ public class Parser
         eventHandler.stack[0] = root;
       }
       catch (BlitzException e) {
-        if (currentOptions.contains(Option.FAIL_ON_ERROR))
+        if (Option.FAIL_ON_ERROR.is(true, options))
           throw e;
         Nonterminal ixml = new Nonterminal("ixml");
         ixml.addChildren(new Symbol[] {
@@ -717,14 +709,14 @@ public class Parser
         eventHandler.stack[0] = root;
       }
       finally {
-        if (currentOptions.contains(Option.TIMING)) {
+        if (Option.TIMING.is(true, options)) {
           long t1 = System.currentTimeMillis();
           System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
         }
       }
 
       StringBuilder w = new StringBuilder();
-      XmlSerializer s = new XmlSerializer(w, currentOptions.contains(Option.INDENT));
+      XmlSerializer s = new XmlSerializer(w, Option.INDENT.is(true, options));
       eventHandler.serialize(s);
       return w.toString();
     }

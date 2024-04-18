@@ -26,8 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.bottlecaps.markup.Blitz.Option;
-import de.bottlecaps.markup.BlitzException;
+import de.bottlecaps.markup.blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
@@ -75,15 +74,12 @@ public class Generator {
   }
 
   public static Parser generate(Grammar g) {
-    return generate(g,  Collections.emptySet());
+    return generate(g,  Collections.emptyMap());
   }
 
-  public static Parser generate(Grammar g, Set<Option> options) {
-    if (options.contains(Option.LONGEST_MATCH) && options.contains(Option.SHORTEST_MATCH))
-      throw new BlitzException("Options LONGEST_MATCH and SHORTEST_MATCH must not be specified at the same time.");
-
+  public static Parser generate(Grammar g, Map<Option, Object> options) {
     Generator ci  = new Generator();
-    ci.verbose = options.contains(Option.VERBOSE);
+    ci.verbose = Option.VERBOSE.is(true, options);
     ci.grammar = g;
 
     if (ci.verbose) {
@@ -93,12 +89,12 @@ public class Generator {
       System.err.println(g);
     }
 
-    boolean shortestMatch = options.contains(Option.SHORTEST_MATCH);
-    boolean longestMatch = options.contains(Option.LONGEST_MATCH);
-    boolean partialMatch = shortestMatch || longestMatch;
+    final boolean shortestMatch = Option.TRAILING_CONTENT_POLICY.is(Option.Value.SHORTEST_MATCH, options);
+    final boolean longestMatch = Option.TRAILING_CONTENT_POLICY.is(Option.Value.LONGEST_MATCH, options);
+    final boolean partialMatch = shortestMatch || longestMatch;
     ci.new SymbolCodeAssigner(partialMatch).visit(g);
 
-    if (options.contains(Option.VERBOSE)) {
+    if (ci.verbose) {
       System.err.println();
       System.err.println("Number of charClasses: " + ci.terminalCode.size());
       System.err.println("----------------------");
@@ -204,8 +200,7 @@ public class Generator {
         ci.forks,
         expectedTokens,
         ci.grammar.isMismatch(),
-        ci.grammar.getVersion().isAtLeast(Grammar.Version.V1_1),
-        shortestMatch);
+        ci.grammar.getVersion().isAtLeast(Grammar.Version.V1_1));
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
