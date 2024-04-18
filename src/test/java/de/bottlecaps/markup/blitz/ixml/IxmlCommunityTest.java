@@ -84,21 +84,6 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
-
-    // waiting for https://github.com/invisibleXML/ixml/pull/241
-    skipReasons.put("Tests producing parse trees/version-decl-two", SkipReason.BROKEN);
-
-    // waiting for https://github.com/invisibleXML/ixml/pull/245
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-06", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-07", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-08", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-09", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-10", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-fragments/ob-ORP", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORS", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORB", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORG", SkipReason.BROKEN);
-    skipReasons.put("Oberon-performance-tests/Oberon-modules/ORP", SkipReason.BROKEN);
   }
 
   public static enum Catalog {
