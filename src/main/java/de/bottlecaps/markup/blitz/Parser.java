@@ -844,7 +844,6 @@ public class Parser
       public DeferredEvent deferredEvent;
       public Status status;
       public final int id;
-//      public int actualOffset;
       public int length;
       public int state;
       public int action;
