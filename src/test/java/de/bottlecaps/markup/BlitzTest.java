@@ -776,6 +776,103 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testIssue9() {
+    Parser parser = generate(
+          "input = (A; B; C)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "C = -'C', rs, name, stop.\n"
+        + "@a-list = name ++ comma-space.\n"
+        + "@b-list = id ++ comma-space.\n"
+        + "id = name.\n"
+        + "@name = [L]+.\n"
+        + "\n"
+        + "-comma-space = (s?, -\",\", s?, +\" \").\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.",
+        Map.of(Option.INDENT, true));
+    String result = parser.parse("A x. A x, y, z. B z. B a, b, c. C q.");
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"x y z\"/>\n"
+        + "   <B b-list=\"z\"/>\n"
+        + "   <B b-list=\"a b c\"/>\n"
+        + "   <C name=\"q\"/>\n"
+        + "</input>",
+        result);
+  }
+
+  @Test
+  public void testIssue10() {
+    Parser parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (rs, +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.",
+        Map.of(Option.INDENT, true));
+    String result = parser.parse("A  x. A x  y  z. B  x. B x  y  z.");
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x y z\"/>\n"
+        + "</input>", result);
+    parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (\" \", +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.",
+        Map.of(Option.INDENT, true));
+    result = parser.parse("A  x. A x y z. B  x. B x y z.");
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x  y  z\"/>\n"
+        + "</input>", result);
+    parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (s, +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.",
+        Map.of(Option.INDENT, true));
+    result = parser.parse("A  x. A x y z. B  x. B x y z.");
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x y z\"/>\n"
+        + "</input>", result);
+  }
+
+  @Test
   public void testLongestMatch() {
     Parser parser = generate("S: 'a'.", Map.of(Option.TRAILING_CONTENT_POLICY, Option.Value.LONGEST_MATCH));
     assertEquals("<S xmlns:blitz=\"http://de.bottlecaps/markup/blitz/NS\" blitz:length=\"1\">a</S>", parser.parse("a"));

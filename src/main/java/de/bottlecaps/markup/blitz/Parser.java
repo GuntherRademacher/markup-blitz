@@ -277,8 +277,7 @@ public class Parser
     @Override
     public void sendContent(XmlSerializer e) {
       for (Symbol c : children)
-        if (! (c instanceof Nonterminal) || ! ((Nonterminal) c).isAttribute)
-          c.sendContent(e);
+        c.sendContent(e);
     }
 
     public static Nonterminal attribute(String name, String value) {
