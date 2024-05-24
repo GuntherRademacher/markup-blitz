@@ -20,7 +20,9 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
+import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -265,7 +267,7 @@ public class BNF extends Visitor {
 
   @Override
   public void visit(Insertion i) {
-    if (i.getNext() == null && i.getParent() instanceof Alt) {
+    if (i.getNext() == null && ! isRepeated(i)) {
       alts.peek().last().getTerms().add(i.copy());
     }
     else {
@@ -282,6 +284,15 @@ public class BNF extends Visitor {
         justAdded.put(additionalRule.getName(), additionalRule);
       }
     }
+  }
+
+  private boolean isRepeated(Node node) {
+    while (! (node.getParent() instanceof Rule)) {
+      node = node.getParent();
+      if (node instanceof Control && ((Control) node).getOccurrence() != Occurrence.ZERO_OR_ONE)
+        return true;
+    }
+    return false;
   }
 
 }

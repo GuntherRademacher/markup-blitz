@@ -805,6 +805,70 @@ public class BlitzTest extends TestBase {
         result);
   }
 
+  @Test
+  public void testIssue10() {
+    Parser parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (rs, +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.");
+    String result = parser.parse("A  x. A x  y  z. B  x. B x  y  z.", Option.INDENT);
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x y z\"/>\n"
+        + "</input>", result);
+    parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (\" \", +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.");
+    result = parser.parse("A  x. A x y z. B  x. B x y z.", Option.INDENT);
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x  y  z\"/>\n"
+        + "</input>", result);
+    parser = generate(
+          "input = (A|B)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "@a-list = name ++ rs.\n"
+        + "@b-list = name ++ (s, +#20).\n"
+        + "name = [L]+.\n"
+        + "\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.");
+    result = parser.parse("A  x. A x y z. B  x. B x y z.", Option.INDENT);
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"xyz\"/>\n"
+        + "   <B b-list=\"x\"/>\n"
+        + "   <B b-list=\"x y z\"/>\n"
+        + "</input>", result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(
