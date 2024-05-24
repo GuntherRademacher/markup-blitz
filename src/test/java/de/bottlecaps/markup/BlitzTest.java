@@ -776,6 +776,35 @@ public class BlitzTest extends TestBase {
         result);
   }
 
+  @Test
+  public void testIssue9() {
+    Parser parser = generate(
+          "input = (A; B; C)*.\n"
+        + "A = -'A', rs, a-list, stop.\n"
+        + "B = -'B', rs, b-list, stop.\n"
+        + "C = -'C', rs, name, stop.\n"
+        + "@a-list = name ++ comma-space.\n"
+        + "@b-list = id ++ comma-space.\n"
+        + "id = name.\n"
+        + "@name = [L]+.\n"
+        + "\n"
+        + "-comma-space = (s?, -\",\", s?, +\" \").\n"
+        + "-stop = os, -\".\", os.\n"
+        + "-s = -[Zs; #09; #0A].\n"
+        + "-rs = s+.\n"
+        + "-os = s*.");
+    String result = parser.parse("A x. A x, y, z. B z. B a, b, c. C q.", Option.INDENT);
+    assertEquals(
+          "<input>\n"
+        + "   <A a-list=\"x\"/>\n"
+        + "   <A a-list=\"x y z\"/>\n"
+        + "   <B b-list=\"z\"/>\n"
+        + "   <B b-list=\"a b c\"/>\n"
+        + "   <C name=\"q\"/>\n"
+        + "</input>",
+        result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(
