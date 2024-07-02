@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.4-SNAPSHOT'
+version = '1.4'
 group = 'de.bottlecaps'
 
 repositories {
@@ -12,13 +12,13 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:10.7'
+    testImplementation 'org.basex:basex:11.0'
 }
 
 testing {
     suites {
         test {
-            useJUnitJupiter('5.10.2')
+            useJUnitJupiter('5.10.3')
         }
     }
 }
