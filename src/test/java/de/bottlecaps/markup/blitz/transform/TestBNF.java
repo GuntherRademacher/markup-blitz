@@ -115,7 +115,7 @@ public class TestBNF extends TestBase {
         + "               @mark, -s.\n"
         + "_naming_option_1:\n"
         + "               ;\n"
-        + "               ['>'], -s, @alias, -s.\n"
+        + "               -['>'], -s, @alias, -s.\n"
         + "         alts: ^alt;\n"
         + "               -alts, -[';|'], -s, ^alt.\n"
         + "       string: -['\"'], -_string_list, -['\"'];\n"
