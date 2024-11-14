@@ -124,23 +124,34 @@ public class IxmlCommunityTest extends TestBase {
   public static void beforeAll() throws Exception {
     allTests = Boolean.parseBoolean(System.getProperty("ALL_TESTS"));
     xmlInputFactory = XMLInputFactory.newInstance();
-    String thisPath = "/" + IxmlCommunityTest.class.getName().replace(".", "/") + ".class";
-    URL thisResource = IxmlCommunityTest.class.getResource(thisPath);
-    assertNotNull(thisResource);
 
-    String thisUrl = thisResource.toString();
-    assertTrue(thisUrl.contains(thisProject));
+    String ixmlPath = System.getenv("IXML_PATH");
+    if (ixmlPath != null) {
+        ixmlFolder = new File(ixmlPath);
+        assertTrue(ixmlFolder.exists(), "The folder specified as IXML_PATH does not exist: " + ixmlFolder + "\n"
+              + "For running this test, please make sure that the " + ixmlProject + " project is\n"
+              + "available in the same location as the " + thisProject + " project, or set\n"
+              + "environment variable IXML_PATH to point to the ixml project folder.");
+    }
+    else {
+        String thisPath = "/" + IxmlCommunityTest.class.getName().replace(".", "/") + ".class";
+        URL thisResource = IxmlCommunityTest.class.getResource(thisPath);
+        assertNotNull(thisResource);
 
-    String ixmlUrl = thisUrl.substring(0, thisUrl.indexOf("/" + thisProject + "/"))
-                   + "/"
-                   + ixmlProject;
+        String thisUrl = thisResource.toString();
+        assertTrue(thisUrl.contains(thisProject));
 
-    ixmlFolder = new File(new URI(ixmlUrl));
-    assumeTrue(ixmlFolder.exists(),
-          IxmlCommunityTest.class.getSimpleName() + " was not executed,\n"
-        + "because this folder does not exist: " + ixmlFolder + "\n"
-        + "For running this test, please make sure that the " + ixmlProject + " project is\n"
-        + "available in the same location as the " + thisProject + " project.");
+        String ixmlUrl = thisUrl.substring(0, thisUrl.indexOf("/" + thisProject + "/"))
+                       + "/"
+                       + ixmlProject;
+        ixmlFolder = new File(new URI(ixmlUrl));
+        assumeTrue(ixmlFolder.exists(),
+              IxmlCommunityTest.class.getSimpleName() + " was not executed, because neither IXML_PATH\n"
+            + "was set, nor the " + ixmlProject + " folder exists at this path: " + ixmlFolder.getAbsolutePath() + "\n"
+            + "For running this test, please make sure that the " + ixmlProject + " project is\n"
+            + "available in the folder specified by environment variable IXML_PATH,\n"
+            + "or next to " + thisProject + ", i.e. in " + ixmlFolder.getAbsolutePath());
+    }
   }
 
   @ParameterizedTest(name = "{0}")

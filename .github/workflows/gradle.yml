@@ -16,6 +16,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+	env:
+	  IXML_PATH: ${{ github.workspace }}/ixml
 
     steps:
     - uses: actions/checkout@v4
