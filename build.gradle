@@ -12,13 +12,14 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.1'
+    testImplementation 'org.basex:basex:11.5'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
 }
 
 testing {
     suites {
         test {
-            useJUnitJupiter('5.10.3')
+            useJUnitJupiter()
         }
     }
 }
@@ -51,6 +52,14 @@ test {
         maxHeapSize = '16g'
         systemProperty 'ALL_TESTS', 'true'
         jvmArgs('-Xss4m')
+    }
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "${result.testCount} tests completed: " +
+                    "${result.successfulTestCount} succeeded, " +
+                    "${result.skippedTestCount} skipped, " +
+                    "${result.failedTestCount} failed."
+        }
     }
 }
 
