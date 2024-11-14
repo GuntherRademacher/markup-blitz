@@ -13,12 +13,13 @@ repositories {
 
 dependencies {
     testImplementation 'org.basex:basex:11.5'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
 }
 
 testing {
     suites {
         test {
-            useJUnitJupiter('5.10.3')
+            useJUnitJupiter()
         }
     }
 }
