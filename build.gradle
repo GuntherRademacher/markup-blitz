@@ -52,6 +52,14 @@ test {
         systemProperty 'ALL_TESTS', 'true'
         jvmArgs('-Xss4m')
     }
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "${result.testCount} tests completed: " +
+                    "${result.successfulTestCount} succeeded, " +
+                    "${result.skippedTestCount} skipped, " +
+                    "${result.failedTestCount} failed."
+        }
+    }
 }
 
 ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
