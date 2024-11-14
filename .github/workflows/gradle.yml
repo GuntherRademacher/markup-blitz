@@ -46,14 +46,14 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results
         path: markup-blitz/build/test-results/test
 
     - name: Upload JUnit HTML report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-report
         path: markup-blitz/build/reports/tests/test
