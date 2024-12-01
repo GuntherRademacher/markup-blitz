@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.5-SNAPSHOT'
+version = '1.5'
 group = 'de.bottlecaps'
 
 repositories {
@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.5'
+    testImplementation 'org.basex:basex:11.6'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
 }
 
@@ -117,6 +117,7 @@ publishing {
 }
 
 signing {
+    useGpgCmd()
     sign publishing.publications.jar
 }
 
