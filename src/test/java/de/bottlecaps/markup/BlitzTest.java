@@ -869,6 +869,17 @@ public class BlitzTest extends TestBase {
         + "</input>", result);
   }
 
+  @Test
+  public void testIssue18() {
+    Parser parser = generate(
+    	"S: -E1; -E2. E1: 'x'++'y'. E2: 'x'**'y'.");
+    String result = parser.parse(
+        "xyx");
+    assertEquals(
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">xyx</S>",
+        result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(
