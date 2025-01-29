@@ -211,8 +211,10 @@ public class ClassifyCharacters extends Copy {
     List<Charset> charsets = literalToCharsets(l);
     if (charsets.size() == 1)
       return charsets.get(0);
+    Alt alt = new Alt();
+    charsets.forEach(c -> alt.addCharset(c));
     Alts alts = new Alts();
-    charsets.stream().forEach(c -> alts.addAlt(new Alt().addCharset(c)));
+    alts.addAlt(alt);
     return alts;
   }
 
