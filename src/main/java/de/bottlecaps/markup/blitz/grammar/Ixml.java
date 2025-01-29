@@ -1,4 +1,4 @@
-// This file was generated on Sat Mar 23, 2024 14:41 (UTC+01) by REx v5.57 which is Copyright (c) 1979-2023 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Wed Jan 29, 2025 21:06 (UTC+01) by REx v6.1 which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1592,7 +1592,7 @@ public class Ixml
 
   private static final String[] TOKEN =
   {
-    "(0)",
+    "%ERROR",
     "cchar",
     "namestart",
     "dchar",

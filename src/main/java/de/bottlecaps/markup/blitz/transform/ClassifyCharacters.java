@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Gunther Rademacher. Provided under the Apache 2 License.
+// Copyright (c) 2023-2025 Gunther Rademacher. Provided under the Apache 2 License.
 
 package de.bottlecaps.markup.blitz.transform;
 
@@ -211,8 +211,10 @@ public class ClassifyCharacters extends Copy {
     List<Charset> charsets = literalToCharsets(l);
     if (charsets.size() == 1)
       return charsets.get(0);
+    Alt alt = new Alt();
+    charsets.forEach(c -> alt.addCharset(c));
     Alts alts = new Alts();
-    charsets.stream().forEach(c -> alts.addAlt(new Alt().addCharset(c)));
+    alts.addAlt(alt);
     return alts;
   }
 

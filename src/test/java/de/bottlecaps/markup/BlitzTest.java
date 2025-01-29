@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Gunther Rademacher. Provided under the Apache 2 License.
+// Copyright (c) 2023-2025 Gunther Rademacher. Provided under the Apache 2 License.
 
 package de.bottlecaps.markup;
 
@@ -1120,4 +1120,43 @@ public class BlitzTest extends TestBase {
       errData.toString(StandardCharsets.UTF_8));
   }
 
+  public void testIssue18() {
+    Parser parser = generate(
+        "S: -E1; -E2. E1: 'x'++'y'. E2: 'x'**'y'.");
+    String result = parser.parse(
+        "xyx");
+    assertEquals(
+        "<S xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"ambiguous\">xyx</S>",
+        result);
+  }
+
+  @Test
+  public void testIssue20() {
+    Parser parser = generate(
+        "s: 'a'**'bc'.");
+    String result = parser.parse(
+        "abca");
+    assertEquals(
+        "<s>abca</s>",
+        result);
+    parser = generate(
+        "s: 'bc'**'a'.");
+    result = parser.parse(
+        "bcabc");
+    assertEquals(
+        "<s>bcabc</s>",
+        result);
+  }
+
+//  @Test
+//  public void test() {
+//    Parser parser = generate(
+//        "");
+//    String result = parser.parse(
+//        "",
+//        Option.INDENT);
+//    assertEquals(
+//        "",
+//        result);
+//  }
 }

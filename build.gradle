@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.5'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
+    testImplementation 'org.basex:basex:11.6'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
 }
 
 testing {
@@ -117,6 +117,7 @@ publishing {
 }
 
 signing {
+    useGpgCmd()
     sign publishing.publications.jar
 }
 

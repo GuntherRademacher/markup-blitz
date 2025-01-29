@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Gunther Rademacher. Provided under the Apache 2 License.
+// Copyright (c) 2023-2025 Gunther Rademacher. Provided under the Apache 2 License.
 
 package de.bottlecaps.markup.blitz.transform;
 
@@ -169,17 +169,32 @@ public class BNF extends Visitor {
     String[] names = grammar.getAdditionalNames().get(c);
     String name = names[0];
     alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETE, null, name));
-    if (! coveredRules.contains(name)) {
-      Rule additionalRule;
-      switch (c.getOccurrence()) {
-      case ONE_OR_MORE: {
+    Rule additionalRule;
+    switch (c.getOccurrence()) {
+    case ONE_OR_MORE:
+      if (! coveredRules.contains(name)) {
+        Alts alts = new Alts();
+        Alt alt1 = new Alt();
+        alt1.getTerms().add(term.copy());
+        Alt alt2 = new Alt();
+        alt2.addNonterminal(Mark.DELETE, null, name);
+        if (separator != null)
+          alt2.getTerms().add(separator.copy());
+        alt2.getTerms().add(term.copy());
+        alts.addAlt(alt1);
+        alts.addAlt(alt2);
+        additionalRule = new Rule(Mark.NONE, null, name, alts);
+        coveredRules.add(name);
+        justAdded.put(name, additionalRule);
+      }
+      break;
+    case ZERO_OR_MORE:
+      if (separator == null) {
+        if (! coveredRules.contains(name)) {
           Alts alts = new Alts();
           Alt alt1 = new Alt();
-          alt1.getTerms().add(term.copy());
           Alt alt2 = new Alt();
           alt2.addNonterminal(Mark.DELETE, null, name);
-          if (separator != null)
-            alt2.getTerms().add(separator.copy());
           alt2.getTerms().add(term.copy());
           alts.addAlt(alt1);
           alts.addAlt(alt2);
@@ -187,60 +202,48 @@ public class BNF extends Visitor {
           coveredRules.add(name);
           justAdded.put(name, additionalRule);
         }
-        break;
-      case ZERO_OR_MORE: {
-          if (separator == null) {
-            Alts alts = new Alts();
-            Alt alt1 = new Alt();
-            Alt alt2 = new Alt();
-            alt2.addNonterminal(Mark.DELETE, null, name);
-            alt2.getTerms().add(term.copy());
-            alts.addAlt(alt1);
-            alts.addAlt(alt2);
-            additionalRule = new Rule(Mark.NONE, null, name, alts);
-            coveredRules.add(name);
-            justAdded.put(name, additionalRule);
-          }
-          else {
-            String listName = names[1]; {
-              Alts alts = new Alts();
-              Alt alt1 = new Alt();
-              alt1.getTerms().add(term.copy());
-              Alt alt2 = new Alt();
-              alt2.addNonterminal(Mark.DELETE, null, listName);
-              alt2.getTerms().add(separator.copy());
-              alt2.getTerms().add(term.copy());
-              alts.addAlt(alt1);
-              alts.addAlt(alt2);
-              additionalRule = new Rule(Mark.NONE, null, listName, alts);
-              coveredRules.add(listName);
-              justAdded.put(listName, additionalRule);
-            } {
-              Alts alts = new Alts();
-              Alt alt2 = new Alt();
-              alt2.addNonterminal(Mark.DELETE, null, listName);
-              alts.addAlt(new Alt());
-              alts.addAlt(alt2);
-              additionalRule = new Rule(Mark.NONE, null, name, alts);
-              coveredRules.add(name);
-              justAdded.put(name, additionalRule);
-            }
-          }
-        }
-        break;
-      case ZERO_OR_ONE: {
+      }
+      else {
+        String listName = names[1];
+        if (! coveredRules.contains(listName)) {
           Alts alts = new Alts();
+          Alt alt1 = new Alt();
+          alt1.getTerms().add(term.copy());
+          Alt alt2 = new Alt();
+          alt2.addNonterminal(Mark.DELETE, null, listName);
+          alt2.getTerms().add(separator.copy());
+          alt2.getTerms().add(term.copy());
+          alts.addAlt(alt1);
+          alts.addAlt(alt2);
+          additionalRule = new Rule(Mark.NONE, null, listName, alts);
+          coveredRules.add(listName);
+          justAdded.put(listName, additionalRule);
+        } 
+        if (! coveredRules.contains(name)) {
+          Alts alts = new Alts();
+          Alt alt2 = new Alt();
+          alt2.addNonterminal(Mark.DELETE, null, listName);
           alts.addAlt(new Alt());
-          alts.addAlt(new Alt());
-          alts.last().getTerms().add(term);
+          alts.addAlt(alt2);
           additionalRule = new Rule(Mark.NONE, null, name, alts);
           coveredRules.add(name);
           justAdded.put(name, additionalRule);
         }
-        break;
-      default:
-        throw new IllegalArgumentException();
       }
+      break;
+    case ZERO_OR_ONE:
+      if (! coveredRules.contains(name)) {
+        Alts alts = new Alts();
+        alts.addAlt(new Alt());
+        alts.addAlt(new Alt());
+        alts.last().getTerms().add(term);
+        additionalRule = new Rule(Mark.NONE, null, name, alts);
+        coveredRules.add(name);
+        justAdded.put(name, additionalRule);
+      }
+      break;
+    default:
+      throw new IllegalArgumentException();
     }
   }
 
