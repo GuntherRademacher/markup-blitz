@@ -2490,7 +2490,6 @@ public class TestToREx extends TestBase {
     Grammar grammar = Ixml.parse("S: ~[].");
     String expectedResult =
           "_start        ::= S _end\n"
-        + "S             ::= S\n"
         + "\n"
         + "<?TOKENS?>\n"
         + "\n"
