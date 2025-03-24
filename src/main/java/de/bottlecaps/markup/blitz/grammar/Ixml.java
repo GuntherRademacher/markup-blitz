@@ -1,4 +1,4 @@
-// This file was generated on Wed Jan 29, 2025 21:06 (UTC+01) by REx v6.1 which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Mon Mar 24, 2025 08:51 (UTC+01) by REx v6.1 which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1764,7 +1764,7 @@ public class Ixml
                                                                     "Failed to process grammar:\n" + parser.getErrorMessage(pe),
                                                                     offending >= 0 ? TOKEN[offending]
                                                                                    : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
-                                                                                                              : "$",
+                                                                                                              : "end of input",
                                                                     line,
                                                                     column);
                                                                 }

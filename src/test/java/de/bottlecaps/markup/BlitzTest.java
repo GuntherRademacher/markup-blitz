@@ -4,6 +4,7 @@ package de.bottlecaps.markup;
 
 import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -18,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.blitz.Option;
@@ -735,19 +735,16 @@ public class BlitzTest extends TestBase {
   @Test
   public void testFailOnError() {
     Parser parser = generate("S: 'a'.", Map.of(Option.FAIL_ON_ERROR, true));
-    try {
-      String result = parser.parse("b");
-      Assertions.fail("Parse did not fail, returned: \n" + result);
-    }
-    catch (BlitzParseException e) {
-      assertEquals(
+    BlitzParseException exception = assertThrows(BlitzParseException.class, () -> {
+      parser.parse("b");
+    });
+    assertEquals(
             "Failed to parse input:\n"
-            + "lexical analysis failed\n"
-            + "while expecting 'a'\n"
-            + "at line 1, column 1:\n"
-            + "...b...",
-          e.getMessage());
-    }
+          + "lexical analysis failed\n"
+          + "while expecting 'a'\n"
+          + "at line 1, column 1:\n"
+          + "...b...",
+        exception.getMessage());
   }
 
   @Test
@@ -1146,6 +1143,76 @@ public class BlitzTest extends TestBase {
     assertEquals(
         "<s>bcabc</s>",
         result);
+  }
+
+  @Test
+  public void testIssue24() {
+    Parser parser = generate(
+        "S:'a'.");
+    String result = parser.parse(
+        "");
+    assertEquals(
+          "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
+        + "syntax error, found end of input\n"
+        + "while expecting 'a'\n"
+        + "at line 1, column 1:\n"
+        + "......</ixml>",
+        result);
+
+    Parser failingParser = generate(
+        "S:'a'.", Map.of(Option.FAIL_ON_ERROR, true));
+    BlitzParseException exception = assertThrows(BlitzParseException.class, () -> {
+      failingParser.parse("");
+    });
+    assertEquals(
+          "Failed to parse input:\n"
+        + "syntax error, found end of input\n"
+        + "while expecting 'a'\n"
+        + "at line 1, column 1:\n"
+        + "......",
+        exception.getMessage());
+    assertEquals(1, exception.getLine());
+    assertEquals(1, exception.getColumn());
+    assertEquals("end of input", exception.getOffendingToken());
+
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(errContent));
+    try {
+      generate(
+          "S:'a'.",
+          Map.of(Option.VERBOSE, true));
+      String expected =
+            "\n"
+          + "BNF grammar:\n"
+          + "------------\n"
+          + "      -_start: ^S.\n"
+          + "            S: ['a'].\n"
+          + "\n"
+          + "Number of charClasses: 2\n"
+          + "----------------------\n"
+          + "0: end of input\n"
+          + "1: ['a']\n"
+          + "\n"
+          + "2 states (not counting LR(0) reduce states)\n"
+          + "2 reduce arguments\n"
+          + "0 forks\n"
+          + "\n"
+          + "state 0:\n"
+          + "[-_start: . ^S | {end of input}] shift 1\n"
+          + "[S: . ['a'] | {end of input}] shift-reduce 1 (pop 1, id 1, nonterminal S, marks ^)\n"
+          + "\n"
+          + "state 1:\n"
+          + "[-_start: ^S . | {end of input}] reduce 0 (pop 1, id 0, nonterminal _start, marks ^)\n"
+          + "\n"
+          + "size of token code map: 107, shift: [3, 4, 4]\n"
+          + "size of terminal transition map: 5, shift: [2]\n"
+          + "size of nonterminal transition map: 5, shift: [2]\n"
+          + "\n";
+      assertEquals(expected, errContent.toString().replace("\r\n", "\n"));
+    } finally {
+      System.setErr(originalErr);
+    }
   }
 
 //  @Test

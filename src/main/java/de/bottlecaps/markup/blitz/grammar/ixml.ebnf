@@ -998,7 +998,7 @@ namefollower^token << '.' 'x'
                                                                       "Failed to process grammar:\n" + parser.getErrorMessage(pe),
                                                                       offending >= 0 ? TOKEN[offending]
                                                                                      : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
-                                                                                                                : "$",
+                                                                                                                : "end of input",
                                                                       line,
                                                                       column);
                                                                   }
