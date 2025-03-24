@@ -582,7 +582,7 @@ public class Generator {
 
     private String toString(Integer token) {
       if (token == 0)
-        return "$";
+        return "end of input";
       if (terminal == null)
         return Integer.toString(token);
       return terminal[token].shortName();

@@ -323,7 +323,7 @@ public class RangeSet extends AbstractSet<Range> implements Comparable<RangeSet>
 
   public String shortName() {
     return this == EOF
-         ? "$"
+         ? "end of input"
          : ranges.length == 0
            ? "[]"
            : new Range(firstCodepoint(ranges[0])).toString() + (charCount() == 1 ? "" : "...");

@@ -617,7 +617,7 @@ public class Parser
               "Failed to parse input:\n" + getErrorMessage(pe),
               offending >= 0 ? terminal[offending].shortName()
                              : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
-                                                       : "$",
+                                                       : RangeSet.EOF.shortName(),
               line,
               column
           );
