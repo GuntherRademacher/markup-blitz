@@ -728,7 +728,7 @@ public class BlitzTest extends TestBase {
     String result = parser.parse("b");
     assertEquals(
           "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
-          + "lexical analysis failed\n"
+          + "lexical analysis failed, found 'b'\n"
           + "while expecting 'a'\n"
           + "at line 1, column 1:\n"
           + "...b...</ixml>",
@@ -743,7 +743,7 @@ public class BlitzTest extends TestBase {
     });
     assertEquals(
             "Failed to parse input:\n"
-          + "lexical analysis failed\n"
+          + "lexical analysis failed, found 'b'\n"
           + "while expecting 'a'\n"
           + "at line 1, column 1:\n"
           + "...b...",

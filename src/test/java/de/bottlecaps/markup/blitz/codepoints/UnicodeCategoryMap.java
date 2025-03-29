@@ -19,13 +19,14 @@ import de.bottlecaps.markup.blitz.codepoints.RangeSet.Builder;
  * Generate Unicode category map from UnicodeData.txt
  * @see de.bottlecaps.markup.blitz.codepoints.UnicodeCategory#codepointsByCode
  * @see <a href="http://www.unicode.org/Public/UNIDATA/UnicodeData.txt">UnicodeData.txt</a>
+ * @see <a href="https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt">UnicodeData.txt 16.0.0</a>
  * @see <a href="https://unicode.org/versions/">Unicode versions</a>
  * @see <a href="http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt">PropertyValueAliases</a>
  */
 public class UnicodeCategoryMap {
 
   public static void main(String[] args) throws Exception {
-    String unicodeDataUrl = "http://www.unicode.org/Public/UNIDATA/UnicodeData.txt";
+    String unicodeDataUrl = "https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt";
     Map<String, Builder> categoryMap = parseUnicodeData(unicodeDataUrl);
     for (Entry<String, Builder> entry : categoryMap.entrySet()) {
       String categoryName = entry.getKey();
