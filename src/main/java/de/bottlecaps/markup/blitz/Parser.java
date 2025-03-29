@@ -151,7 +151,6 @@ public class Parser
     public int getBegin() {return begin;}
     public int getEnd() {return end;}
     public int getState() {return state;}
-    public int getOffending() {return offending;}
     public boolean wasStalled() {return wasStalled;}
   }
 
@@ -610,14 +609,12 @@ public class Parser
         catch (ParseException pe) {
           int begin = pe.getBegin();
           String prefix = input.substring(0, begin);
-          int offending = pe.getOffending();
           int line = prefix.replaceAll("[^\n]", "").length() + 1;
           int column = prefix.length() - prefix.lastIndexOf('\n');
           throw new BlitzParseException(
               "Failed to parse input:\n" + getErrorMessage(pe),
-              offending >= 0 ? terminal[offending].shortName()
-                             : begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
-                                                       : RangeSet.EOF.shortName(),
+              begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
+                                     : RangeSet.EOF.shortName(),
               line,
               column
           );
@@ -762,22 +759,22 @@ public class Parser
     }
 
     private String getErrorMessage(ParseException e) {
-      String message = e.getMessage();
       String[] tokenSet = getExpectedTokenSet(e);
-      String found = e.getOffending() < 0
-                   ? null
-                   : terminal[e.getOffending()].shortName();
+      String found = e.getBegin() < input.length()
+                   ? ("'" + Character.toString(input.codePointAt(e.getBegin())) + "'")
+                   : RangeSet.EOF.shortName();
       int size = e.getEnd() - e.getBegin();
-      message += (found == null ? "" : ", found " + found)
-              + "\nwhile expecting "
-              + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
-              + "\n"
-              + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ");
-      message += "at " + lineAndColumn(e.getBegin()) + ":\n..."
-              + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
-              + "...";
+      String message = e.getMessage()
+                     + ", found " + found
+                     + "\nwhile expecting "
+                     + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
+                     + "\n"
+                     + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ")
+                     + "at " + lineAndColumn(e.getBegin()) + ":\n..."
+                     + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
+                     + "...";
       if (e.wasStalled())
-        message += "\nHowever, some alternatives were discarded while parsing because they were"
+        message += "\nHowever, some alternatives were discarded while parsing because they were "
                 + "suspected to be involved in infinite ambiguity.";
       return message;
     }
