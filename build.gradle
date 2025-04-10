@@ -4,8 +4,14 @@ plugins {
     id 'signing'
 }
 
-version = '1.7-SNAPSHOT'
+version = '1.8'
 group = 'de.bottlecaps'
+
+ext {
+    targetJavaVersion = 11
+}
+
+println "Building project '${project.name}' with Java ${targetJavaVersion} (toolchain configured)"
 
 repositories {
     mavenCentral()
@@ -27,20 +33,35 @@ testing {
 java {
     withJavadocJar()
     withSourcesJar()
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(targetJavaVersion)
     options.fork = true
-    options.forkOptions.jvmArgs << '-Xss4m'
-    options.forkOptions.jvmArgs << '-Duser.language=en'
-    options.encoding = "UTF-8"
+    options.forkOptions.jvmArgs += ['-Xss4m', '-Duser.language=en']
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Test).configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
+        }
+    )
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 jar {
     manifest {
         attributes(
             'Main-Class': 'de.bottlecaps.markup.Blitz',
-            'Implementation-Version': archiveVersion,
+            'Implementation-Version': project.version,
             'Build-Timestamp': new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date())
         )
     }
@@ -123,4 +144,10 @@ signing {
 
 tasks.withType(Sign) {
     onlyIf { isReleaseVersion }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (JavaVersion.current().ordinal() > JavaVersion.VERSION_11.ordinal()) {
+        println "Warning: building with JDK ${JavaVersion.current()}, but targeting Java ${targetJavaVersion}"
+    }
 }
