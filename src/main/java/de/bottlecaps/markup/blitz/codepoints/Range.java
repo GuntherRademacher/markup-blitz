@@ -5,6 +5,8 @@ package de.bottlecaps.markup.blitz.codepoints;
 import de.bottlecaps.markup.blitz.Errors;
 
 public class Range implements Comparable<Range> {
+  public static final Range EOI = new Range(Codepoint.EOI);
+
   private final int firstCodepoint;
   private final int lastCodepoint;
 

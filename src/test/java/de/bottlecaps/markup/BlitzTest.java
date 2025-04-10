@@ -905,28 +905,50 @@ public class BlitzTest extends TestBase {
         "");
     assertEquals(
           "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
-        + "syntax error, found end of input\n"
+        + "syntax error, found end-of-input\n"
         + "while expecting 'a'\n"
-        + "at line 1, column 1:\n"
-        + "......</ixml>",
+        + "at line 1, column 1</ixml>",
         result);
 
-    Parser failingParser = generate(
+    Parser failingParser1 = generate(
         "S:'a'.", Option.FAIL_ON_ERROR);
-    BlitzParseException exception = assertThrows(BlitzParseException.class, () -> {
-      failingParser.parse("");
+    BlitzParseException exception1 = assertThrows(BlitzParseException.class, () -> {
+      failingParser1.parse("");
     });
     assertEquals(
           "Failed to parse input:\n"
-        + "syntax error, found end of input\n"
+        + "syntax error, found end-of-input\n"
         + "while expecting 'a'\n"
-        + "at line 1, column 1:\n"
-        + "......",
-        exception.getMessage());
-    assertEquals(1, exception.getLine());
-    assertEquals(1, exception.getColumn());
-    assertEquals("end of input", exception.getOffendingToken());
+        + "at line 1, column 1",
+        exception1.getMessage());
+    assertEquals(1, exception1.getLine());
+    assertEquals(1, exception1.getColumn());
+    assertEquals("end-of-input", exception1.getOffendingToken());
+    assertEquals("['a']", Arrays.toString(exception1.getExpectedTokens()));
 
+    Parser failingParser2 = generate(
+        "S:~['a']?.", Option.FAIL_ON_ERROR);
+    BlitzParseException exception2 = assertThrows(BlitzParseException.class, () -> {
+      failingParser2.parse("a");
+    });
+    assertEquals(
+          "Failed to parse input:\n"
+        + "lexical analysis failed, found 'a'\n"
+        + "while expecting one of [end-of-input, ' ', '!', '\"', '#', '$', '%', '&', \"'\", '(', ')', '*', '+', ',', '-', '.', ...]\n"
+        + "at line 1, column 1:\n"
+        + "...a...",
+        exception2.getMessage());
+    assertEquals(1, exception2.getLine());
+    assertEquals(1, exception2.getColumn());
+    assertEquals("'a'", exception2.getOffendingToken());
+    assertEquals(
+          "[end-of-input, #0-#1f, ' ', '!', '\"', '#', '$', '%', '&', \"'\", '(', ')', '*', "
+        + "'+', ',', '-', '.', '/', '0'-'9', ':', ';', '<', '=', '>', '?', '@', 'A'-'Z', '[', '\\',"
+        + " ']', '^', '_', '`', 'b'-'z', '{', '|', '}', '~', #7f-#d7ff, #e000-#fdcf, #fdf0-#fffd, "
+        + "#10000-#1fffd, #20000-#2fffd, #30000-#3fffd, #40000-#4fffd, #50000-#5fffd, #60000-#6fffd"
+        + ", #70000-#7fffd, #80000-#8fffd, #90000-#9fffd, #a0000-#afffd, #b0000-#bfffd, "
+        + "#c0000-#cfffd, #d0000-#dfffd, #e0000-#efffd, #f0000-#ffffd, #100000-#10fffd]",
+        Arrays.toString(exception2.getExpectedTokens()));
     PrintStream originalErr = System.err;
     ByteArrayOutputStream errContent = new ByteArrayOutputStream();
     System.setErr(new PrintStream(errContent));
@@ -943,7 +965,7 @@ public class BlitzTest extends TestBase {
           + "\n"
           + "Number of charClasses: 2\n"
           + "----------------------\n"
-          + "0: end of input\n"
+          + "0: end-of-input\n"
           + "1: ['a']\n"
           + "\n"
           + "2 states (not counting LR(0) reduce states)\n"
@@ -951,11 +973,11 @@ public class BlitzTest extends TestBase {
           + "0 forks\n"
           + "\n"
           + "state 0:\n"
-          + "[-_start: . ^S | {end of input}] shift 1\n"
-          + "[S: . ['a'] | {end of input}] shift-reduce 1 (pop 1, id 1, nonterminal S, marks ^)\n"
+          + "[-_start: . ^S | {end-of-input}] shift 1\n"
+          + "[S: . ['a'] | {end-of-input}] shift-reduce 1 (pop 1, id 1, nonterminal S, marks ^)\n"
           + "\n"
           + "state 1:\n"
-          + "[-_start: ^S . | {end of input}] reduce 0 (pop 1, id 0, nonterminal _start, marks ^)\n"
+          + "[-_start: ^S . | {end-of-input}] reduce 0 (pop 1, id 0, nonterminal _start, marks ^)\n"
           + "\n"
           + "size of token code map: 107, shift: [3, 4, 4]\n"
           + "size of terminal transition map: 5, shift: [2]\n"

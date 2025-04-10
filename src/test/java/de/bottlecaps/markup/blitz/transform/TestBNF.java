@@ -166,8 +166,8 @@ public class TestBNF extends TestBase {
         + "_name_list_option:\n"
         + "               ;\n"
         + "               -_name_list_option, -namefollower.\n"
-        + "        alias: @name.\n"
-        + "          alt: ;\n"
+        + "        alias: @name.\n",
+          "          alt: ;\n"
         + "               -_alt_list.\n"
         + "    _alt_list: -term;\n"
         + "               -_alt_list, -[','], -s, -term.\n"

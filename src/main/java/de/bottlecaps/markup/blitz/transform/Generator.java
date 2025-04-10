@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 
 import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
+import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
@@ -582,7 +583,7 @@ public class Generator {
 
     private String toString(Integer token) {
       if (token == 0)
-        return "end of input";
+        return Codepoint.toString(Codepoint.EOI);
       if (terminal == null)
         return Integer.toString(token);
       return terminal[token].shortName();

@@ -15,12 +15,14 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.BlitzIxmlException;
 import de.bottlecaps.markup.BlitzParseException;
 import de.bottlecaps.markup.blitz.codepoints.Codepoint;
+import de.bottlecaps.markup.blitz.codepoints.Range;
 import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.grammar.Mark;
@@ -107,11 +109,34 @@ public class Parser
   }
 
   private String[] getExpectedTokenSet(ParseException e) {
-    List<String> expected = new ArrayList<>();
     BitSet tokens = expectedTokens[e.getState()];
+    RangeSet.Builder ranges = RangeSet.builder();
     for (int i = tokens.nextSetBit(0); i >= 0; i = tokens.nextSetBit(i + 1))
-      expected.add(terminal[i].shortName());
+      ranges.add(terminal[i]);
+    List<String> expected = new ArrayList<>();
+    for (Range range : ranges.build()) {
+      int last = range.getLastCodepoint();
+      for (int codepoint = range.getFirstCodepoint(); codepoint <= last && codepoint >= 0; ++codepoint) {
+        if (printRange(codepoint) && codepoint + 2 <= last && printRange(codepoint + 2)) {
+          int endRange = codepoint + 2;
+          while (endRange + 1 <= last && printRange(endRange + 1))
+            ++endRange;
+          expected.add(Codepoint.toString(codepoint) + "-" + Codepoint.toString(endRange));
+          codepoint = endRange;
+        }
+        else {
+          expected.add(Codepoint.toString(codepoint));
+        }
+      }
+    }
     return expected.toArray(String[]::new);
+  }
+
+  private static boolean printRange(int chr) {
+    return chr >= '0' && chr <= '9'
+        || chr >= 'A' && chr <= 'Z'
+        || chr >= 'a' && chr <= 'z'
+        || ! Codepoint.isAscii(chr) && chr <= 0x10ffff;
   }
 
   private static String xmlEscape(String s) {
@@ -130,12 +155,11 @@ public class Parser
 
   private static class ParseException extends Exception {
     private static final long serialVersionUID = 1L;
-    private int begin, end, offending, state;
+    private int begin, offending, state;
     private boolean wasStalled;
 
-    public ParseException(int begin, int end, int state, int offending, boolean wasStalled) {
+    public ParseException(int begin, int state, int offending, boolean wasStalled) {
       this.begin = begin;
-      this.end = end;
       this.state = state;
       this.offending = offending;
       this.wasStalled = wasStalled;
@@ -149,7 +173,6 @@ public class Parser
     }
 
     public int getBegin() {return begin;}
-    public int getEnd() {return end;}
     public int getState() {return state;}
     public boolean wasStalled() {return wasStalled;}
   }
@@ -609,12 +632,14 @@ public class Parser
         catch (ParseException pe) {
           int begin = pe.getBegin();
           String prefix = input.substring(0, begin);
-          int line = prefix.replaceAll("[^\n]", "").length() + 1;
+          String[] tokenSet = getExpectedTokenSet(pe);
+          int line = prefix.replaceAll("[^\n]+", "").length() + 1;
           int column = prefix.length() - prefix.lastIndexOf('\n');
           throw new BlitzParseException(
-              "Failed to parse input:\n" + getErrorMessage(pe),
+              "Failed to parse input:\n" + getErrorMessage(pe, tokenSet),
               begin < input.length() ? ("'" + Character.toString(input.codePointAt(begin)) + "'")
-                                     : RangeSet.EOF.shortName(),
+                                     : Codepoint.toString(Codepoint.EOI),
+              tokenSet,
               line,
               column
           );
@@ -747,7 +772,7 @@ public class Parser
             otherThreads.add(thread);
           }
           else if (otherThreads.isEmpty() && currentThreads.isEmpty()) {
-            throw new ParseException(thread.b1, thread.e1, thread.state, thread.l1, stalled);
+            throw new ParseException(thread.b1, thread.state, thread.l1, stalled);
           }
         }
         while ((thread = currentThreads.poll()) != null);
@@ -758,21 +783,25 @@ public class Parser
       }
     }
 
-    private String getErrorMessage(ParseException e) {
-      String[] tokenSet = getExpectedTokenSet(e);
-      String found = e.getBegin() < input.length()
-                   ? ("'" + Character.toString(input.codePointAt(e.getBegin())) + "'")
-                   : RangeSet.EOF.shortName();
-      int size = e.getEnd() - e.getBegin();
-      String message = e.getMessage()
-                     + ", found " + found
+    private String getErrorMessage(ParseException e, String[] tokenSet) {
+      boolean eoi = e.getBegin() >= input.length();
+      String found = eoi
+                   ? RangeSet.EOI.shortName()
+                   : ("'" + Character.toString(input.codePointAt(e.getBegin())) + "'");
+      int limit = 16;
+      String[] expectedTokens = Stream.concat(
+            Arrays.stream(tokenSet)
+            .sorted((s1, s2) -> Boolean.compare(s1.startsWith("#"), s2.startsWith("#")))
+            .limit(limit),
+            tokenSet.length > limit ? Stream.of("...") : Stream.empty()
+          )
+          .toArray(String[]::new);
+      String message = e.getMessage() + ", found " + found
                      + "\nwhile expecting "
-                     + (tokenSet.length == 1 ? tokenSet[0] : Arrays.toString(tokenSet))
-                     + "\n"
-                     + (size == 0 || found != null ? "" : "after successfully scanning " + size + " characters beginning ")
-                     + "at " + lineAndColumn(e.getBegin()) + ":\n..."
-                     + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64))
-                     + "...";
+                     + (expectedTokens.length == 1 ? expectedTokens[0] : ("one of " + Arrays.toString(expectedTokens)))
+                     + "\nat " + lineAndColumn(e.getBegin());
+      if (!eoi)
+        message += ":\n..." + input.subSequence(e.getBegin(), Math.min(input.length(), e.getBegin() + 64)) + "...";
       if (e.wasStalled())
         message += "\nHowever, some alternatives were discarded while parsing because they were "
                 + "suspected to be involved in infinite ambiguity.";
