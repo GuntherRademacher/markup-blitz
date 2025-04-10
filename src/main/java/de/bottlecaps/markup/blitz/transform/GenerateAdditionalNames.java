@@ -21,15 +21,28 @@ import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
+/**
+ * Generate additional names, e.g. for extra rules introduced by BNF
+ * transformation.
+ */
 public class GenerateAdditionalNames extends Visitor {
+  /** IXML name character pattern. */
   private static final Pattern nameCharPattern = Pattern.compile("^([-_.\u00B7\u203F\u2040]|\\p{L}|\\p{Nd}|\\p{Mn})$");
-
+  /** The grammar. */
   private final Grammar grammar;
+  /** The set of rule names. */
   private final Set<String> names;
+  /** Names by rule right hand side expression. */
   private final Map<Alts, String> nameByRhs;
+  /** Prefix for making newly generated names distinct from user-defined ones. */
   private final String additionalNamePrefix;
+  /** The smallest context for each range set. */
   private final Map<RangeSet, String> smallestContext;
 
+  /**
+   * Constructor.
+   * @param grammar the grammar
+   */
   public GenerateAdditionalNames(Grammar grammar) {
     this.grammar = grammar;
     this.nameByRhs = new HashMap<>();
@@ -109,7 +122,14 @@ public class GenerateAdditionalNames extends Visitor {
       throw new IllegalStateException();
     }
   }
-
+ 
+  /**
+   * Get the additional name for a given term.
+   * @param proposal name proposal
+   * @param term the term
+   * @param suffix suffix to be appended
+   * @return the additional name
+   */
   public String getAdditionalName(String proposal, Term term, String suffix) {
     Alts alts;
     if (term instanceof Alts) {
@@ -130,6 +150,13 @@ public class GenerateAdditionalNames extends Visitor {
     return name;
   }
 
+  /**
+   * Get the additional name for a given proposal.
+   * 
+   * @param proposal name proposal
+   * @param suffix suffix to be appended
+   * @return the additional name
+   */
   public String getAdditionalName(String proposal, String suffix) {
     StringBuilder sb = new StringBuilder();
     char last = '_';
@@ -154,6 +181,12 @@ public class GenerateAdditionalNames extends Visitor {
     }
   }
 
+  /**
+   * Check if a charset needs a name proposal.
+   * 
+   * @param c the charset
+   * @return true if a name proposal is needed
+   */
   private boolean needsProposalForName(Charset c) {
     if (grammar.getAdditionalNames().containsKey(c))
       return false;
@@ -163,6 +196,9 @@ public class GenerateAdditionalNames extends Visitor {
     return true;
   }
 
+  /**
+   * Calculate the smallest context for a charset.
+   */
   private class CharsetOrigin extends Visitor {
     Map<RangeSet, String> smallestContext = new HashMap<>();
     Map<RangeSet, Integer> smallestContextSize = new HashMap<>();
