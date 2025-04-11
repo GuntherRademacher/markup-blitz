@@ -4,14 +4,14 @@ plugins {
     id 'signing'
 }
 
-version = '1.8'
+version = '1.9-SNAPSHOT'
 group = 'de.bottlecaps'
 
 ext {
     targetJavaVersion = 11
 }
 
-println "Building project '${project.name}' with Java ${targetJavaVersion} (toolchain configured)"
+println "Building project '${project.name}' targeting Java ${targetJavaVersion} bytecode"
 
 repositories {
     mavenCentral()
@@ -33,9 +33,6 @@ testing {
 java {
     withJavadocJar()
     withSourcesJar()
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -43,14 +40,6 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.forkOptions.jvmArgs += ['-Xss4m', '-Duser.language=en']
     options.encoding = 'UTF-8'
-}
-
-tasks.withType(Test).configureEach {
-    javaLauncher.set(
-        javaToolchains.launcherFor {
-            languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
-        }
-    )
 }
 
 tasks.withType(Javadoc).configureEach {
@@ -146,8 +135,18 @@ tasks.withType(Sign) {
     onlyIf { isReleaseVersion }
 }
 
-gradle.taskGraph.whenReady { graph ->
-    if (JavaVersion.current().ordinal() > JavaVersion.VERSION_11.ordinal()) {
-        println "Warning: building with JDK ${JavaVersion.current()}, but targeting Java ${targetJavaVersion}"
+tasks.withType(AbstractPublishToMaven).configureEach {
+    doFirst {
+        println "Preparing to publish... Checking JDK environment."
+
+        def requiredLauncher = javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(targetJavaVersion as int))
+        }.get()
+
+        if (JavaVersion.current().ordinal() > JavaVersion.toVersion(targetJavaVersion).ordinal()) {
+            throw new GradleException("Cannot publish with JDK ${JavaVersion.current()} — must use Java ${targetJavaVersion}")
+        }
+
+        println "JDK version ${JavaVersion.current()} is valid for publishing"
     }
 }
