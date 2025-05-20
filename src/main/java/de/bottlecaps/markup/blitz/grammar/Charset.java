@@ -11,7 +11,7 @@ import de.bottlecaps.markup.blitz.codepoints.UnicodeCategory;
 import de.bottlecaps.markup.blitz.transform.Visitor;
 
 public class Charset extends Term {
-  public static final Charset END = new Charset(true, RangeSet.EOF);
+  public static final Charset END = new Charset(true, RangeSet.EOI);
 
   private final boolean deleted;
   private final RangeSet rangeSet;

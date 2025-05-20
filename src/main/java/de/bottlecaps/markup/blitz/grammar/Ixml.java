@@ -1,4 +1,4 @@
-// This file was generated on Mon Mar 24, 2025 08:51 (UTC+01) by REx v6.1 which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Thu Apr 10, 2025 10:53 (UTC+02) by REx v6.1 which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
@@ -1641,7 +1641,7 @@ public class Ixml
     "namefollower",
     "hexdigit",
     "letter",
-    "eof",
+    "end-of-input",
     "'\"'",
     "'#'",
     "''''",
@@ -1764,7 +1764,8 @@ public class Ixml
                                                                     "Failed to process grammar:\n" + parser.getErrorMessage(pe),
                                                                     offending >= 0 ? TOKEN[offending]
                                                                                    : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
-                                                                                                              : "end of input",
+                                                                                                              : de.bottlecaps.markup.blitz.codepoints.Codepoint.toString(de.bottlecaps.markup.blitz.codepoints.Codepoint.EOI),
+                                                                    getExpectedTokenSet(pe),
                                                                     line,
                                                                     column);
                                                                 }
@@ -1778,5 +1779,5 @@ public class Ixml
                                                                  de.bottlecaps.markup.blitz.Errors.S11.thro("#" + Integer.toHexString(codepoint));
                                                               }
                                                             }
-                                                            // line 1782 "Ixml.java"
+                                                            // line 1783 "Ixml.java"
 // End

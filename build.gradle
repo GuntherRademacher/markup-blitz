@@ -7,13 +7,19 @@ plugins {
 version = '2.0-SNAPSHOT'
 group = 'de.bottlecaps'
 
+ext {
+    targetJavaVersion = 11
+}
+
+println "Building project '${project.name}' targeting Java ${targetJavaVersion} bytecode"
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.8'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.1'
+    testImplementation 'org.basex:basex:11.9'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
 }
 
 testing {
@@ -29,18 +35,22 @@ java {
     withSourcesJar()
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(targetJavaVersion)
     options.fork = true
-    options.forkOptions.jvmArgs << '-Xss4m'
-    options.forkOptions.jvmArgs << '-Duser.language=en'
-    options.encoding = "UTF-8"
+    options.forkOptions.jvmArgs += ['-Xss4m', '-Duser.language=en']
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 jar {
     manifest {
         attributes(
             'Main-Class': 'de.bottlecaps.markup.Blitz',
-            'Implementation-Version': archiveVersion,
+            'Implementation-Version': project.version,
             'Build-Timestamp': new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date())
         )
     }
@@ -123,4 +133,20 @@ signing {
 
 tasks.withType(Sign) {
     onlyIf { isReleaseVersion }
+}
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+    doFirst {
+        println "Preparing to publish... Checking JDK environment."
+
+        def requiredLauncher = javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(targetJavaVersion as int))
+        }.get()
+
+        if (JavaVersion.current().ordinal() > JavaVersion.toVersion(targetJavaVersion).ordinal()) {
+            throw new GradleException("Cannot publish with JDK ${JavaVersion.current()} — must use Java ${targetJavaVersion}")
+        }
+
+        println "JDK version ${JavaVersion.current()} is valid for publishing"
+    }
 }

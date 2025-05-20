@@ -15,14 +15,29 @@ import de.bottlecaps.markup.blitz.grammar.Nonterminal;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
+/**
+ * Copy a grammar.
+ */
 public class Copy extends Visitor {
+  /** Stack for holding items during copying process. */
   protected final Stack<Alts> alts = new Stack<>();
+  /** Copied grammar. */
   protected final Grammar copy;
 
+  /**
+   *  Constructor.
+   * @param g grammar to copy
+   */
   protected Copy(Grammar g) {
     this.copy = g;
   }
 
+  /***
+   * Copy a grammar.
+   * 
+   * @param g grammar to copy
+   * @return copied grammar
+   */
   public static Grammar process(Grammar g) {
     Copy c = new Copy(new Grammar(g));
     c.visit(g);

@@ -5,11 +5,13 @@ package de.bottlecaps.markup.blitz.grammar;
 import static de.bottlecaps.markup.Blitz.normalizeEol;
 import static de.bottlecaps.markup.blitz.grammar.Ixml.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -66,7 +68,14 @@ public class IxmlTest extends TestBase {
     private void testUrlContent(String url, String resource, String expectedResult)
         throws MalformedURLException, URISyntaxException {
 
-      Grammar grammar = Ixml.parse(cachedUrlContent(new URI(url).toURL()));
-      assertEquals(expectedResult, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
+      try {
+        Grammar grammar = Ixml.parse(cachedUrlContent(new URI(url).toURL()));
+        assertEquals(expectedResult, grammar.toString(), "parsing content of " + url + " did not yield " + resource);
+      }
+      catch (RuntimeException e) {
+        assumeFalse(e.getCause() instanceof UnknownHostException,
+            "Test skipped due to " + e.getCause().getClass().getSimpleName() + " - presumably there is no Internet connection");
+        throw e;
+      }
     }
 }

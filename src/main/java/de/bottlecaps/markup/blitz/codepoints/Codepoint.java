@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 import de.bottlecaps.markup.blitz.Errors;
 
 public class Codepoint {
+  public static final int EOI = Integer.MAX_VALUE;
+
   private static Pattern hexPattern = Pattern.compile("^0*(0|(?:[1-9A-Fa-f][0-9A-Fa-f]*))$");
 
   public static int of(String hex) {
@@ -51,6 +53,8 @@ public class Codepoint {
       return "\"'\"";
     else if (isAscii(codepoint))
       return "'" + (char) codepoint + "'";
+    else if (codepoint == EOI)
+      return "end-of-input";
     else
       return "#" + Integer.toHexString(codepoint);
   }

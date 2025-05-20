@@ -1,7 +1,7 @@
 // Copyright (c) 2023-2025 Gunther Rademacher. Provided under the Apache 2 License.
 
          ixml::= s (prolog RS)?                             <?java if (grammar == null) grammar = new Grammar((String) null);?>
-                                rule ( rs rule )* s eof
+                                rule ( rs rule )* s end-of-input
            rs::=                                            <?java de.bottlecaps.markup.blitz.Errors.S01.thro();?>
                | RS
 
@@ -933,7 +933,7 @@
      hexdigit::= [0-9a-fA-F]
        letter::= [A-Za-z]
 
-          eof::= $
+end-of-input ::= $
 
             .::= [#x1-#xd7ff]
                | [#xe000-#xfdcf]
@@ -998,7 +998,8 @@ namefollower^token << '.' 'x'
                                                                       "Failed to process grammar:\n" + parser.getErrorMessage(pe),
                                                                       offending >= 0 ? TOKEN[offending]
                                                                                      : begin < content.length() ? ("'" + Character.toString(content.codePointAt(begin)) + "'")
-                                                                                                                : "end of input",
+                                                                                                                : de.bottlecaps.markup.blitz.codepoints.Codepoint.toString(de.bottlecaps.markup.blitz.codepoints.Codepoint.EOI),
+                                                                      getExpectedTokenSet(pe),
                                                                       line,
                                                                       column);
                                                                   }
