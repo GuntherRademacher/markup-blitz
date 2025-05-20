@@ -18,8 +18,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.8'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.1'
+    testImplementation 'org.basex:basex:11.9'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
 }
 
 testing {
