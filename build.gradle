@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     testImplementation 'org.basex:basex:11.9'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.1'
 }
 
 testing {
