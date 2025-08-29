@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.9'
+version = '1.10-SNAPSHOT'
 group = 'de.bottlecaps'
 
 ext {
