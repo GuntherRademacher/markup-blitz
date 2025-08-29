@@ -20,16 +20,11 @@ jobs:
       IXML_PATH: ${{ github.workspace }}/ixml
 
     steps:
-    - uses: actions/checkout@v5
-      name: Checkout markup-blitz repository
-      with:
-        path: markup-blitz
-
-    - name: Checkout ixml repository
+    - name: Checkout repository with submodules
       uses: actions/checkout@v5
       with:
-        repository: invisibleXML/ixml
-        path: ixml
+        path: markup-blitz
+        submodules: recursive
 
     - name: Set up JDK 11
       uses: actions/setup-java@v5

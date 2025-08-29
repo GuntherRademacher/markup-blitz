@@ -19,7 +19,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -44,6 +43,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.support.AnnotationConsumer;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.BlitzException;
@@ -51,7 +51,6 @@ import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.Parser;
 
 public class IxmlCommunityTest extends TestBase {
-  private static final String thisProject = "markup-blitz";
   private static final String ixmlProject = "ixml";
   private static File ixmlFolder;
   private static XMLInputFactory xmlInputFactory;
@@ -127,31 +126,35 @@ public class IxmlCommunityTest extends TestBase {
 
     String ixmlPath = System.getenv("IXML_PATH");
     if (ixmlPath != null) {
-        ixmlFolder = new File(ixmlPath);
-        assertTrue(ixmlFolder.exists(), "The folder specified as IXML_PATH does not exist: " + ixmlFolder + "\n"
-              + "For running this test, please make sure that the " + ixmlProject + " project is\n"
-              + "available in the same location as the " + thisProject + " project, or set\n"
-              + "environment variable IXML_PATH to point to the ixml project folder.");
+      ixmlFolder = new File(ixmlPath);
+      assertTrue(ixmlFolder.exists(),
+            "The folder specified as IXML_PATH does not exist: " + ixmlFolder + "\n"
+          + "For running this test, please make sure that the " + ixmlProject + " project is\n"
+          + "available at the location specified by IXML_PATH, or run\n"
+          + "'git submodule update --init --recursive'\n"
+          + "to initialize the ixml submodule in the default location.");
     }
     else {
-        String thisPath = "/" + IxmlCommunityTest.class.getName().replace(".", "/") + ".class";
-        URL thisResource = IxmlCommunityTest.class.getResource(thisPath);
-        assertNotNull(thisResource);
-
-        String thisUrl = thisResource.toString();
-        assertTrue(thisUrl.contains(thisProject));
-
-        String ixmlUrl = thisUrl.substring(0, thisUrl.indexOf("/" + thisProject + "/"))
-                       + "/"
-                       + ixmlProject;
-        ixmlFolder = new File(new URI(ixmlUrl));
-        assumeTrue(ixmlFolder.exists(),
-              IxmlCommunityTest.class.getSimpleName() + " was not executed, because neither IXML_PATH\n"
-            + "was set, nor the " + ixmlProject + " folder exists at this path: " + ixmlFolder.getAbsolutePath() + "\n"
-            + "For running this test, please make sure that the " + ixmlProject + " project is\n"
-            + "available in the folder specified by environment variable IXML_PATH,\n"
-            + "or next to " + thisProject + ", i.e. in " + ixmlFolder.getAbsolutePath());
+      File currentDir = new File(IxmlCommunityTest.class.getProtectionDomain()
+          .getCodeSource().getLocation().toURI()).getParentFile();
+      while (currentDir != null && !isProjectRoot(currentDir))
+        currentDir = currentDir.getParentFile();
+      if (currentDir != null)
+        ixmlFolder = new File(currentDir, "ixml");
     }
+    assumeTrue(ixmlFolder != null && ixmlFolder.exists(),
+          IxmlCommunityTest.class.getSimpleName() + " was not executed, because neither IXML_PATH\n"
+        + "was set, nor the " + ixmlProject + " folder exists at the expected location.\n"
+        + "For running this test, please either:\n"
+        + "1. Run 'git submodule update --init --recursive' to initialize the ixml submodule\n"
+        + "2. Set environment variable IXML_PATH to point to the ixml project folder\n"
+        + "Expected ixml submodule at location: " + ixmlFolder.getAbsolutePath());
+  }
+
+  private static boolean isProjectRoot(File dir) {
+      return new File(dir, ".gitmodules").exists() ||
+             new File(dir, "pom.xml").exists() ||
+             new File(dir, "build.gradle").exists();
   }
 
   @ParameterizedTest(name = "{0}")
@@ -375,7 +378,7 @@ public class IxmlCommunityTest extends TestBase {
     }
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+    public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
       return new TestCatalog(ixmlFolder, catalog.path)
           .getTestCases()
           .stream()
