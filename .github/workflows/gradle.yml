@@ -16,8 +16,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      IXML_PATH: ${{ github.workspace }}/ixml
 
     steps:
     - name: Checkout repository with submodules
