@@ -142,19 +142,24 @@ public class IxmlCommunityTest extends TestBase {
       if (currentDir != null)
         ixmlFolder = new File(currentDir, "ixml");
     }
-    assumeTrue(ixmlFolder != null && ixmlFolder.exists(),
+    assumeTrue(ixmlFolder != null && isSubmoduleInitialized(ixmlFolder),
           IxmlCommunityTest.class.getSimpleName() + " was not executed, because neither IXML_PATH\n"
-        + "was set, nor the " + ixmlProject + " folder exists at the expected location.\n"
+        + "was set, nor the " + ixmlProject + " submodule is properly initialized.\n"
         + "For running this test, please either:\n"
         + "1. Run 'git submodule update --init --recursive' to initialize the ixml submodule\n"
         + "2. Set environment variable IXML_PATH to point to the ixml project folder\n"
-        + "Expected ixml submodule at location: " + ixmlFolder.getAbsolutePath());
+        + "Submodule directory exists at: " + ixmlFolder.getAbsolutePath() + " but appears empty/uninitialized");
   }
 
   private static boolean isProjectRoot(File dir) {
       return new File(dir, ".gitmodules").exists() ||
              new File(dir, "pom.xml").exists() ||
              new File(dir, "build.gradle").exists();
+  }
+  private static boolean isSubmoduleInitialized(File submoduleDir) {
+    if (!submoduleDir.exists()) return false;
+    File[] files = submoduleDir.listFiles();
+    return files != null && files.length > 0;
   }
 
   @ParameterizedTest(name = "{0}")
