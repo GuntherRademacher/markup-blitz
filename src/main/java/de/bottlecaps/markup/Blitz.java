@@ -19,6 +19,7 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.transform.BNF;
 import de.bottlecaps.markup.blitz.transform.Generator;
 import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
+import de.bottlecaps.markup.blitz.Version;
 
 /**
  * The Markup Blitz main class. It provides static methods for parser
@@ -152,6 +153,11 @@ public class Blitz {
       ? "-jar " + resource.replaceFirst("^.*/([^/]+.jar)!.*$", "$1")
       : Blitz.class.getName();
 
+    System.err.println("Markup Blitz - Invisible XML processor");
+    System.err.println();
+    System.err.println("  version " + Version.VALUE);
+    System.err.println("  built " + Version.DATE);
+    System.err.println();
     System.err.println("Usage: java " + origin + " [<OPTION>...] [<GRAMMAR>] <INPUT>");
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");

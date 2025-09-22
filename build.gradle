@@ -13,6 +13,17 @@ ext {
 
 println "Building project '${project.name}' targeting Java ${targetJavaVersion} bytecode"
 
+def buildTime = new Date()
+def generatedSrc = "$buildDir/generated-src/main"
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["$generatedSrc/java"]
+        }
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -28,6 +39,27 @@ testing {
             useJUnitJupiter()
         }
     }
+}
+
+task generateSrc {
+    doFirst {
+        def blitzVersion = new File("$generatedSrc/java/de/bottlecaps/markup/blitz", 'Version.java')
+        blitzVersion.parentFile.exists() || blitzVersion.parentFile.mkdirs()
+        blitzVersion.withWriter {
+            it << $/package de.bottlecaps.markup.blitz;
+
+public class Version
+{
+  public static final String VALUE = "$version";
+  public static final String DATE = "${new java.text.SimpleDateFormat("MMM dd, yyyy", Locale.US).format(buildTime)}";
+}
+/$
+        }
+    }
+}
+
+compileJava {
+    dependsOn generateSrc
 }
 
 java {
