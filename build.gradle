@@ -8,7 +8,7 @@ version = '1.10-SNAPSHOT'
 group = 'de.bottlecaps'
 
 ext {
-    targetJavaVersion = 11
+    targetJavaVersion = 17
 }
 
 println "Building project '${project.name}' targeting Java ${targetJavaVersion} bytecode"
@@ -29,8 +29,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:11.9'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testImplementation 'org.basex:basex:12.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.1'
 }
 
 testing {
