@@ -47,7 +47,13 @@ or this one on Windows:
 gradlew test
 ```
 
-Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project [ixml][GHIXML]. For running those as well, make sure that the [ixml][GHIXML] project is available next to the [markup-blitz][markup-blitz] project and use the above command. Executing these tests takes a few minutes, however some of the performance tests are skipped by default, because they require significantly more time or memory. For running those as well, set property `ALL_TESTS` to `true`:
+Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project ixml, included as a git submodule. To run the full test suite, make sure that the submodule is loaded before running the tests:
+
+```bash
+git submodule update --init --recursive
+```
+
+Executing these tests takes a few minutes, however some of the performance tests are skipped by default, because they require significantly more time or memory. For running those as well, set property `ALL_TESTS` to `true`:
 
 ```sh
 ./gradlew test -PALL_TESTS=true

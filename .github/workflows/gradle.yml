@@ -16,23 +16,16 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      IXML_PATH: ${{ github.workspace }}/ixml
 
     steps:
-    - uses: actions/checkout@v4
-      name: Checkout markup-blitz repository
+    - name: Checkout repository with submodules
+      uses: actions/checkout@v5
       with:
         path: markup-blitz
-
-    - name: Checkout ixml repository
-      uses: actions/checkout@v4
-      with:
-        repository: invisibleXML/ixml
-        path: ixml
+        submodules: recursive
 
     - name: Set up JDK 11
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '11'
         distribution: 'temurin'

@@ -1237,6 +1237,24 @@ public class BlitzTest extends TestBase {
     }
   }
 
+  @Test
+  public void testSupplementaryNone() {
+    assertEquals(
+          "<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\">Failed to parse input:\n"
+        + "lexical analysis failed, found '\uD800\uDC00'\n"
+        + "while expecting 'x'\n"
+        + "at line 1, column 1:\n"
+        + "...\uD800\uDC00...</ixml>",
+        generate("S: 'x'.").parse("\uD800\uDC00"));
+  }
+  
+  @Test
+  public void testSupplementaryOnly() {
+    assertEquals(
+        "<S>\uD800\uDC00</S>",
+        generate("S: '\uD800\uDC00'.").parse("\uD800\uDC00"));
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(

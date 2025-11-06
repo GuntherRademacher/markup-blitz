@@ -212,17 +212,12 @@ public class Generator {
   }
 
   private int[] supplementaryMap(final int firstValue) {
-    Range firstKey = terminalCodeByRange.floorKey(new Range(firstValue));
-    if (firstKey == null) {
-      if (terminalCodeByRange.isEmpty())
-        return new int[0];
-      firstKey = terminalCodeByRange.firstKey();
-    }
-    if (firstValue > firstKey.getLastCodepoint()) {
-      firstKey = terminalCodeByRange.higherKey(firstKey);
-      if (firstKey == null)
-        return new int[0];
-    }
+    Range value = new Range(firstValue);
+    Range firstKey = terminalCodeByRange.floorKey(value);
+    if (firstKey == null || firstValue > firstKey.getLastCodepoint())
+      firstKey = terminalCodeByRange.higherKey(value);
+    if (firstKey == null)
+      return new int[] {firstValue, Character.MAX_CODE_POINT, -1};
     SortedMap<Range, Integer> tailMap = terminalCodeByRange.tailMap(firstKey);
     final var count = tailMap.size();
     int[] rangeMap = new int[3 * count];
