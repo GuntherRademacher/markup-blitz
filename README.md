@@ -12,7 +12,7 @@ Markup Blitz is an implementation of [Invisible XML][IXML] (ixml). Please see th
 
 # Building Markup Blitz
 
-Use JDK 11 or higher. For building Markup Blitz, clone this GitHub repository and go to the resulting directory:
+Use JDK 17 or higher. For building Markup Blitz, clone this GitHub repository and go to the resulting directory:
 
 ```sh
 git clone https://github.com/GuntherRademacher/markup-blitz.git
