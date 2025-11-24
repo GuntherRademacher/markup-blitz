@@ -19,7 +19,7 @@ jobs:
 
     steps:
     - name: Checkout repository with submodules
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         path: markup-blitz
         submodules: recursive
