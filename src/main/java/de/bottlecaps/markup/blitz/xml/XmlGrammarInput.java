@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -27,7 +26,6 @@ import de.bottlecaps.markup.blitz.Errors;
 
 public class XmlGrammarInput {
   private static final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-  private static final DocumentBuilder docBuilder;
   static {
     try {
       dbFactory.setValidating(false);
@@ -36,7 +34,6 @@ public class XmlGrammarInput {
       dbFactory.setFeature("http://xml.org/sax/features/namespaces", true);
       dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
       dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-      docBuilder = dbFactory.newDocumentBuilder();
     }
     catch (ParserConfigurationException e) {
       throw new RuntimeException(e.getMessage(), e);
@@ -53,7 +50,7 @@ public class XmlGrammarInput {
   private XmlGrammarInput(InputSource xml) {
     try {
       // TODO: add schema validation
-      doc = docBuilder.parse(xml);
+      doc = dbFactory.newDocumentBuilder().parse(xml);
     }
     catch (Exception e) {
       throw new BlitzException("Failed to parse XML gramamr input", e);
