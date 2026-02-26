@@ -126,6 +126,34 @@ public static Parser generate(String grammar, Map<Option, Object> options) throw
 
 **Throws:** `BlitzException`: if any error is detected while generating the parser
 
+### de.bottlecaps.markup.Blitz.generateFromXml
+Generate a parser from an Invisible XML grammar in XML, passed as an InputStream.
+
+```java
+public static Parser generateFromXml(InputStream xml, Option... blitzOptions) throws BlitzException
+```
+**Parameters:**
+- `InputStream xml`: the Invisible XML grammar in XML
+- `Option... blitzOptions`: options for use at generation time and parsing time
+
+**Returns:** `Parser`: the generated parser
+
+**Throws:** `BlitzException`: if any error is detected while generating the parser
+
+### de.bottlecaps.markup.Blitz.generateFromXml
+Generate a parser from an Invisible XML grammar in XML, passed as a String.
+
+```java
+public static Parser generateFromXml(String xml, Option... blitzOptions) throws BlitzException
+```
+**Parameters:**
+- `String xml`: the Invisible XML grammar in XML
+- `Option... blitzOptions`: options for use at generation time and parsing time
+
+**Returns:** `Parser`: the generated parser
+
+**Throws:** `BlitzException`: if any error is detected while generating the parser
+
 ### de.bottlecaps.markup.blitz.Parser.parse
 
 Parse the given input.
@@ -175,7 +203,7 @@ Some performance comparison of REx-generated parsers and Invisible XML parsers c
 
 # License
 
-Copyright (c) 2023-2025 Gunther Rademacher. Markup Blitz is provided under the [Apache 2 License][ASL].
+Copyright (c) 2023-2026 Gunther Rademacher. Markup Blitz is provided under the [Apache 2 License][ASL].
 
 # Thanks
 
@@ -186,7 +214,7 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [logo]: markup-blitz.svg "Markup Blitz"
 [BaseX]: https://basex.org/
 [ASL]: http://www.apache.org/licenses/LICENSE-2.0
-[REx]: https://www.bottlecaps.de/rex
+[REx]: https://github.com/GuntherRademacher/rex-parser-generator
 [LALR]: https://en.wikipedia.org/wiki/LALR_parser
 [GLR]: https://en.wikipedia.org/wiki/GLR_parser
 [rex-parser-benchmark]: https://github.com/GuntherRademacher/rex-parser-benchmark
@@ -196,7 +224,7 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [parser]: https://en.wikipedia.org/wiki/Parsing#Parser
 [parse-tree]: https://en.wikipedia.org/wiki/Parse_tree
 [parser-generator]: https://en.wikipedia.org/wiki/Compiler-compiler
-[fnInvisibleXml]: https://qt4cg.org/pr/791/xpath-functions-40/Overview.html#func-invisible-xml
-[BXFiddle]: https://bxfiddle.cloud.basexgmbh.de/
+[fnInvisibleXml]: https://qt4cg.org/specifications/xpath-functions-40/Overview.html#func-invisible-xml
+[BXFiddle]: https://fiddle.basex.org/
 [markup-blitz]: https://github.com/GuntherRademacher/markup-blitz
 [maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz
