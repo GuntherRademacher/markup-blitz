@@ -390,7 +390,7 @@ public class Parser
         case '"': out.append("&quot;"); break;
         default:
           if (codepoint >= ' ') {
-            out.append(Character.toString(codepoint));
+            out.appendCodePoint(codepoint);
           }
           else {
             out.append("&x");
@@ -411,7 +411,7 @@ public class Parser
         case '\n': out.append('\n'); break;
         default:
           if (codepoint >= ' ') {
-            out.append(Character.toString(codepoint));
+            out.appendCodePoint(codepoint);
           }
           else {
             out.append("&#x");
