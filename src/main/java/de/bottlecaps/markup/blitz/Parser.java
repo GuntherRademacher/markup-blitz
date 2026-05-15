@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -716,7 +716,7 @@ public class Parser
     }
 
     private ParsingThread parse() throws ParseException {
-      Queue<ParsingThread> currentThreads = new LinkedList<>();
+      Queue<ParsingThread> currentThreads = new ArrayDeque<>();
       Queue<ParsingThread> otherThreads = new PriorityQueue<>();
       ParsingThread thread = new ParsingThread();
       int pos = 0;
