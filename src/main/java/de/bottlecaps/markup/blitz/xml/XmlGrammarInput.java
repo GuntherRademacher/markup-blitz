@@ -42,7 +42,7 @@ public class XmlGrammarInput {
 
   private static final Set<String> elements = Set.of(
       "alt", "alts", "comment", "exclusion", "inclusion", "insertion", "ixml", "literal", "member",
-      "nonterminal", "option", "repeat0", "repeat1", "rule", "sep");
+      "nonterminal", "option", "prolog", "repeat0", "repeat1", "rule", "sep", "version");
 
   private final Document doc;
   private String indent;
@@ -184,6 +184,10 @@ public class XmlGrammarInput {
         return "+#" + element.getAttribute("hex");
       }
       return "+'" + element.getAttribute("string").replace("'", "''") + "'";
+    case "prolog":
+      return process(singletonChildElement(element));
+    case "version":
+      return "ixml version '" + element.getAttribute("string").replace("'", "''") + "'.";
     default:
       throw new BlitzException("Unsupported element: " + element.getLocalName());
     }
