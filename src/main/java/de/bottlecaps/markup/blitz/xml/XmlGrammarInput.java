@@ -168,9 +168,9 @@ public class XmlGrammarInput {
       String from = element.getAttribute("from");
       String to = element.getAttribute("to");
       if (! from.isEmpty() && ! to.isEmpty()) {
-        if (from.startsWith("#") && ! from.matches("^[0-9A-Fa-f]+$"))
+        if (from.startsWith("#") && ! from.substring(1).matches("^[0-9A-Fa-f]+$"))
           Errors.S06.thro(from.substring(1));
-        if (to.startsWith("#") && ! to.matches("^[0-9A-Fa-f]+$"))
+        if (to.startsWith("#") && ! to.substring(1).matches("^[0-9A-Fa-f]+$"))
           Errors.S06.thro(to.substring(1));
         return (from.startsWith("#") ? from : "'" + from.replace("'", "''") + "'")
              + "-"
