@@ -136,7 +136,9 @@ public class Blitz {
     String grammarString = grammar.startsWith("!")
                          ? grammar.substring(1)
                          : urlContent(url(grammar));
-    Parser parser = generate(grammarString, options.toArray(Option[]::new));
+    Parser parser = grammarString.stripLeading().startsWith("<")
+                  ? generateFromXml(grammarString, options.toArray(Option[]::new))
+                  : generate(grammarString, options.toArray(Option[]::new));
     String inputString = input.startsWith("!")
                        ? input.substring(1)
                        : urlContent(url(input));
@@ -162,8 +164,9 @@ public class Blitz {
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
-    System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.");
-    System.err.println("                     When omitted, the ixml grammar will be used.");
+    System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation or XML.");
+    System.err.println("                     XML grammars are detected automatically. When omitted, the ixml");
+    System.err.println("                     grammar will be used.");
     System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  <OPTION>:");
