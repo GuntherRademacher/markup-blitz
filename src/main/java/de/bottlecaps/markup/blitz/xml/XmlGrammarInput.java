@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -30,9 +31,9 @@ public class XmlGrammarInput {
     try {
       dbFactory.setValidating(false);
       dbFactory.setNamespaceAware(true);
-      dbFactory.setFeature("http://xml.org/sax/features/validation", false);
-      dbFactory.setFeature("http://xml.org/sax/features/namespaces", true);
-      dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+      dbFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      dbFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      dbFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       dbFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
     }
     catch (ParserConfigurationException e) {
