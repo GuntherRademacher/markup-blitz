@@ -93,7 +93,13 @@ public class XmlGrammarInput {
     }
 
     int maxLength = 1 + stream(childElements(doc.getDocumentElement()))
-      .mapToInt(e -> e.getAttribute("name").length())
+      .filter(e -> "rule".equals(e.getLocalName()))
+      .mapToInt(e -> {
+        String a = e.getAttribute("alias");
+        return e.getAttribute("mark").length()
+             + e.getAttribute("name").length()
+             + (a.isEmpty() ? 0 : 1 + a.length());
+      })
       .max()
       .orElseThrow(() -> new BlitzException("No rules found in ixml grammar"));
     indent = IntStream.range(0, maxLength).mapToObj(i -> " ").collect(Collectors.joining());
@@ -110,7 +116,9 @@ public class XmlGrammarInput {
         strings.add(process(child));
       return String.join("\n", strings);
     case "rule":
-      String lhs = element.getAttribute("mark") + element.getAttribute("name");
+      String alias = element.getAttribute("alias");
+      String lhs = element.getAttribute("mark") + element.getAttribute("name")
+          + (alias.isEmpty() ? "" : ">" + alias);
       for (Element child : childElements(element))
         strings.add(process(child));
       return indent.substring(lhs.length()) + lhs + ": "
@@ -123,14 +131,16 @@ public class XmlGrammarInput {
     case "alts":
       for (Element child : childElements(element))
         strings.add(process(child));
-      return "(" + String.join(", ", strings) + ")";
+      return "(" + String.join("; ", strings) + ")";
     case "nonterminal":
-      return element.getAttribute("mark") + element.getAttribute("name");
+      String ntAlias = element.getAttribute("alias");
+      return element.getAttribute("mark") + element.getAttribute("name")
+          + (ntAlias.isEmpty() ? "" : ">" + ntAlias);
     case "literal":
       if (! element.getAttribute("hex").isEmpty()) {
         if (! element.getAttribute("hex").matches("^[0-9A-Fa-f]+$"))
           Errors.S06.thro(element.getAttribute("hex"));
-        return "#" + element.getAttribute("hex");
+        return element.getAttribute("tmark") + "#" + element.getAttribute("hex");
       }
       return element.getAttribute("tmark") + "'" + element.getAttribute("string").replace("'", "''") + "'";
     case "option":
@@ -168,13 +178,11 @@ public class XmlGrammarInput {
       String from = element.getAttribute("from");
       String to = element.getAttribute("to");
       if (! from.isEmpty() && ! to.isEmpty()) {
-        if (from.startsWith("#") && ! from.substring(1).matches("^[0-9A-Fa-f]+$"))
-          Errors.S06.thro(from.substring(1));
-        if (to.startsWith("#") && ! to.substring(1).matches("^[0-9A-Fa-f]+$"))
-          Errors.S06.thro(to.substring(1));
-        return (from.startsWith("#") ? from : "'" + from.replace("'", "''") + "'")
+        boolean fromIsHex = from.startsWith("#") && from.substring(1).matches("^[0-9A-Fa-f]+$");
+        boolean toIsHex = to.startsWith("#") && to.substring(1).matches("^[0-9A-Fa-f]+$");
+        return (fromIsHex ? from : "'" + from.replace("'", "''") + "'")
              + "-"
-             + (to.startsWith("#") ? to : "'" + to.replace("'", "''") + "'");
+             + (toIsHex ? to : "'" + to.replace("'", "''") + "'");
       }
       return "'" + element.getAttribute("string").replace("'", "''") + "'";
     case "insertion":

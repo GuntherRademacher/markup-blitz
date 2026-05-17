@@ -49,6 +49,8 @@ import de.bottlecaps.markup.Blitz;
 import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.TestBase;
 import de.bottlecaps.markup.blitz.Parser;
+import de.bottlecaps.markup.blitz.grammar.Ixml;
+import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 
 public class IxmlCommunityTest extends TestBase {
   private static final String ixmlProject = "ixml";
@@ -420,14 +422,19 @@ public class IxmlCommunityTest extends TestBase {
       return;
     }
 
+    String xmlForm = null;
+    if (!testCase.isXmlGrammar()) {
+      xmlForm = ixmlParser().parse(testCase.getGrammar());
+      assertEquals(
+          Ixml.parse(testCase.getGrammar()),
+          Ixml.parse(new XmlGrammarInput(xmlForm).toIxml()),
+          "XML grammar roundtrip failed");
+    }
+
     if (testCase.isGrammarTest()) {
       assertNull(input, "Unexpected input for grammar test " + testCase.getName());
       assertEquals(1, testCase.getOutputs().size(), "Expected a single reference output for grammar test");
-      if (ixmlParser == null) {
-        String ixmlIxmlResourceContent = resourceContent(Blitz.IXML_GRAMMAR_RESOURCE);
-        ixmlParser = generate(ixmlIxmlResourceContent);
-      }
-      String actual = ixmlParser.parse(testCase.getGrammar());
+      String actual = xmlForm != null ? xmlForm : ixmlParser().parse(testCase.getGrammar());;
       String expected = testCase.getOutputs().get(0);
       if (! (actual.equals(expected) || deepEqual(expected, actual)))
         assertEquals(expected, actual, "Unexpected xml grammar output");
@@ -477,4 +484,9 @@ public class IxmlCommunityTest extends TestBase {
     }
   }
 
+  private Parser ixmlParser() {
+    if (ixmlParser == null)
+      ixmlParser = generate(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE));
+    return ixmlParser;
+  }
 }
