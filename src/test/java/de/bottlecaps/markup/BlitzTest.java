@@ -1007,6 +1007,15 @@ public class BlitzTest extends TestBase {
         generate("S: '\uD800\uDC00'.").parse("\uD800\uDC00"));
   }
 
+  @Test
+  public void testD02() {
+    Parser parser = generate("S: A*. @A : 'a'.");
+    String result = parser.parse("aa");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D02\">[D02] Two or more attributes with the same name would"
+        + " be serialized on the same element: A.</ixml>", result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(

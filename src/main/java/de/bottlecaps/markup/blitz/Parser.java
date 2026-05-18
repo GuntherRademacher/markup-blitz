@@ -616,8 +616,7 @@ public class Parser
       Set<Option> currentOptions = options.length == 0
           ? defaultOptions
           : Set.of(options);
-      StringBuilder w = new StringBuilder();
-      XmlSerializer s = new XmlSerializer(w, currentOptions.contains(Option.INDENT));
+      boolean indent = currentOptions.contains(Option.INDENT);
       eventHandler = new ParseTreeBuilder();
       try {
         trace = currentOptions.contains(Option.TRACE);
@@ -677,6 +676,7 @@ public class Parser
               Nonterminal.attribute("ixml:state", state)
           });
         }
+        return serialize(indent);
       }
       catch (BlitzIxmlException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
@@ -711,7 +711,12 @@ public class Parser
           System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
         }
       }
-      eventHandler.serialize(s);
+      return serialize(indent);
+    }
+
+    private String serialize(boolean indent) {
+      StringBuilder w = new StringBuilder();
+      eventHandler.serialize(new XmlSerializer(w, indent));
       return w.toString();
     }
 
