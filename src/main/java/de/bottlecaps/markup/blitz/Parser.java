@@ -393,7 +393,7 @@ public class Parser
             out.appendCodePoint(codepoint);
           }
           else {
-            out.append("&x");
+            out.append("&#x");
             out.append(Integer.toString(codepoint, 16).toUpperCase());
             out.append(';');
           }

@@ -1016,6 +1016,13 @@ public class BlitzTest extends TestBase {
         + " be serialized on the same element: A.</ixml>", result);
   }
 
+  @Test
+  public void testAttributeEntities() {
+    Parser parser = generate("S: A*. @A : #a.");
+    String result = parser.parse("\n");
+    assertEquals("<S A=\"&#xA;\"/>", result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(
