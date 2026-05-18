@@ -8,8 +8,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -62,18 +64,16 @@ public class TestBase {
   }
 
   protected static Parser generate(String grammar, Option... blitzOptions) {
-    Set<Option> options = Set.of(blitzOptions);
-    Map.Entry<String, Set<Option>> key = Map.entry(grammar, options);
-    return parserCache.computeIfAbsent(key, k ->
-      Blitz.generate(k.getKey(), k.getValue().toArray(Option[]::new))
+    Set<Option> options = new HashSet<>(Arrays.asList(blitzOptions));
+    return parserCache.computeIfAbsent(Map.entry(grammar, options),
+        k -> Blitz.generate(grammar, blitzOptions)
     );
   }
 
   protected static Parser generateFromXml(String grammar, Option... blitzOptions) {
-    Set<Option> options = Set.of(blitzOptions);
-    Map.Entry<String, Set<Option>> key = Map.entry(grammar, options);
-    return parserCache.computeIfAbsent(key, k ->
-      Blitz.generateFromXml(k.getKey(), k.getValue().toArray(Option[]::new))
+    Set<Option> options = new HashSet<>(Arrays.asList(blitzOptions));
+    return parserCache.computeIfAbsent(Map.entry(grammar, options),
+        k -> Blitz.generateFromXml(grammar, blitzOptions)
     );
   }
 

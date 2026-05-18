@@ -1023,6 +1023,13 @@ public class BlitzTest extends TestBase {
     assertEquals("<S A=\"&#xA;\"/>", result);
   }
 
+  @Test
+  public void testDuplicateOption() {
+    Parser parser = generate("S: .", Option.INDENT, Option.INDENT);
+    String result = parser.parse("", Option.INDENT, Option.INDENT);
+    assertEquals("<S/>", result);
+  }
+
 //  @Test
 //  public void test() {
 //    Parser parser = generate(

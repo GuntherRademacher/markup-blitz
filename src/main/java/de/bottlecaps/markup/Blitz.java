@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,7 +51,7 @@ public class Blitz {
    */
   public static Parser generate(String grammar, Blitz.Option... blitzOptions) throws BlitzException {
     long t0 = 0, t1 = 0, t2 = 0, t3 = 0;
-    Set<Blitz.Option> options = Set.of(blitzOptions);
+    Set<Blitz.Option> options = new HashSet<>(Arrays.asList(blitzOptions));
     boolean timing = options.contains(Blitz.Option.TIMING);
     if (timing)
       t0 = System.currentTimeMillis();

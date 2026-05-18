@@ -615,7 +615,7 @@ public class Parser
 
       Set<Option> currentOptions = options.length == 0
           ? defaultOptions
-          : Set.of(options);
+          : new HashSet<>(Arrays.asList(options));
       boolean indent = currentOptions.contains(Option.INDENT);
       eventHandler = new ParseTreeBuilder();
       try {
