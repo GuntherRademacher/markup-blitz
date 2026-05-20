@@ -54,7 +54,7 @@ public class XmlGrammarInput {
       doc = dbFactory.newDocumentBuilder().parse(xml);
     }
     catch (Exception e) {
-      throw new BlitzException("Failed to parse XML gramamr input", e);
+      throw new BlitzException("Failed to parse XML grammar input", e);
     }
   }
 
