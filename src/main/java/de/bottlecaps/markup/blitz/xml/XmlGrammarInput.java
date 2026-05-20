@@ -26,8 +26,15 @@ import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.blitz.Errors;
 
 public class XmlGrammarInput {
-  private static final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-  static {
+  private static final Set<String> elements = Set.of(
+      "alt", "alts", "comment", "exclusion", "inclusion", "insertion", "ixml", "literal", "member",
+      "nonterminal", "option", "prolog", "repeat0", "repeat1", "rule", "sep", "version");
+
+  private final Document doc;
+  private String indent;
+
+  private XmlGrammarInput(InputSource xml) {
+    final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
     try {
       dbFactory.setValidating(false);
       dbFactory.setNamespaceAware(true);
@@ -39,16 +46,6 @@ public class XmlGrammarInput {
     catch (ParserConfigurationException e) {
       throw new RuntimeException(e.getMessage(), e);
     }
-  }
-
-  private static final Set<String> elements = Set.of(
-      "alt", "alts", "comment", "exclusion", "inclusion", "insertion", "ixml", "literal", "member",
-      "nonterminal", "option", "prolog", "repeat0", "repeat1", "rule", "sep", "version");
-
-  private final Document doc;
-  private String indent;
-
-  private XmlGrammarInput(InputSource xml) {
     try {
       // TODO: add schema validation
       doc = dbFactory.newDocumentBuilder().parse(xml);
