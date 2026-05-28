@@ -29,8 +29,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.basex:basex:12.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+    testImplementation 'org.basex:basex:12.4'
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.1.0'
 }
 
 testing {
