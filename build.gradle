@@ -102,16 +102,32 @@ test {
         jvmArgs "-XX:StartFlightRecording=filename=${jfrFile},settings=profile,dumponexit=true"
         println "JFR profiling enabled — output: ${jfrFile}"
     }
+    reports {
+        html.required = false
+    }
+    finalizedBy 'htmlTestReport'
     addTestListener([
         afterSuite: { desc, result ->
             if (!desc.parent) {
-                println "${result.testCount} tests completed: " +
+                long millis = result.endTime - result.startTime
+                long minutes = millis / 60000
+                long seconds = (millis % 60000) / 1000
+                String duration = minutes > 0
+                    ? "${minutes}m ${seconds}s"
+                    : "${seconds}s"
+                println "${result.testCount} tests completed in ${duration}: " +
                         "${result.successfulTestCount} succeeded, " +
                         "${result.skippedTestCount} skipped, " +
                         "${result.failedTestCount} failed."
             }
         }
     ] as TestListener)
+}
+
+tasks.register('htmlTestReport', TestReport) {
+    testResults.from(test.binaryResultsDirectory)
+    destinationDirectory = test.reports.html.outputLocation
+    onlyIf { test.state.failure != null || project.hasProperty('HTML_REPORT') }
 }
 
 ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
