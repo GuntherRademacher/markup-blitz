@@ -96,6 +96,12 @@ test {
         systemProperty 'ALL_TESTS', 'true'
         jvmArgs('-Xss4m')
     }
+    if (project.hasProperty('PROFILE')) {
+        def jfrFile = layout.buildDirectory.file('reports/test-profile.jfr').get().asFile
+        jfrFile.parentFile.mkdirs()
+        jvmArgs "-XX:StartFlightRecording=filename=${jfrFile},settings=profile,dumponexit=true"
+        println "JFR profiling enabled — output: ${jfrFile}"
+    }
     addTestListener([
         afterSuite: { desc, result ->
             if (!desc.parent) {
