@@ -1,4 +1,4 @@
-// This file was generated on Fri Jan 9, 2026 20:34 (UTC+01) by REx v6.2-SNAPSHOT which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
+// This file was generated on Mon Jun 1, 2026 21:02 (UTC+02) by REx v6.2 which is Copyright (c) 1979-2026 by Gunther Rademacher <grd@gmx.net>
 // REx command line: -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
 
 package de.bottlecaps.markup.blitz.grammar;
