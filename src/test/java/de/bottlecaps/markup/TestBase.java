@@ -106,7 +106,7 @@ public class TestBase {
           "declare variable $xml1 external;\n"
         + "declare variable $xml2 external;\n"
         + "deep-equal($xml1, $xml2)";
-    try (QueryProcessor proc = new QueryProcessor(query, new Context())) {
+    try (QueryProcessor proc = new QueryProcessor(query, basexContext)) {
       proc.variable("xml1", new DBNode(IO.get(xml1)));
       proc.variable("xml2", new DBNode(IO.get(xml2)));
       return (boolean) proc.value().toJava();
@@ -117,6 +117,7 @@ public class TestBase {
   }
 
   private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+  private Context basexContext = new Context();
 
   protected static boolean isXml(File file) {
     try (FileInputStream fileInputStream = new FileInputStream(file)) {
