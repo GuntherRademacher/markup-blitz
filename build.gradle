@@ -102,7 +102,7 @@ test {
             jfrFile.parentFile.mkdirs()
         }
         jvmArgs "-XX:StartFlightRecording=filename=${jfrFile},settings=profile,dumponexit=true"
-        println "JFR profiling enabled — output: ${jfrFile}"
+        println "JFR profiling enabled - output: ${jfrFile}"
     }
     reports {
         html.required = false
