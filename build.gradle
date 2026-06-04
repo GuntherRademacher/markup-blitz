@@ -98,7 +98,9 @@ test {
     }
     if (project.hasProperty('PROFILE')) {
         def jfrFile = layout.buildDirectory.file('reports/test-profile.jfr').get().asFile
-        jfrFile.parentFile.mkdirs()
+        doFirst {
+            jfrFile.parentFile.mkdirs()
+        }
         jvmArgs "-XX:StartFlightRecording=filename=${jfrFile},settings=profile,dumponexit=true"
         println "JFR profiling enabled — output: ${jfrFile}"
     }

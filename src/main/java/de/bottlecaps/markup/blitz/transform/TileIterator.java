@@ -5,11 +5,9 @@ package de.bottlecaps.markup.blitz.transform;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NavigableMap;
 
 import de.bottlecaps.markup.blitz.codepoints.Range;
-import de.bottlecaps.markup.blitz.transform.Map2D.Index;
 
 public interface TileIterator {
   public int next(int[] tiles, int offset);
@@ -188,21 +186,16 @@ public interface TileIterator {
   }
 
   public static TileIterator of(Map2D map, int tileIndexBits, int defaultValue) {
+    long[] entries = map.sortedEntries();
+    int count = map.size();
     return new TileIterator() {
       int tileSize = 1 << tileIndexBits;
       int end = map.getEndX() * map.getEndY();
       int numberOfTiles = (end - 1 + tileSize) / tileSize;
       int currentIndex = 0;
-
-      Iterator<Entry<Index, Integer>> it;
-      int index = -1;
-      int value;
-      {
-        if (! map.isEmpty()) {
-          it = map.entrySet().iterator();
-          nextEntry();
-        }
-      }
+      int entryPos = 0;
+      int index = count > 0 ? (int) (entries[0] >>> 32) : -1;
+      int value = count > 0 ? (int) entries[0] : 0;
 
       @Override
       public int numberOfTiles() {
@@ -260,13 +253,13 @@ public interface TileIterator {
       }
 
       private void nextEntry() {
-        if (! it.hasNext()) {
+        ++entryPos;
+        if (entryPos >= count) {
           index = -1;
         }
         else {
-          Map.Entry<Index, Integer> entry = it.next();
-          index = entry.getKey().getX() * map.getEndY() + entry.getKey().getY();
-          value = entry.getValue();
+          index = (int) (entries[entryPos] >>> 32);
+          value = (int) entries[entryPos];
         }
       }
 

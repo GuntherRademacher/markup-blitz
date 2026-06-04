@@ -226,7 +226,7 @@ public class TileIteratorTest extends TestBase {
       if (data[i] != defaultValue) {
         int x = i / endY;
         int y = i - endY * x;
-        map.put(new Map2D.Index(x, y), data[i]);
+        map.put(x, y, data[i]);
       }
     int[] reconstructed = reconstruct(TileIterator.of(map, bits, defaultValue));
     assertArrayEquals(data, Arrays.copyOf(reconstructed, data.length));

@@ -439,7 +439,7 @@ public class Generator {
     void parserData() {
       conflicts.forEach((terminalId, forkId) -> {
         final int code = Action.code(Action.Type.FORK, forkId);
-        terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+        terminalTransitionData.put(id, terminalId, code);
       });
       terminalTransitions.forEach((terminalId, state) -> {
         if (! conflicts.containsKey(terminalId)) {
@@ -454,7 +454,7 @@ public class Generator {
           else {
             code = Action.code(Action.Type.SHIFT, state.id);
           }
-          terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+          terminalTransitionData.put(id, terminalId, code);
         }
       });
       nonterminalTransitions.forEach((nonterminalId, state) -> {
@@ -468,7 +468,7 @@ public class Generator {
         else {
           code = Action.code(Action.Type.SHIFT, state.id);
         }
-        nonterminalTransitionData.put(new Map2D.Index(id , nonterminalId), code);
+        nonterminalTransitionData.put(id, nonterminalId, code);
       });
       reductions.forEach((terminalId, alts) -> {
         if (! conflicts.containsKey(terminalId)) {
@@ -476,7 +476,7 @@ public class Generator {
             throw new IllegalStateException();
           final int reductionId = alts.get(0).getReductionId();
           final int code = Action.code(Action.Type.REDUCE, reductionId);
-          terminalTransitionData.put(new Map2D.Index(id , terminalId), code);
+          terminalTransitionData.put(id, terminalId, code);
         }
       });
     }
@@ -663,7 +663,7 @@ public class Generator {
   private void parserData() {
     terminalTransitionData = new Map2D(states.size(), terminal.length);
     nonterminalTransitionData = new Map2D(states.size(), grammar.getRules().size());
-    nonterminalTransitionData.put(new Map2D.Index(0, 0), Action.code(Action.Type.ACCEPT, 0));
+    nonterminalTransitionData.put(0, 0, Action.code(Action.Type.ACCEPT, 0));
     states.keySet().forEach(State::parserData);
   }
 

@@ -2,24 +2,48 @@
 
 package de.bottlecaps.markup.blitz.transform;
 
-import java.util.TreeMap;
+import java.util.Arrays;
 
-public class Map2D extends TreeMap<Map2D.Index, Integer> {
-  private static final long serialVersionUID = 1L;
-
-  private int endX;
-  private int endY;
+public class Map2D {
+  private long[] entries;
+  private int size;
+  private boolean sorted;
+  private final int endX;
+  private final int endY;
 
   public Map2D(int endX, int endY) {
     this.endX = endX;
     this.endY = endY;
+    this.entries = new long[16];
+    this.size = 0;
+    this.sorted = true;
   }
 
-  @Override
-  public Integer put(Index key, Integer value) {
-    if (key.x > getEndX() || key.y > getEndY())
+  public void put(int x, int y, int value) {
+    if (x >= endX || y >= endY)
       throw new IllegalArgumentException();
-    return super.put(key, value);
+    if (size == entries.length)
+      entries = Arrays.copyOf(entries, size * 2);
+    entries[size++] = ((long) (x * endY + y) << 32) | (value & 0xFFFFFFFFL);
+    sorted = false;
+  }
+
+  public long[] sortedEntries() {
+    if (!sorted) {
+      Arrays.sort(entries, 0, size);
+      sorted = true;
+      for (int i = 1; i < size; ++i) {
+        int key = (int) (entries[i] >>> 32);
+        if (key == (int) (entries[i - 1] >>> 32))
+          throw new IllegalStateException(
+              "Duplicate key in Map2D at (" + key / endY + ", " + key % endY + ")");
+      }
+    }
+    return entries;
+  }
+
+  public int size() {
+    return size;
   }
 
   public int getEndX() {
@@ -28,35 +52,5 @@ public class Map2D extends TreeMap<Map2D.Index, Integer> {
 
   public int getEndY() {
     return endY;
-  }
-
-  public static class Index implements Comparable<Index> {
-    private int x;
-    private int y;
-
-    public Index(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    @Override
-    public int compareTo(Index o) {
-      return getX() != o.getX()
-           ? getX() - o.getX()
-           : getY() - o.getY();
-    }
-
-    @Override
-    public String toString() {
-      return "[" + getX() + ", " + getY() + "]";
-    }
-
-    public int getY() {
-      return y;
-    }
-
-    public int getX() {
-      return x;
-    }
   }
 }
