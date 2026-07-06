@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -722,16 +721,15 @@ public class Parser
 
     private ParsingThread parse() throws ParseException {
       Queue<ParsingThread> currentThreads = new ArrayDeque<>();
-      Queue<ParsingThread> otherThreads = new PriorityQueue<>();
+      LongKeyHeap<ParsingThread> otherThreads = new LongKeyHeap<>();
       ParsingThread thread = new ParsingThread();
       int pos = 0;
       boolean stalled = false;
 
       for (;;) {
-        while (thread.equals(otherThreads.peek())) {
+        for (ParsingThread t; (t = otherThreads.removeIfEqual(thread)) != null;) {
           if (trace)
             writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
-          ParsingThread t = otherThreads.remove();
           if (t.deferredEvent == null || t.deferredEvent.getQueueSize() < thread.deferredEvent.getQueueSize())
             thread = t;
           thread.isAmbiguous = true;
@@ -758,8 +756,9 @@ public class Parser
             isUnambiguous = false;
             thread.action = forks[2 * fork];
             if (thread.e0 > pos) {
-              otherThreads.add(thread);
-              otherThreads.add(new ParsingThread(thread, forks[2 * fork + 1]));
+              otherThreads.add(thread.priority(), thread);
+              ParsingThread forkedThread = new ParsingThread(thread, forks[2 * fork + 1]);
+              otherThreads.add(forkedThread.priority(), forkedThread);
             }
             else if (thread.forkCount[fork] > 0 && repeatedForks >= STALL_THRESHOLD) {
               stalled = true;
@@ -774,7 +773,7 @@ public class Parser
             }
           }
           else if (thread.status != Status.ERROR) {
-            otherThreads.add(thread);
+            otherThreads.add(thread.priority(), thread);
           }
           else if (otherThreads.isEmpty() && currentThreads.isEmpty()) {
             throw new ParseException(thread.b1, thread.state, thread.l1, stalled);
@@ -820,7 +819,7 @@ public class Parser
       return "line " + line + ", column " + column;
     }
 
-    private class ParsingThread implements Comparable<ParsingThread> {
+    private class ParsingThread {
       public final byte[] forkCount;
       public DeferredEvent deferredEvent;
       public Status status;
@@ -870,12 +869,8 @@ public class Parser
         isAmbiguous = other.isAmbiguous;
       }
 
-      @Override
-      public int compareTo(ParsingThread other) {
-        int comp = e0 - other.e0;
-        if (comp != 0)
-          return comp;
-        return other.id - id;
+      public long priority() {
+        return (long) e0 << 32 | ~id & 0xFFFFFFFFL;
       }
 
       @Override
