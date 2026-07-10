@@ -166,8 +166,9 @@ public class Blitz {
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
     System.err.println();
     System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation or XML.");
-    System.err.println("                     XML grammars are detected automatically. When omitted, the ixml");
-    System.err.println("                     grammar will be used.");
+    System.err.println("                     XML grammars are detected automatically. When omitted, the grammar");
+    System.err.println("                     of ixml itself is used, so that the input is parsed as an ixml");
+    System.err.println("                     grammar.");
     System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
     System.err.println("  <OPTION>:");

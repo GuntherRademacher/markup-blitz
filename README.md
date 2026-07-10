@@ -47,7 +47,7 @@ or this one on Windows:
 gradlew test
 ```
 
-Markup Blitz comes with a few tests, but it also passes all of the 5168 tests in the Invisible XML community project ixml, included as a git submodule. To run the full test suite, make sure that the submodule is loaded before running the tests:
+Markup Blitz comes with a few tests, but it also passes all of the more than 5000 tests in the Invisible XML community project [ixml][ixml-repo], included as a git submodule. To run the full test suite, make sure that the submodule is loaded before running the tests:
 
 ```bash
 git submodule update --init --recursive
@@ -59,7 +59,7 @@ Executing these tests takes a few minutes, however some of the performance tests
 ./gradlew test -PALL_TESTS=true
 ```
 
-(on Windows omit the leading `./`). Note that this causes JVM arguments to be set for a heap size of 16GB and a stack size of 4MB. Execution may take more than half an hour in this case.
+(on Windows omit the leading `./`). Note that this causes JVM arguments to be set for a heap size of 16GB and a stack size of 4MB. Execution may take about 10 minutes in this case.
 
 # Markup Blitz in Eclipse
 
@@ -78,8 +78,10 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
 
-  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation.
-                     When omitted, the ixml grammar will be used.
+  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation or XML.
+                     XML grammars are detected automatically. When omitted, the grammar
+                     of ixml itself is used, so that the input is parsed as an ixml
+                     grammar.
   <INPUT>            the input (literal, file name or URL).
 
   <OPTION>:
@@ -94,6 +96,8 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
   UTF-8 as well. Resulting XML goes to standard output, all diagnostics go
   to standard error.
 ```
+
+When the grammar is omitted, Markup Blitz uses its built-in [grammar of ixml][ixml-grammar] to parse the input as an ixml grammar, producing its XML representation.
 
 # Running Markup Blitz online
 
@@ -196,7 +200,8 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [GLR]: https://en.wikipedia.org/wiki/GLR_parser
 [rex-parser-benchmark]: https://github.com/GuntherRademacher/rex-parser-benchmark
 [IXML]: https://invisiblexml.org/
-[GHIXML]: https://github.com/invisibleXML/ixml
+[ixml-repo]: https://codeberg.org/InvisibleXML/ixml
+[ixml-grammar]: src/main/resources/de/bottlecaps/markup/blitz/ixml.ixml
 [CFG]: https://en.wikipedia.org/wiki/Context-free_grammar
 [parser]: https://en.wikipedia.org/wiki/Parsing#Parser
 [parse-tree]: https://en.wikipedia.org/wiki/Parse_tree
