@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-version = '1.11-SNAPSHOT'
+version = '1.11'
 group = 'de.bottlecaps'
 
 ext {
@@ -76,6 +76,9 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(Javadoc).configureEach {
     options.encoding = 'UTF-8'
+    // Only document the public API; silence "missing" warnings for the rest,
+    // but keep validating the Javadoc that is present (HTML, references, syntax).
+    options.addStringOption('Xdoclint:all,-missing', '-quiet')
 }
 
 jar {
