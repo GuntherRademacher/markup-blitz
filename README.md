@@ -184,7 +184,7 @@ Some performance comparison of REx-generated parsers and Invisible XML parsers c
 
 # License
 
-Copyright (c) 2023-2026 Gunther Rademacher. Markup Blitz is provided under the [Apache 2 License][ASL].
+Copyright (c) 2023-2026 Gunther Rademacher. Markup Blitz is provided under the [Apache 2 License][ASL] (see [LICENSE.txt](LICENSE.txt)).
 
 # Thanks
 
