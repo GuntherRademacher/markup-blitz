@@ -203,7 +203,7 @@ tasks.withType(AbstractPublishToMaven).configureEach {
         }.get()
 
         if (JavaVersion.current().ordinal() > JavaVersion.toVersion(targetJavaVersion).ordinal()) {
-            throw new GradleException("Cannot publish with JDK ${JavaVersion.current()} — must use Java ${targetJavaVersion}")
+            throw new GradleException("Cannot publish with JDK ${JavaVersion.current()} - must use Java ${targetJavaVersion}")
         }
 
         println "JDK version ${JavaVersion.current()} is valid for publishing"

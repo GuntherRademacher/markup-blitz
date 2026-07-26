@@ -182,40 +182,50 @@ public class Parser
   }
 
   private static class Terminal extends Symbol {
-    private int codepoint;
+    private final int first;
+    private int[] more;   // additional codepoints, allocated lazily when extended
+    private int length;
 
     public Terminal(int codepoint) {
-      this.codepoint = codepoint;
+      first = codepoint;
+      length = 1;
+    }
+
+    public Terminal(int[] codepoints) {
+      first = codepoints[0];
+      length = codepoints.length;
+      if (length > 1)
+        more = Arrays.copyOfRange(codepoints, 1, length);
+    }
+
+    public void append(Terminal other) {
+      ensureMore(length - 1 + other.length);
+      more[length - 1] = other.first;
+      if (other.more != null)
+        System.arraycopy(other.more, 0, more, length, other.length - 1);
+      length += other.length;
+    }
+
+    private void ensureMore(int items) {
+      if (more == null)
+        more = new int[Math.max(4, items)];
+      else if (more.length < items) {
+        int capacity = more.length;
+        do capacity <<= 1; while (capacity < items);
+        more = Arrays.copyOf(more, capacity);
+      }
     }
 
     @Override
     public void send(XmlSerializer e) {
-      e.terminal(codepoint);
+      e.terminal(first);
+      for (int i = 0; i < length - 1; ++i)
+        e.terminal(more[i]);
     }
 
     @Override
     public void sendContent(XmlSerializer e) {
-      e.terminal(codepoint);
-    }
-  }
-
-  private static class Insertion extends Symbol {
-    private int[] codepoints;
-
-    public Insertion(int[] codepoints) {
-      this.codepoints = codepoints;
-    }
-
-    @Override
-    public void send(XmlSerializer e) {
-      for (int codepoint : codepoints)
-        e.terminal(codepoint);
-    }
-
-    @Override
-    public void sendContent(XmlSerializer e) {
-      for (int codepoint : codepoints)
-        e.terminal(codepoint);
+      send(e);
     }
   }
 
@@ -227,9 +237,12 @@ public class Parser
     private boolean isAttribute;
 
     public Nonterminal(String name) {
+      this(name, NO_CHILDREN);
+    }
+
+    public Nonterminal(String name, Symbol... children) {
       this.name = name;
-      children = NO_CHILDREN;
-      isAttribute = false;
+      this.children = children;
     }
 
     public void setName(String newName) {
@@ -240,23 +253,13 @@ public class Parser
       isAttribute = true;
     }
 
-    public void addChildren(Symbol[] newChildren) {
+    public void addChildren(Symbol... newChildren) {
       if (children == NO_CHILDREN) {
         children = newChildren;
       }
       else {
         children = Arrays.copyOf(children, children.length + newChildren.length);
         System.arraycopy(newChildren, 0, children, children.length - newChildren.length, newChildren.length);
-      }
-    }
-
-    public void addChild(Symbol child) {
-      if (children == NO_CHILDREN) {
-        children = new Symbol[] {child};
-      }
-      else {
-        children = Arrays.copyOf(children, children.length + 1);
-        children[children.length - 1] = child;
       }
     }
 
@@ -300,8 +303,9 @@ public class Parser
     }
 
     public static Nonterminal attribute(String name, String value) {
-      Nonterminal attribute = new Nonterminal(name);
-      attribute.addChildren(value.codePoints().mapToObj(Terminal::new).toArray(Symbol[]::new));
+      Nonterminal attribute = value.isEmpty()
+          ? new Nonterminal(name)
+          : new Nonterminal(name, new Terminal(value.codePoints().toArray()));
       attribute.setAttribute();
       return attribute;
     }
@@ -531,6 +535,7 @@ public class Parser
   private class ParseTreeBuilder {
     private Symbol[] stack = new Symbol[64];
     private int top = -1;
+    private Symbol[] childBuffer = new Symbol[64];
 
     ParseTreeBuilder() {
       stack = new Symbol[64];
@@ -547,12 +552,22 @@ public class Parser
 
       final Nonterminal nt = new Nonterminal(nonterminal[reduceArgument.getNonterminalId()]);
 
+      // collect children, combining adjacent terminals by extending the trailing run in place
+      Symbol[] buffer = childBuffer;
+      int c = 0;
+      Terminal run = null;
       for (int i = from; i < to; ++i) {
         Symbol symbol = stack[i];
         Mark mark = marks[i - top - 1];
         if (symbol instanceof Terminal) {
-          if (mark == Mark.NODE)
-            nt.addChild(symbol);
+          if (mark == Mark.NODE) {
+            if (run != null)
+              run.append((Terminal) symbol);
+            else {
+              buffer = ensureChildBuffer(buffer, c + 1);
+              buffer[c++] = run = (Terminal) symbol;
+            }
+          }
         }
         else {
           Nonterminal n = (Nonterminal) symbol;
@@ -564,10 +579,29 @@ public class Parser
             n.setAttribute();
             // fall through
           case NODE:
-            nt.addChild(n);
+            buffer = ensureChildBuffer(buffer, c + 1);
+            buffer[c++] = n;
+            run = null;
             break;
           case DELETE:
-            nt.addChildren(n.children);
+            // splice hoisted children; only the boundary need be combined
+            Symbol[] grandchildren = n.children;
+            int length = grandchildren.length;
+            if (length != 0) {
+              int start = 0;
+              if (run != null && grandchildren[0] instanceof Terminal) {
+                run.append((Terminal) grandchildren[0]);
+                start = 1;
+              }
+              int add = length - start;
+              if (add != 0) {
+                buffer = ensureChildBuffer(buffer, c + add);
+                System.arraycopy(grandchildren, start, buffer, c, add);
+                c += add;
+                Symbol last = grandchildren[length - 1];
+                run = last instanceof Terminal ? (Terminal) last : null;
+              }
+            }
             break;
           default:
             throw new IllegalStateException("Unexpected mark: " + mark);
@@ -576,9 +610,16 @@ public class Parser
       }
 
       int[] insertion = reduceArgument.getInsertion();
-      if (insertion != null)
-        nt.addChild(new Insertion(insertion));
+      if (insertion != null) {
+        if (run != null)
+          run.append(new Terminal(insertion));
+        else {
+          buffer = ensureChildBuffer(buffer, c + 1);
+          buffer[c++] = new Terminal(insertion);
+        }
+      }
 
+      nt.children = c == 0 ? Nonterminal.NO_CHILDREN : Arrays.copyOf(buffer, c);
       push(nt);
     }
 
@@ -594,6 +635,15 @@ public class Parser
       if (++top >= stack.length)
         stack = Arrays.copyOf(stack, stack.length << 1);
       stack[top] = s;
+    }
+
+    private Symbol[] ensureChildBuffer(Symbol[] buffer, int capacity) {
+      if (buffer.length < capacity) {
+        int size = buffer.length;
+        do size <<= 1; while (size < capacity);
+        buffer = childBuffer = Arrays.copyOf(buffer, size);
+      }
+      return buffer;
     }
   }
 
@@ -670,39 +720,30 @@ public class Parser
               : thread.isAmbiguous
                   ? "ambiguous"
                   : "version-mismatch";
-          nonterminal.addChildren(new Symbol[] {
+          nonterminal.addChildren(
               Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-              Nonterminal.attribute("ixml:state", state)
-          });
+              Nonterminal.attribute("ixml:state", state));
         }
         return serialize(indent);
       }
       catch (BlitzIxmlException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
           throw e;
-        Nonterminal ixml = new Nonterminal("ixml");
-        ixml.addChildren(new Symbol[] {
+        Nonterminal ixml = new Nonterminal("ixml",
             Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
             Nonterminal.attribute("ixml:state", "failed"),
             Nonterminal.attribute("ixml:error-code", e.getError().name()),
-            new Insertion(e.getMessage().codePoints().toArray())
-        });
-        Nonterminal root = new Nonterminal("root");
-        root.addChild(ixml);
-        eventHandler.stack[0] = root;
+            new Terminal(e.getMessage().codePoints().toArray()));
+        eventHandler.stack[0] = new Nonterminal("root", ixml);
       }
       catch (BlitzException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
           throw e;
-        Nonterminal ixml = new Nonterminal("ixml");
-        ixml.addChildren(new Symbol[] {
+        Nonterminal ixml = new Nonterminal("ixml",
             Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
             Nonterminal.attribute("ixml:state", "failed"),
-            new Insertion(e.getMessage().codePoints().toArray())
-        });
-        Nonterminal root = new Nonterminal("root");
-        root.addChild(ixml);
-        eventHandler.stack[0] = root;
+            new Terminal(e.getMessage().codePoints().toArray()));
+        eventHandler.stack[0] = new Nonterminal("root", ixml);
       }
       finally {
         if (currentOptions.contains(Option.TIMING)) {
