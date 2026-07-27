@@ -233,6 +233,7 @@ public class Parser
     private static final Symbol[] NO_CHILDREN = new Symbol[] {};
 
     private Symbol[] children;
+    private int childCount;
     private String name;
     private boolean isAttribute;
 
@@ -243,6 +244,7 @@ public class Parser
     public Nonterminal(String name, Symbol... children) {
       this.name = name;
       this.children = children;
+      this.childCount = children.length;
     }
 
     public void setName(String newName) {
@@ -254,13 +256,16 @@ public class Parser
     }
 
     public void addChildren(Symbol... newChildren) {
-      if (children == NO_CHILDREN) {
+      if (childCount == 0) {
         children = newChildren;
       }
       else {
-        children = Arrays.copyOf(children, children.length + newChildren.length);
-        System.arraycopy(newChildren, 0, children, children.length - newChildren.length, newChildren.length);
+        Symbol[] combined = new Symbol[childCount + newChildren.length];
+        System.arraycopy(children, 0, combined, 0, childCount);
+        System.arraycopy(newChildren, 0, combined, childCount, newChildren.length);
+        children = combined;
       }
+      childCount = children.length;
     }
 
     @Override
@@ -271,35 +276,36 @@ public class Parser
         if (name.equals("xmlns"))
           Errors.D07.thro();
         e.startAttribute(name);
-        for (Symbol c : children)
-          c.sendContent(e);
+        for (int i = 0; i < childCount; ++i)
+          children[i].sendContent(e);
         e.endAttribute();
       }
       else {
         e.startNonterminal(name);
         Set<String> names = null;
-        for (Symbol c : children)
-          if (c instanceof Nonterminal) {
-            Nonterminal nonterminal = (Nonterminal) c;
+        for (int i = 0; i < childCount; ++i)
+          if (children[i] instanceof Nonterminal nonterminal) {
             if (nonterminal.isAttribute) {
               if (names == null)
                 names = new HashSet<>();
               if (! names.add(nonterminal.name))
                 Errors.D02.thro(nonterminal.name);
-              c.send(e);
+              nonterminal.send(e);
             }
           }
-        for (Symbol c : children)
-          if (! (c instanceof Nonterminal) || ! ((Nonterminal) c).isAttribute)
-            c.send(e);
+        for (int i = 0; i < childCount; ++i) {
+          final Symbol child = children[i];
+          if (! (child instanceof Nonterminal nonterminal) || ! nonterminal.isAttribute)
+            child.send(e);
+        }
         e.endNonterminal(name);
       }
     }
 
     @Override
     public void sendContent(XmlSerializer e) {
-      for (Symbol c : children)
-        c.sendContent(e);
+      for (int i = 0; i < childCount; ++i)
+        children[i].sendContent(e);
     }
 
     public static Nonterminal attribute(String name, String value) {
@@ -535,7 +541,6 @@ public class Parser
   private class ParseTreeBuilder {
     private Symbol[] stack = new Symbol[64];
     private int top = -1;
-    private Symbol[] childBuffer = new Symbol[64];
 
     ParseTreeBuilder() {
       stack = new Symbol[64];
@@ -549,29 +554,43 @@ public class Parser
       top -= count;
       int from = top + 1;
       int to = top + count + 1;
+      int i = from;
 
       final Nonterminal nt = new Nonterminal(nonterminal[reduceArgument.getNonterminalId()]);
+      Symbol[] buffer;
+      int c;
+      Terminal run = null;
+
+      // reuse a hoisted child's array for left-recursive accumulation, otherwise collect into a fresh array
+      if (count != 0 && marks[0] == Mark.DELETE && stack[i] instanceof Nonterminal accumulator
+          && accumulator.childCount != 0) {
+        ++i;
+        buffer = accumulator.children;
+        c = accumulator.childCount;
+        run = buffer[c - 1] instanceof Terminal terminal ? terminal : null;
+      }
+      else {
+        buffer = Nonterminal.NO_CHILDREN;
+        c = 0;
+      }
 
       // collect children, combining adjacent terminals by extending the trailing run in place
-      Symbol[] buffer = childBuffer;
-      int c = 0;
-      Terminal run = null;
-      for (int i = from; i < to; ++i) {
+      for (; i < to; ++i) {
         Symbol symbol = stack[i];
-        Mark mark = marks[i - top - 1];
-        if (symbol instanceof Terminal) {
+        Mark mark = marks[i - from];
+        if (symbol instanceof Terminal terminal) {
           if (mark == Mark.NODE) {
             if (run != null)
               run.append((Terminal) symbol);
             else {
-              buffer = ensureChildBuffer(buffer, c + 1);
-              buffer[c++] = run = (Terminal) symbol;
+              buffer = ensure(buffer, c + 1);
+              buffer[c++] = run = terminal;
             }
           }
         }
         else {
           Nonterminal n = (Nonterminal) symbol;
-          int alias = aliases[i - top - 1];
+          int alias = aliases[i - from];
           if (alias >= 0)
             n.setName(nonterminal[alias]);
           switch (mark) {
@@ -579,27 +598,27 @@ public class Parser
             n.setAttribute();
             // fall through
           case NODE:
-            buffer = ensureChildBuffer(buffer, c + 1);
+            buffer = ensure(buffer, c + 1);
             buffer[c++] = n;
             run = null;
             break;
           case DELETE:
             // splice hoisted children; only the boundary need be combined
             Symbol[] grandchildren = n.children;
-            int length = grandchildren.length;
+            int length = n.childCount;
             if (length != 0) {
               int start = 0;
-              if (run != null && grandchildren[0] instanceof Terminal) {
-                run.append((Terminal) grandchildren[0]);
+              if (run != null && grandchildren[0] instanceof Terminal terminal) {
+                run.append(terminal);
                 start = 1;
               }
               int add = length - start;
               if (add != 0) {
-                buffer = ensureChildBuffer(buffer, c + add);
+                buffer = ensure(buffer, c + add);
                 System.arraycopy(grandchildren, start, buffer, c, add);
                 c += add;
                 Symbol last = grandchildren[length - 1];
-                run = last instanceof Terminal ? (Terminal) last : null;
+                run = last instanceof Terminal terminal ? terminal : null;
               }
             }
             break;
@@ -614,12 +633,13 @@ public class Parser
         if (run != null)
           run.append(new Terminal(insertion));
         else {
-          buffer = ensureChildBuffer(buffer, c + 1);
+          buffer = ensure(buffer, c + 1);
           buffer[c++] = new Terminal(insertion);
         }
       }
 
-      nt.children = c == 0 ? Nonterminal.NO_CHILDREN : Arrays.copyOf(buffer, c);
+      nt.children = c == 0 ? Nonterminal.NO_CHILDREN : buffer;
+      nt.childCount = c;
       push(nt);
     }
 
@@ -637,11 +657,11 @@ public class Parser
       stack[top] = s;
     }
 
-    private Symbol[] ensureChildBuffer(Symbol[] buffer, int capacity) {
+    private static Symbol[] ensure(Symbol[] buffer, int capacity) {
       if (buffer.length < capacity) {
-        int size = buffer.length;
-        do size <<= 1; while (size < capacity);
-        buffer = childBuffer = Arrays.copyOf(buffer, size);
+        int size = Math.max(buffer.length, 1);
+        while (size < capacity) size <<= 1;
+        return buffer.length == 0 ? new Symbol[size] : Arrays.copyOf(buffer, size);
       }
       return buffer;
     }
@@ -704,14 +724,14 @@ public class Parser
         }
 
         Nonterminal startSymbol = ((Nonterminal) eventHandler.stack[0]);
-        if (startSymbol.children == null || startSymbol.children.length == 0)
+        if (startSymbol.childCount == 0)
           Errors.D01.thro(); // not well-formed
         if (! (startSymbol.children[0] instanceof Nonterminal))
           Errors.D06.thro(); // not exactly one element
         Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
         if (nonterminal.isAttribute)
           Errors.D05.thro(); // attribute as root
-        if (startSymbol.children.length != 1)
+        if (startSymbol.childCount != 1)
           Errors.D06.thro(); // not exactly one element
 
         if (thread.isAmbiguous || isVersionMismatch) {
