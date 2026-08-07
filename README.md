@@ -151,7 +151,7 @@ public static Parser generateFromXml(String xml, Option... blitzOptions) throws 
 
 ### de.bottlecaps.markup.blitz.Parser.parse
 
-Parse the given input.
+Parse the given input, returning the resulting XML as a string.
 
 ```java
 public String parse(String input, Option... options)
@@ -161,6 +161,35 @@ public String parse(String input, Option... options)
 - `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
 
 **Returns:** `String`: the resulting XML
+
+### de.bottlecaps.markup.blitz.Parser.parse
+
+Parse the given input, reporting the result to the given handler instead of returning a serialized XML string. This lets a caller build a result representation of its choice (for example a tree in a host language) directly from the parse tree, without an intervening serialized form.
+
+```java
+public void parse(String input, ResultHandler resultHandler, Option... options)
+```
+**Parameters**:
+- `String input`: the input string
+- `ResultHandler resultHandler`: the handler that receives the parse result
+- `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
+
+### de.bottlecaps.markup.blitz.ResultHandler
+
+An implementation of `ResultHandler` receives the parse result as serialization-style callbacks, in document order. An element's attributes are reported by `attribute`, after the enclosing `startElement` and before any child content.
+
+```java
+public interface ResultHandler {
+  /** Reports the start of an element. */
+  void startElement(String name);
+  /** Reports the end of an element. */
+  void endElement(String name);
+  /** Reports an attribute, with its value given as codepoints. */
+  void attribute(String name, int[] codepoints, int length);
+  /** Reports a run of codepoints of element content. */
+  void text(int[] codepoints, int length);
+}
+```
 
 ### de.bottlecaps.markup.Blitz.Option
 Either of the `generate` and `parse` methods accepts `Option` arguments for creating extra diagnostic output. Generation time options are passed to the `Parser` object implicitly, and they are used at parsing time, when `parse` is called without any options.
