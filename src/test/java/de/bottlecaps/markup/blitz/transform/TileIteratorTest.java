@@ -2,8 +2,8 @@
 
 package de.bottlecaps.markup.blitz.transform;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,13 +97,10 @@ public class TileIteratorTest extends TestBase {
           TileIterator it = TileIterator.of(map, maxCodepoint + 1, tileIndexBits, defaultValue);
           assertEquals(numberOfTiles, it.numberOfTiles());
           assertEquals(tileSize, it.tileSize());
-          int[] reconstruction = reconstruct(it);
-
-          assertEquals(numberOfTiles * tileSize, reconstruction.length);
           int[] expectedResult = Arrays.copyOf(uncompressedData, maxCodepoint);
           if (expectedResult.length > uncompressedData.length)
             Arrays.fill(expectedResult, uncompressedData.length, expectedResult.length, defaultValue);
-          assertArrayEquals(expectedResult, Arrays.copyOf(reconstruction, maxCodepoint));
+          assertReconstructs(it, expectedResult);
 
           test2D(expectedResult, tileIndexBits, defaultValue);
         }
@@ -148,32 +145,31 @@ public class TileIteratorTest extends TestBase {
     int maxTileIndexBits = log2(lastCodepoint) + 1;
     for (int tileIndexBits = 1; tileIndexBits <= maxTileIndexBits; ++tileIndexBits) {
       TileIterator it = TileIterator.of(codeByRange, lastCodepoint + 1, tileIndexBits, defaultValue);
-      int[] reconstructed = reconstruct(it);
-      assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
+      assertReconstructs(it, originalData);
 
       it = TileIterator.of(originalData, originalData.length, tileIndexBits, defaultValue);
-      reconstructed = reconstruct(it);
-      assertArrayEquals(originalData, Arrays.copyOf(reconstructed, originalData.length), () -> msgPrefix);
+      assertReconstructs(it, originalData);
 
       test2D(originalData, tileIndexBits, defaultValue);
     }
   }
 
-  private int[] reconstruct(TileIterator it) {
-    int tileIndexBits = it.tileIndexBits();
-    int tileSize = 1 << tileIndexBits;
-    int[] target = new int[tileSize];
+  private void assertReconstructs(TileIterator it, int[] expected) {
+    int tileSize = it.tileSize();
+    assertTrue(it.numberOfTiles() * tileSize >= expected.length, () -> msgPrefix);
+    int[] tile = new int[tileSize];
     for (int offset = 0;;) {
-      if (offset + tileSize > target.length)
-        target = Arrays.copyOf(target, target.length << 1);
-      int count = it.next(target, offset);
-      if (count == 0)
-        return Arrays.copyOf(target, offset);
-      offset += tileSize;
-      for (int i = 1; i < count; ++i) {
-        if (offset + tileSize > target.length)
-          target = Arrays.copyOf(target, target.length << 1);
-        System.arraycopy(target, offset - tileSize, target, offset, tileSize);
+      int count = it.next(tile, 0);
+      if (count == 0) {
+        assertEquals(it.numberOfTiles() * tileSize, offset, () -> msgPrefix);
+        return;
+      }
+      for (int repetition = 0; repetition < count; ++repetition) {
+        for (int i = 0; i < tileSize; ++i) {
+          int index = offset + i;
+          if (index < expected.length)
+            assertEquals(expected[index], tile[i], () -> msgPrefix + "at index " + index);
+        }
         offset += tileSize;
       }
     }
@@ -228,7 +224,6 @@ public class TileIteratorTest extends TestBase {
         int y = i - endY * x;
         map.put(x, y, data[i]);
       }
-    int[] reconstructed = reconstruct(TileIterator.of(map, bits, defaultValue));
-    assertArrayEquals(data, Arrays.copyOf(reconstructed, data.length));
+    assertReconstructs(TileIterator.of(map, bits, defaultValue), data);
   }
 }

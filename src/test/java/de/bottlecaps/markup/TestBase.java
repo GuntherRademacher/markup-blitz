@@ -117,7 +117,7 @@ public class TestBase {
   }
 
   private static XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-  private Context basexContext = new Context();
+  private static Context basexContext = new Context();
 
   protected static boolean isXml(File file) {
     try (FileInputStream fileInputStream = new FileInputStream(file)) {

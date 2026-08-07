@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
@@ -94,11 +93,9 @@ public class CompressedMapTest {
     for (int i = 0; i < randomValues.length; ++i)
       randomValues[i] = random.nextInt(originalData.length);
 
-    Map<Integer, Integer> hashMap = new HashMap<>();
-    int defaultValue = iteratorSupplier.apply(2).defaultValue();
-    for (int i = 0; i < originalData.length; ++i)
-      if (originalData[i] != defaultValue)
-        hashMap.put(i, originalData[i]);
+    int expectedSum = 0;
+    for (int v : randomValues)
+      expectedSum += originalData[v];
 
     for (int maxDepth = 1; maxDepth <= 8; ++maxDepth) {
       CompressedMap map = new CompressedMap(iteratorSupplier, maxDepth);
@@ -107,15 +104,6 @@ public class CompressedMapTest {
         validate(data);
         int[] reconstructed = reconstruct(map, originalData.length);
         assertArrayEquals(originalData, reconstructed, msgPrefix);
-
-        int expectedSum = 0;
-        for (int v : randomValues) {
-          Integer code = hashMap.get(v);
-          if (code != null)
-            expectedSum += code;
-          else
-            expectedSum += defaultValue;
-        }
 
         int sum = 0;
         for (int v : randomValues)
@@ -195,7 +183,8 @@ public class CompressedMapTest {
       final int prime = 31;
       int hashCode = 1;
       for (int i = 0; i < value.length; ++i)
-        hashCode = prime * hashCode + value[i];;
+        hashCode = prime * hashCode + value[i];
+      this.hashCode = hashCode;
     }
 
     @Override
