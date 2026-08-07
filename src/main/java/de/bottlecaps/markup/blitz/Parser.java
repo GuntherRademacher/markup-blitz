@@ -84,7 +84,7 @@ public class Parser
   }
 
   /**
-   * Parse the given input.
+   * Parse the given input, returning the resulting XML as a string.
    *
    * @param input the input string
    * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
@@ -92,6 +92,17 @@ public class Parser
    */
   public String parse(String input, Option... options) {
     return new ParsingContext(input).parse(options);
+  }
+
+  /**
+   * Parse the given input, reporting the result to the given handler.
+   *
+   * @param input the input string
+   * @param resultHandler the handler that receives the parse result
+   * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
+   */
+  public void parse(String input, ResultHandler resultHandler, Option... options) {
+    new ParsingContext(input).parse(resultHandler, options);
   }
 
   public void setTraceWriter(Writer w) {
@@ -177,13 +188,13 @@ public class Parser
   }
 
   private static abstract class Symbol {
-    public abstract void send(XmlSerializer e);
-    public abstract void sendContent(XmlSerializer e);
+    abstract void send(ResultHandler resultHandler);
+    abstract void validate();
   }
 
   private static class Terminal extends Symbol {
     private final int first;
-    private int[] more;   // additional codepoints, allocated lazily when extended
+    private int[] all;
     private int length;
 
     public Terminal(int codepoint) {
@@ -193,39 +204,50 @@ public class Parser
 
     public Terminal(int[] codepoints) {
       first = codepoints[0];
+      all = codepoints;
       length = codepoints.length;
-      if (length > 1)
-        more = Arrays.copyOfRange(codepoints, 1, length);
     }
 
     public void append(Terminal other) {
-      ensureMore(length - 1 + other.length);
-      more[length - 1] = other.first;
-      if (other.more != null)
-        System.arraycopy(other.more, 0, more, length, other.length - 1);
+      ensureMore(length + other.length);
+      if (other.length == 1)
+        all[length] = other.first;
+      else
+        System.arraycopy(other.all, 0, all, length, other.length);
       length += other.length;
     }
 
     private void ensureMore(int items) {
-      if (more == null)
-        more = new int[Math.max(4, items)];
-      else if (more.length < items) {
-        int capacity = more.length;
+      if (all == null) {
+        all = new int[Math.max(4, items)];
+        all[0] = first;
+      }
+      else if (all.length < items) {
+        int capacity = all.length;
         do capacity <<= 1; while (capacity < items);
-        more = Arrays.copyOf(more, capacity);
+        all = Arrays.copyOf(all, capacity);
       }
     }
 
     @Override
-    public void send(XmlSerializer e) {
-      e.terminal(first);
-      for (int i = 0; i < length - 1; ++i)
-        e.terminal(more[i]);
+    void validate() {
+      if (all == null) {
+        if (! UnicodeCategory.xmlChar.containsCodepoint(first))
+          Errors.D04.thro(Codepoint.toString(first));
+      }
+      else {
+        for (int i = 0; i < length; ++i)
+          if (! UnicodeCategory.xmlChar.containsCodepoint(all[i]))
+            Errors.D04.thro(Codepoint.toString(all[i]));
+      }
     }
 
     @Override
-    public void sendContent(XmlSerializer e) {
-      send(e);
+    public void send(ResultHandler resultHandler) {
+      if (all == null)
+        resultHandler.text(new int[] {first}, 1);
+      else
+        resultHandler.text(all, length);
     }
   }
 
@@ -235,7 +257,6 @@ public class Parser
     private Symbol[] children;
     private int childCount;
     private String name;
-    private boolean isAttribute;
 
     public Nonterminal(String name) {
       this(name, NO_CHILDREN);
@@ -251,8 +272,24 @@ public class Parser
       name = newName;
     }
 
-    public void setAttribute() {
-      isAttribute = true;
+    // turn this node into an attribute: collapse it to the concatenated terminal codepoints
+    public Attribute toAttribute() {
+      Attribute attribute = new Attribute(name);
+      collect(attribute);
+      return attribute;
+    }
+
+    // append the codepoints of all terminals in this subtree to the attribute value
+    private void collect(Attribute attribute) {
+      for (int i = 0; i < childCount; ++i) {
+        Symbol child = children[i];
+        if (child instanceof Nonterminal nonterminal)
+          nonterminal.collect(attribute);
+        else if (child instanceof Terminal terminal)
+          attribute.append(terminal);
+        else
+          attribute.append((Attribute) child);
+      }
     }
 
     public void addChildren(Symbol... newChildren) {
@@ -269,60 +306,101 @@ public class Parser
     }
 
     @Override
-    public void send(XmlSerializer e) {
+    void validate() {
       if (name.charAt(0) == ' ')
         Errors.D03.thro(name.substring(1));
-      if (isAttribute) {
-        if (name.equals("xmlns"))
-          Errors.D07.thro();
-        e.startAttribute(name);
-        for (int i = 0; i < childCount; ++i)
-          children[i].sendContent(e);
-        e.endAttribute();
-      }
-      else {
-        e.startNonterminal(name);
-        Set<String> names = null;
-        for (int i = 0; i < childCount; ++i)
-          if (children[i] instanceof Nonterminal nonterminal) {
-            if (nonterminal.isAttribute) {
-              if (names == null)
-                names = new HashSet<>();
-              if (! names.add(nonterminal.name))
-                Errors.D02.thro(nonterminal.name);
-              nonterminal.send(e);
-            }
-          }
-        for (int i = 0; i < childCount; ++i) {
-          final Symbol child = children[i];
-          if (! (child instanceof Nonterminal nonterminal) || ! nonterminal.isAttribute)
-            child.send(e);
+      Set<String> names = null;
+      for (int i = 0; i < childCount; ++i) {
+        final Symbol symbol = children[i];
+        if (symbol instanceof Attribute attribute) {
+          if (names == null)
+            names = new HashSet<>();
+          if (! names.add(attribute.name))
+            Errors.D02.thro(attribute.name);
         }
-        e.endNonterminal(name);
+        symbol.validate();
       }
     }
 
     @Override
-    public void sendContent(XmlSerializer e) {
+    public void send(ResultHandler resultHandler) {
+      resultHandler.startElement(name);
       for (int i = 0; i < childCount; ++i)
-        children[i].sendContent(e);
-    }
-
-    public static Nonterminal attribute(String name, String value) {
-      Nonterminal attribute = value.isEmpty()
-          ? new Nonterminal(name)
-          : new Nonterminal(name, new Terminal(value.codePoints().toArray()));
-      attribute.setAttribute();
-      return attribute;
+        if (children[i] instanceof Attribute)
+          children[i].send(resultHandler);
+      for (int i = 0; i < childCount; ++i)
+        if (! (children[i] instanceof Attribute))
+          children[i].send(resultHandler);
+      resultHandler.endElement(name);
     }
   }
 
-  private static class XmlSerializer {
+  private static final class Attribute extends Symbol {
+    private final String name;
+    private int[] value;
+    private int length;
+
+    public Attribute(String name) {
+      this.name = name;
+      value = new int[8];
+    }
+
+    public Attribute(String name, String value) {
+      this.name = name;
+      this.value = value.codePoints().toArray();
+      length = this.value.length;
+    }
+
+    public void append(Terminal terminal) {
+      if (terminal.all == null)
+        append(terminal.first);
+      else
+        append(terminal.all, 0, terminal.length);
+    }
+
+    public void append(Attribute other) {
+      append(other.value, 0, other.length);
+    }
+
+    private void append(int codepoint) {
+      if (length == value.length)
+        value = Arrays.copyOf(value, length << 1);
+      value[length++] = codepoint;
+    }
+
+    private void append(int[] codepoints, int offset, int count) {
+      int needed = length + count;
+      if (needed > value.length) {
+        int capacity = value.length;
+        do capacity <<= 1; while (capacity < needed);
+        value = Arrays.copyOf(value, capacity);
+      }
+      System.arraycopy(codepoints, offset, value, length, count);
+      length = needed;
+    }
+
+    @Override
+    void validate() {
+      if (name.charAt(0) == ' ')
+        Errors.D03.thro(name.substring(1));
+      if (name.equals("xmlns"))
+        Errors.D07.thro();
+      for (int i = 0; i < length; ++i)
+        if (! UnicodeCategory.xmlChar.containsCodepoint(value[i]))
+          Errors.D04.thro(Codepoint.toString(value[i]));
+    }
+
+    @Override
+    public void send(ResultHandler resultHandler) {
+      resultHandler.attribute(name, value, length);
+    }
+  }
+
+  private static class XmlSerializer implements ResultHandler {
     private static final String INDENTATION = "   ";
 
     private StringBuilder out;
     private int depth;
-    private int attributeLevel;
     private boolean delayedTag;
     private boolean indent;
     private boolean hasChildElement;
@@ -331,67 +409,52 @@ public class Parser
       this.out = out;
       this.indent = indent;
       depth = 0;
-      attributeLevel = 0;
       delayedTag = false;
       hasChildElement = false;
     }
 
-    public void startNonterminal(String name) {
-      if (attributeLevel == 0) {
-        if (delayedTag)
-          out.append('>');
-        delayedTag = true;
-        if (indent && depth > 0) {
-          out.append('\n');
-          for (int i = 0; i < depth; ++i)
-            out.append(INDENTATION);
-        }
-        out.append('<');
-        out.append(name);
-        hasChildElement = false;
-        ++depth;
+    public void startElement(String name) {
+      if (delayedTag)
+        out.append('>');
+      delayedTag = true;
+      if (indent && depth > 0) {
+        out.append('\n');
+        for (int i = 0; i < depth; ++i)
+          out.append(INDENTATION);
       }
+      out.append('<');
+      out.append(name);
+      hasChildElement = false;
+      ++depth;
     }
 
-    public void endNonterminal(String name) {
-      if (attributeLevel == 0) {
-        --depth;
-        if (delayedTag) {
-          delayedTag = false;
-          out.append("/>");
-        }
-        else {
-          if (indent) {
-            if (hasChildElement) {
-              out.append('\n');
-              for (int i = 0; i < depth; ++i)
-                out.append(INDENTATION);
-            }
+    public void endElement(String name) {
+      --depth;
+      if (delayedTag) {
+        delayedTag = false;
+        out.append("/>");
+      }
+      else {
+        if (indent) {
+          if (hasChildElement) {
+            out.append('\n');
+            for (int i = 0; i < depth; ++i)
+              out.append(INDENTATION);
           }
-          out.append("</");
-          out.append(name);
-          out.append('>');
         }
-        hasChildElement = true;
+        out.append("</");
+        out.append(name);
+        out.append('>');
       }
+      hasChildElement = true;
     }
 
-    public void startAttribute(String name) {
-      ++attributeLevel;
+    public void attribute(String name, int[] codepoints, int length) {
       out.append(' ');
       out.append(name);
       out.append("=\"");
-    }
-
-    public void endAttribute() {
-      out.append('\"');
-      --attributeLevel;
-    }
-
-    public void terminal(int codepoint) {
-      if (! UnicodeCategory.xmlChar.containsCodepoint(codepoint))
-        Errors.D04.thro(Codepoint.toString(codepoint));
-      if (attributeLevel > 0) {
+      for (int i = 0; i < length; ++i) {
+        int codepoint = codepoints[i];
         switch (codepoint) {
         case '&': out.append("&amp;"); break;
         case '<': out.append("&lt;"); break;
@@ -408,11 +471,16 @@ public class Parser
           }
         }
       }
-      else {
-        if (delayedTag) {
-          out.append('>');
-          delayedTag = false;
-        }
+      out.append('\"');
+    }
+
+    public void text(int[] codepoints, int length) {
+      if (delayedTag) {
+        out.append('>');
+        delayedTag = false;
+      }
+      for (int i = 0; i < length; ++i) {
+        int codepoint = codepoints[i];
         switch (codepoint) {
         case '&': out.append("&amp;"); break;
         case '<': out.append("&lt;"); break;
@@ -427,7 +495,7 @@ public class Parser
             out.append(Integer.toString(codepoint, 16).toUpperCase());
             out.append(';');
           }
-        }
+        }          
       }
     }
   }
@@ -484,9 +552,9 @@ public class Parser
       return queueSize;
     }
 
-    public abstract void execute(ParseTreeBuilder eventHandler);
+    public abstract void execute(ParseTreeBuilder parseTreeBuilder);
 
-    public void release(ParseTreeBuilder eventHandler) {
+    public void release(ParseTreeBuilder parseTreeBuilder) {
       DeferredEvent current = this;
       DeferredEvent predecessor = current.link;
       current.link = null;
@@ -497,7 +565,7 @@ public class Parser
         predecessor = next;
       }
       do {
-        current.execute(eventHandler);
+        current.execute(parseTreeBuilder);
         current = current.link;
       }
       while (current != null);
@@ -513,8 +581,8 @@ public class Parser
     }
 
     @Override
-    public void execute(ParseTreeBuilder eventHandler) {
-      eventHandler.terminal(codepoint);
+    public void execute(ParseTreeBuilder parseTreeBuilder) {
+      parseTreeBuilder.terminal(codepoint);
     }
   }
 
@@ -527,8 +595,8 @@ public class Parser
     }
 
     @Override
-    public void execute(ParseTreeBuilder eventHandler) {
-      eventHandler.nonterminal(reduceArgument);
+    public void execute(ParseTreeBuilder parseTreeBuilder) {
+      parseTreeBuilder.nonterminal(reduceArgument);
     }
   }
 
@@ -548,30 +616,33 @@ public class Parser
     }
 
     public void nonterminal(ReduceArgument reduceArgument) {
-      Mark[] marks = reduceArgument.getMarks();
-      int[] aliases = reduceArgument.getAliases();
-      int count = marks.length;
-      top -= count;
-      int from = top + 1;
-      int to = top + count + 1;
-      int i = from;
+      final Mark[] marks = reduceArgument.getMarks();
+      final int[] aliases = reduceArgument.getAliases();
+      final int count = marks.length;
 
+      top -= count;
+      final int from = top + 1;
+      final int to = top + count + 1;
       final Nonterminal nt = new Nonterminal(nonterminal[reduceArgument.getNonterminalId()]);
       Symbol[] buffer;
+
+      Terminal run;
+      int i;
       int c;
-      Terminal run = null;
 
       // reuse a hoisted child's array for left-recursive accumulation, otherwise collect into a fresh array
-      if (count != 0 && marks[0] == Mark.DELETE && stack[i] instanceof Nonterminal accumulator
+      if (count != 0 && marks[0] == Mark.DELETE && stack[from] instanceof Nonterminal accumulator
           && accumulator.childCount != 0) {
-        ++i;
+        i = from + 1;
         buffer = accumulator.children;
         c = accumulator.childCount;
         run = buffer[c - 1] instanceof Terminal terminal ? terminal : null;
       }
       else {
+        i = from;
         buffer = Nonterminal.NO_CHILDREN;
         c = 0;
+        run = null;
       }
 
       // collect children, combining adjacent terminals by extending the trailing run in place
@@ -581,7 +652,7 @@ public class Parser
         if (symbol instanceof Terminal terminal) {
           if (mark == Mark.NODE) {
             if (run != null)
-              run.append((Terminal) symbol);
+              run.append(terminal);
             else {
               buffer = ensure(buffer, c + 1);
               buffer[c++] = run = terminal;
@@ -595,8 +666,10 @@ public class Parser
             n.setName(nonterminal[alias]);
           switch (mark) {
           case ATTRIBUTE:
-            n.setAttribute();
-            // fall through
+            buffer = ensure(buffer, c + 1);
+            buffer[c++] = n.toAttribute();
+            run = null;
+            break;
           case NODE:
             buffer = ensure(buffer, c + 1);
             buffer[c++] = n;
@@ -647,8 +720,8 @@ public class Parser
       push(new Terminal(codepoint));
     }
 
-    public void serialize(XmlSerializer e) {
-      ((Nonterminal) stack[0]).children[0].send(e);
+    public void serialize(ResultHandler resultHandler) {
+      ((Nonterminal) stack[0]).children[0].send(resultHandler);
     }
 
     public void push(Symbol s) {
@@ -670,7 +743,7 @@ public class Parser
   private class ParsingContext {
     private String input = null;
 
-    private ParseTreeBuilder eventHandler;
+    private ParseTreeBuilder parseTreeBuilder;
     private int size = 0;
     private int maxId = 0;
     private boolean trace;
@@ -680,13 +753,23 @@ public class Parser
     }
 
     public String parse(Option... options) {
+      return run(currentOptions -> serialize(currentOptions.contains(Option.INDENT)), options);
+    }
+
+    public void parse(ResultHandler resultHandler, Option... options) {
+      run(currentOptions -> {
+        parseTreeBuilder.serialize(resultHandler);
+        return null;
+      }, options);
+    }
+
+    private <T> T run(java.util.function.Function<Set<Option>, T> emit, Option... options) {
       long t0 = System.currentTimeMillis();
 
       Set<Option> currentOptions = options.length == 0
           ? defaultOptions
           : new HashSet<>(Arrays.asList(options));
-      boolean indent = currentOptions.contains(Option.INDENT);
-      eventHandler = new ParseTreeBuilder();
+      parseTreeBuilder = new ParseTreeBuilder();
       try {
         trace = currentOptions.contains(Option.TRACE);
         if (trace)
@@ -723,14 +806,14 @@ public class Parser
           }
         }
 
-        Nonterminal startSymbol = ((Nonterminal) eventHandler.stack[0]);
+        Nonterminal startSymbol = ((Nonterminal) parseTreeBuilder.stack[0]);
         if (startSymbol.childCount == 0)
           Errors.D01.thro(); // not well-formed
+        if (startSymbol.children[0] instanceof Attribute)
+          Errors.D05.thro(); // attribute as root
         if (! (startSymbol.children[0] instanceof Nonterminal))
           Errors.D06.thro(); // not exactly one element
         Nonterminal nonterminal = (Nonterminal) startSymbol.children[0];
-        if (nonterminal.isAttribute)
-          Errors.D05.thro(); // attribute as root
         if (startSymbol.childCount != 1)
           Errors.D06.thro(); // not exactly one element
 
@@ -741,29 +824,30 @@ public class Parser
                   ? "ambiguous"
                   : "version-mismatch";
           nonterminal.addChildren(
-              Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-              Nonterminal.attribute("ixml:state", state));
+              new Attribute("xmlns:ixml", IXML_NAMESPACE),
+              new Attribute("ixml:state", state));
         }
-        return serialize(indent);
+        startSymbol.validate();
+        return emit.apply(currentOptions);
       }
       catch (BlitzIxmlException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
           throw e;
         Nonterminal ixml = new Nonterminal("ixml",
-            Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-            Nonterminal.attribute("ixml:state", "failed"),
-            Nonterminal.attribute("ixml:error-code", e.getError().name()),
+            new Attribute("xmlns:ixml", IXML_NAMESPACE),
+            new Attribute("ixml:state", "failed"),
+            new Attribute("ixml:error-code", e.getError().name()),
             new Terminal(e.getMessage().codePoints().toArray()));
-        eventHandler.stack[0] = new Nonterminal("root", ixml);
+        parseTreeBuilder.stack[0] = new Nonterminal("root", ixml);
       }
       catch (BlitzException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
           throw e;
         Nonterminal ixml = new Nonterminal("ixml",
-            Nonterminal.attribute("xmlns:ixml", IXML_NAMESPACE),
-            Nonterminal.attribute("ixml:state", "failed"),
+            new Attribute("xmlns:ixml", IXML_NAMESPACE),
+            new Attribute("ixml:state", "failed"),
             new Terminal(e.getMessage().codePoints().toArray()));
-        eventHandler.stack[0] = new Nonterminal("root", ixml);
+        parseTreeBuilder.stack[0] = new Nonterminal("root", ixml);
       }
       finally {
         if (currentOptions.contains(Option.TIMING)) {
@@ -771,12 +855,12 @@ public class Parser
           System.err.println("        ixml parsing time: " + (t1 - t0) + " msec");
         }
       }
-      return serialize(indent);
+      return emit.apply(currentOptions);
     }
 
     private String serialize(boolean indent) {
       StringBuilder w = new StringBuilder();
-      eventHandler.serialize(new XmlSerializer(w, indent));
+      parseTreeBuilder.serialize(new XmlSerializer(w, indent));
       return w.toString();
     }
 
@@ -799,7 +883,7 @@ public class Parser
         boolean isUnambiguous = otherThreads.isEmpty();
 
         if (isUnambiguous && thread.deferredEvent != null) {
-          thread.deferredEvent.release(eventHandler);
+          thread.deferredEvent.release(parseTreeBuilder);
           thread.deferredEvent = null;
         }
 
@@ -1004,7 +1088,7 @@ public class Parser
               writeTrace("shift");
             if (nonterminalId < 0) {
               if (isUnambiguous)
-                eventHandler.terminal(c1);
+                parseTreeBuilder.terminal(c1);
               else
                 deferredEvent = new TerminalEvent(deferredEvent, c1);
               b0 = b1;
@@ -1044,7 +1128,7 @@ public class Parser
               stack = stack.pop();
             }
             if (isUnambiguous)
-              eventHandler.nonterminal(reduceArgument);
+              parseTreeBuilder.nonterminal(reduceArgument);
             else
               deferredEvent = new NonterminalEvent(deferredEvent, reduceArgument);
             action = nonterminalTransitions.get(state * numberOfNonterminals + nonterminalId);
@@ -1113,7 +1197,7 @@ public class Parser
           writeTrace("\" end=\"" + e1 + "\"/>\n");
         }
         return charclass;
+        }
       }
     }
   }
-}

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import de.bottlecaps.markup.Blitz.Option;
 import de.bottlecaps.markup.blitz.Parser;
+import de.bottlecaps.markup.blitz.ResultHandler;
 
 public class BlitzTest extends TestBase {
 
@@ -33,6 +34,21 @@ public class BlitzTest extends TestBase {
   @Test
   public void testEmptyCharset() {
     generate("S: [], 'a'.");
+  }
+
+  @Test
+  public void testResultHandler() {
+    Parser parser = generate("S: A, B, C. @A: 'a'. B: 'b'. @C: 'c'.");
+    RecordingResultHandler handler = new RecordingResultHandler();
+    parser.parse("abc", handler);
+    assertEquals("start:S|attribute:A=a|attribute:C=c|start:B|text:b|end:B|end:S|",
+        handler.toString());
+
+    parser = generate("S: 'a'.");
+    handler = new RecordingResultHandler();
+    parser.parse("b", handler);
+    assertTrue(handler.toString().startsWith("start:ixml|attribute:xmlns:ixml="
+        + Parser.IXML_NAMESPACE + "|attribute:ixml:state=failed|text:Failed to parse input:"));
   }
 
   @Test
@@ -1009,11 +1025,102 @@ public class BlitzTest extends TestBase {
 
   @Test
   public void testD02() {
-    Parser parser = generate("S: A*. @A : 'a'.");
-    String result = parser.parse("aa");
+    Parser parser = generate("S: 'a', A*. @A : 'a'.");
+    String result = parser.parse("aaa");
     assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
         + "ixml:error-code=\"D02\">[D02] Two or more attributes with the same name would"
         + " be serialized on the same element: A.</ixml>", result);
+    parser = generate("S: A*. @A : 'a'.");
+    result = parser.parse("aa");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D02\">[D02] Two or more attributes with the same name would"
+        + " be serialized on the same element: A.</ixml>", result);
+    parser = generate("S: A. A: B. B: @C+. C: ~[].");
+    result = parser.parse("abc");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D02\">[D02] Two or more attributes with the same name would"
+        + " be serialized on the same element: C.</ixml>", result);
+    parser = generate("S: @A. A: B. B: @C+. C: ~[].");
+    result = parser.parse("abc");
+    assertEquals("<S A=\"abc\"/>", result);
+    parser = generate("S: A. A: B. B: @C+. C: ~[].");
+    result = parser.parse("abc");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D02\">[D02] Two or more attributes with the same name would"
+        + " be serialized on the same element: C.</ixml>", result);
+  }
+
+  @Test
+  public void testD03() {
+    Parser parser = generate("\u00B5: .");
+    String result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D03\">[D03] The name of any element or attribute is not a v"
+        + "alid XML name: \u00B5.</ixml>", result);
+    parser = generate("S: \u00B5. @\u00B5: .");
+    result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D03\">[D03] The name of any element or attribute is not a v"
+        + "alid XML name: \u00B5.</ixml>", result);
+    parser = generate("S: \u00B5. -\u00B5: .");
+    result = parser.parse("");
+    assertEquals("<S/>", result);
+    parser = generate("S: \u00B5. \u00B5>A: .");
+    result = parser.parse("");
+    assertEquals("<S><A/></S>", result);
+    parser = generate("S: \u00B5. @\u00B5>A: .");
+    result = parser.parse("");
+    assertEquals("<S A=\"\"/>", result);
+  }
+
+  @Test
+  public void testD04() {
+    Parser parser = generate("S: ~[].");
+    String result = parser.parse("\u0007");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D04\">[D04] Attempt to serialize as XML any characters that"
+        + " are not permitted in XML: #7.</ixml>", result);
+    parser = generate("S: +#7.");
+    result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D04\">[D04] Attempt to serialize as XML any characters that"
+        + " are not permitted in XML: #7.</ixml>", result);
+    parser = generate("S: A. @A: +#7.");
+    result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D04\">[D04] Attempt to serialize as XML any characters that"
+        + " are not permitted in XML: #7.</ixml>", result);
+    parser = generate("S: -~[].");
+    result = parser.parse("\u0007");
+    assertEquals("<S/>", result);
+  }
+
+  @Test
+  public void testD06BeforeD04() {
+    Parser parser = generate("-S: A, B. A: +#7. B: .");
+    String result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D06\">[D06] The parse tree does not contain exactly one top"
+        + "-level element.</ixml>", result);
+  }
+
+  @Test
+  public void testD07() {
+    Parser parser = generate("S: xmlns. @xmlns : .");
+    String result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D07\">[D07] An attribute named \"xmlns\" appears on an elem"
+        + "ent.</ixml>", result);
+    parser = generate("S: @xmlns. xmlns : .");
+    result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D07\">[D07] An attribute named \"xmlns\" appears on an elem"
+        + "ent.</ixml>", result);
+    parser = generate("S: A. @A>xmlns : .");
+    result = parser.parse("");
+    assertEquals("<ixml xmlns:ixml=\"http://invisiblexml.org/NS\" ixml:state=\"failed\" "
+        + "ixml:error-code=\"D07\">[D07] An attribute named \"xmlns\" appears on an elem"
+        + "ent.</ixml>", result);
   }
 
   @Test
@@ -1041,4 +1148,37 @@ public class BlitzTest extends TestBase {
 //        "",
 //        result);
 //  }
+
+  private static class RecordingResultHandler implements ResultHandler {
+    private final StringBuilder events = new StringBuilder();
+
+    @Override
+    public void startElement(String name) {
+      events.append("start:").append(name).append('|');
+    }
+
+    @Override
+    public void endElement(String name) {
+      events.append("end:").append(name).append('|');
+    }
+
+    @Override
+    public void attribute(String name, int[] codepoints, int length) {
+      events.append("attribute:")
+            .append(name)
+            .append('=')
+            .append(new String(codepoints, 0, length))
+            .append('|');
+    }
+
+    @Override
+    public void text(int[] codepoints, int length) {
+      events.append("text:").append(new String(codepoints, 0, length)).append('|');
+    }
+
+    @Override
+    public String toString() {
+      return events.toString();
+    }
+  }
 }
