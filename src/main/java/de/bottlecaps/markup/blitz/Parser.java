@@ -828,7 +828,6 @@ public class Parser
               new Attribute("ixml:state", state));
         }
         startSymbol.validate();
-        return emit.apply(currentOptions);
       }
       catch (BlitzIxmlException e) {
         if (currentOptions.contains(Option.FAIL_ON_ERROR))
