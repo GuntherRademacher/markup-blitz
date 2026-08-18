@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,7 +20,13 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 public class TestCatalog {
-  public static final String namespace = "https://github.com/invisibleXML/ixml/test-catalog";
+  private static final Set<String> namespaces = Set.of(
+      "https://github.com/invisibleXML/ixml/test-catalog",
+      "https://github.com/cmsmcq/ixml-tests");
+
+  public static boolean isCatalogNamespace(String namespaceURI) {
+    return namespaceURI != null && namespaces.contains(namespaceURI);
+  }
 
   private static final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
   private static final DocumentBuilder docBuilder;
@@ -61,7 +68,7 @@ public class TestCatalog {
         Assertions.assertEquals(Node.ELEMENT_NODE, node.getNodeType());
         Element element = (Element) elements.item(i);
         String localName = node.getLocalName();
-        if (namespace.equals(node.getNamespaceURI())
+        if (isCatalogNamespace(node.getNamespaceURI())
          && ("test-case".equals(localName) || "grammar-test".equals(localName)))
           testCases.add(new TestCase(element, file.getParentFile()));
     }

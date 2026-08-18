@@ -95,6 +95,7 @@ public class IxmlCommunityTest extends TestBase {
     grammar_misc_insertion("tests/grammar-misc/insertion-tests.xml"),
     grammar_misc_prolog("tests/grammar-misc/prolog-tests.xml"),
     grammar_misc("tests/grammar-misc/test-catalog.xml"),
+    insertion("tests/jwl/insertion/insertion-test-catalog.xml"),
     ixml("tests/ixml/test-catalog.xml"),
     misc_001_020("tests/misc/misc-001-020-catalog.xml"),
     misc_021_040("tests/misc/misc-021-040-catalog.xml"),
@@ -108,6 +109,7 @@ public class IxmlCommunityTest extends TestBase {
     performance_oberon("tests/performance/oberon/test-catalog.xml"),
     performance_spec_grammar("tests/performance/ixml-spec-grammar/test-catalog.xml"),
     performance_xpath("tests/performance/xpath/test-catalog.xml"),
+    prolog("tests/jwl/prolog/prolog-test-catalog.xml"),
     syntax_catalog_as_grammar("tests/syntax/catalog-as-grammar-tests.xml"),
     syntax_catalog_as_instance_tests_ixml("tests/syntax/catalog-as-instance-tests-ixml.xml"),
     syntax_catalog_as_instance_tests_xml("tests/syntax/catalog-as-instance-tests-xml.xml"),
@@ -207,6 +209,12 @@ public class IxmlCommunityTest extends TestBase {
   }
 
   @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.insertion)
+  public void insertion(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.ixml)
   public void ixml(String name, TestCase testCase) {
     test(testCase);
@@ -285,6 +293,12 @@ public class IxmlCommunityTest extends TestBase {
   }
 
   @ParameterizedTest(name = "{0}")
+  @CatalogSource(catalog = Catalog.prolog)
+  public void prolog(String name, TestCase testCase) {
+    test(testCase);
+  }
+
+  @ParameterizedTest(name = "{0}")
   @CatalogSource(catalog = Catalog.syntax_catalog_as_grammar)
   public void syntax_catalog_as_grammar(String name, TestCase testCase) {
     test(testCase);
@@ -350,7 +364,7 @@ public class IxmlCommunityTest extends TestBase {
           int event = reader.next();
           if (event == XMLStreamConstants.START_ELEMENT) {
             QName rootElementName = reader.getName();
-            return TestCatalog.namespace.equals(rootElementName.getNamespaceURI())
+            return TestCatalog.isCatalogNamespace(rootElementName.getNamespaceURI())
                 && "test-catalog".equals(rootElementName.getLocalPart());
           }
         }

@@ -64,7 +64,7 @@ public class TestCase extends TestBase{
           for (int i = 0; i < childNodes.getLength(); ++i) {
             Node childNode = childNodes.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE
-             && TestCatalog.namespace.equals(childNode.getNamespaceURI())) {
+             && TestCatalog.isCatalogNamespace(childNode.getNamespaceURI())) {
               String grammar = null;
               switch (childNode.getLocalName()) {
               case "vxml-grammar":
@@ -78,12 +78,12 @@ public class TestCase extends TestBase{
                 // fall through
               case "ixml-grammar-ref":
                 Node href = childNode.getAttributes().getNamedItemNS(null, "href");
-                assertNotNull(href, "no href attribute in test-string-ref of test case " + name);
+                assertNotNull(href, "no href attribute in ixml-grammar-ref of test case " + name);
                 grammar = fileContent(new File(folder, href.getTextContent()));
                 break;
               }
               if (grammar != null) {
-                assertNull(this.grammar, "more than one geammar for test case " + name);
+                assertNull(this.grammar, "more than one grammar for test case " + name);
                 this.grammar = grammar;
               }
             }
@@ -91,14 +91,14 @@ public class TestCase extends TestBase{
         }
       }
 
-      assertNotNull(grammar, "Missing geammar for test case " + name);
+      assertNotNull(grammar, "missing grammar for test case " + name);
 
       outputs = new ArrayList<>();
       NodeList testCaseChildNodes = element.getChildNodes();
       for (int i = 0, testCaseChildNodesLength = testCaseChildNodes.getLength(); i < testCaseChildNodesLength; ++i) {
         Node testCaseChildNode = testCaseChildNodes.item(i);
         if (testCaseChildNode.getNodeType() == Node.ELEMENT_NODE
-         && TestCatalog.namespace.equals(testCaseChildNode.getNamespaceURI())) {
+         && TestCatalog.isCatalogNamespace(testCaseChildNode.getNamespaceURI())) {
           String input = null;
           switch (testCaseChildNode.getLocalName()) {
           case "dependencies":
@@ -118,62 +118,14 @@ public class TestCase extends TestBase{
             }
             break;
           case "result":
-            NodeList resultChildNodes = testCaseChildNode.getChildNodes();
-            for (int j = 0, resultChildNodesLength = resultChildNodes.getLength(); j < resultChildNodesLength; ++j) {
-              Node resultChildNode = resultChildNodes.item(j);
-              if (resultChildNode.getNodeType() == Node.ELEMENT_NODE
-               && TestCatalog.namespace.equals(resultChildNode.getNamespaceURI())) {
-                Node errorCodeAttr;
-                switch (resultChildNode.getLocalName()) {
-                case "assert-xml":
-                  if (assertion == null)
-                    assertion = Assertion.assert_xml;
-                  else
-                    assertEquals(Assertion.assert_xml, assertion, "contradicting assertions in test case '" + name);
-                  assertion = Assertion.assert_xml;
-                  Element xmlContent = XmlGrammarInput.singletonChildElement((Element) resultChildNode);
-                  outputs.add(elementToString(xmlContent));
-                  break;
-                case "assert-xml-ref": {
-                    if (assertion == null)
-                      assertion = Assertion.assert_xml;
-                    else
-                      assertEquals(Assertion.assert_xml, assertion, "contradicting assertions");
-                    Node href = resultChildNode.getAttributes().getNamedItemNS(null, "href");
-                    assertNotNull(href, "no href attribute in assert-xml-ref of test case " + name);
-                    outputs.add(fileContent(new File(folder, href.getTextContent())));
-                  }
-                  break;
-                case "assert-not-a-sentence":
-                  assertNull(assertion, "more than one assertion in test case " + name);
-                  assertion = Assertion.assert_not_a_sentence;
-                  break;
-                case "assert-dynamic-error":
-                  assertNull(assertion, "more than one assertion in test case " + name);
-                  assertion = Assertion.assert_dynamic_error;
-                  errorCodeAttr = resultChildNode
-                      .getAttributes()
-                      .getNamedItemNS(null, "error-code");
-                  assertNotNull(errorCodeAttr, "missing error-code attribute in assert-dynamic-error in test case " + name);
-                  errorCodes = Arrays.stream(errorCodeAttr.getTextContent().split(" "))
-                      .collect(Collectors.toSet());
-                  break;
-                case "assert-not-a-grammar":
-                  assertNull(assertion, "more than one assertion in test case " + name);
-                  assertion = Assertion.assert_not_a_grammar;
-                  errorCodeAttr = resultChildNode
-                      .getAttributes()
-                      .getNamedItemNS(null, "error-code");
-                  assertNotNull(errorCodeAttr, "missing error-code attribute in assert-not-a-grammr in test case " + name);
-                  errorCodes = Arrays.stream(errorCodeAttr.getTextContent().split(" "))
-                      .filter(code -> ! "none".equals(code))
-                      .collect(Collectors.toSet());
-                  break;
-                }
-              }
-            }
-
-            ((Element) testCaseChildNode).getElementsByTagNameNS(TestCatalog.namespace, "");
+            parseAssertions(testCaseChildNode, folder);
+            break;
+          case "assert-xml":
+          case "assert-xml-ref":
+          case "assert-not-a-sentence":
+          case "assert-dynamic-error":
+          case "assert-not-a-grammar":
+            parseAssertion(testCaseChildNode, folder);
           }
           if (input != null) {
             assertNull(this.input, "more than one input for test case " + name);
@@ -198,6 +150,94 @@ public class TestCase extends TestBase{
     }
     catch (Exception e) {
       skippedBecause = "Failed to setup test case due to " + e.getClass().getSimpleName() + ": " + e.getMessage();
+    }
+  }
+
+  private void parseAssertions(Node resultNode, File folder) throws Exception {
+    NodeList resultChildNodes = resultNode.getChildNodes();
+    for (int j = 0, resultChildNodesLength = resultChildNodes.getLength(); j < resultChildNodesLength; ++j) {
+      Node resultChildNode = resultChildNodes.item(j);
+      if (resultChildNode.getNodeType() == Node.ELEMENT_NODE
+       && TestCatalog.isCatalogNamespace(resultChildNode.getNamespaceURI()))
+        parseAssertion(resultChildNode, folder);
+    }
+  }
+
+  private void parseAssertion(Node assertionNode, File folder) throws Exception {
+    Node errorCodeAttr;
+    switch (assertionNode.getLocalName()) {
+    case "assert-xml":
+      if (assertion == null)
+        assertion = Assertion.assert_xml;
+      else
+        assertEquals(Assertion.assert_xml, assertion, "contradicting assertions in test case " + name);
+      Element xmlContent = XmlGrammarInput.singletonChildElement((Element) assertionNode);
+      outputs.add(assertionXmlToString(xmlContent));
+      break;
+    case "assert-xml-ref": {
+        if (assertion == null)
+          assertion = Assertion.assert_xml;
+        else
+          assertEquals(Assertion.assert_xml, assertion, "contradicting assertions");
+        Node href = assertionNode.getAttributes().getNamedItemNS(null, "href");
+        assertNotNull(href, "no href attribute in assert-xml-ref of test case " + name);
+        outputs.add(fileContent(new File(folder, href.getTextContent())));
+      }
+      break;
+    case "assert-not-a-sentence":
+      assertNull(assertion, "more than one assertion in test case " + name);
+      assertion = Assertion.assert_not_a_sentence;
+      break;
+    case "assert-dynamic-error":
+      assertNull(assertion, "more than one assertion in test case " + name);
+      assertion = Assertion.assert_dynamic_error;
+      errorCodeAttr = assertionNode
+          .getAttributes()
+          .getNamedItemNS(null, "error-code");
+      assertNotNull(errorCodeAttr, "missing error-code attribute in assert-dynamic-error in test case " + name);
+      errorCodes = Arrays.stream(errorCodeAttr.getTextContent().split(" "))
+          .collect(Collectors.toSet());
+      break;
+    case "assert-not-a-grammar":
+      assertNull(assertion, "more than one assertion in test case " + name);
+      assertion = Assertion.assert_not_a_grammar;
+      errorCodeAttr = assertionNode
+          .getAttributes()
+          .getNamedItemNS(null, "error-code");
+      errorCodes = errorCodeAttr == null
+          ? Collections.emptySet()
+          : Arrays.stream(errorCodeAttr.getTextContent().split(" "))
+              .filter(code -> ! "none".equals(code))
+              .collect(Collectors.toSet());
+      break;
+    }
+  }
+
+  private String assertionXmlToString(Element xmlContent) {
+    if (! isGrammarTest)
+      return elementToString(xmlContent);
+    Element normalizedXmlContent = (Element) xmlContent.cloneNode(true);
+    stripInterElementWhitespace(normalizedXmlContent);
+    return elementToString(normalizedXmlContent);
+  }
+
+  private static void stripInterElementWhitespace(Node node) {
+    NodeList childNodes = node.getChildNodes();
+    boolean hasElementChild = false;
+    for (int i = 0; i < childNodes.getLength(); ++i) {
+      if (childNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
+        hasElementChild = true;
+        break;
+      }
+    }
+    for (int i = childNodes.getLength() - 1; i >= 0; --i) {
+      Node childNode = childNodes.item(i);
+      if (hasElementChild
+       && childNode.getNodeType() == Node.TEXT_NODE
+       && childNode.getTextContent().trim().isEmpty())
+        node.removeChild(childNode);
+      else if (childNode.getNodeType() == Node.ELEMENT_NODE)
+        stripInterElementWhitespace(childNode);
     }
   }
 
@@ -267,6 +307,8 @@ public class TestCase extends TestBase{
     Writer stringWriter = new StringWriter();
     lsOutput.setCharacterStream(stringWriter);
     LSSerializer lsSerializer = domImplementation.createLSSerializer();
+    if (lsSerializer.getDomConfig().canSetParameter("xml-declaration", false))
+      lsSerializer.getDomConfig().setParameter("xml-declaration", false);
     lsSerializer.write(element, lsOutput);
     return stringWriter.toString();
   }
