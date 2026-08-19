@@ -21,8 +21,7 @@ import org.xml.sax.InputSource;
 
 public class TestCatalog {
   private static final Set<String> namespaces = Set.of(
-      "https://github.com/invisibleXML/ixml/test-catalog",
-      "https://github.com/cmsmcq/ixml-tests");
+      "http://invisiblexml.org/NS/test-catalog");
 
   public static boolean isCatalogNamespace(String namespaceURI) {
     return namespaceURI != null && namespaces.contains(namespaceURI);
