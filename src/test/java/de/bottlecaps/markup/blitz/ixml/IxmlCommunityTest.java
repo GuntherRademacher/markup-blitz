@@ -72,6 +72,7 @@ public class IxmlCommunityTest extends TestBase {
   }
 
   private static Map<String, SkipReason> skipReasons = new HashMap<>();
+  private static Map<String, SkipReason> sampleGrammarSkipReasons = new HashMap<>();
   static {
     // long execution time
     skipReasons.put("Evens and odds/evens-odds/P-8192", SkipReason.SUCCESS_BUT_TOO_LONG);
@@ -85,6 +86,11 @@ public class IxmlCommunityTest extends TestBase {
     skipReasons.put("Evens and odds/evens-odds/N-16384", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/P-16385", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
     skipReasons.put("Evens and odds/evens-odds/N-16385", SkipReason.SUCCESS_BUT_TOO_MUCH_MEMORY);
+
+    // broken sample grammars
+    sampleGrammarSkipReasons.put("samples/Oberon/misc/tmp.Oberon.1.ixml", SkipReason.BROKEN);
+    sampleGrammarSkipReasons.put("samples/Oberon/misc/tmp.Oberon.1.xml", SkipReason.BROKEN);
+    sampleGrammarSkipReasons.put("samples/XPath/XPath.decorated.ixml", SkipReason.BROKEN);
   }
 
   public static enum Catalog {
@@ -356,6 +362,32 @@ public class IxmlCommunityTest extends TestBase {
         .map(testCase -> Arguments.of(testCase.getName(), testCase));
   }
 
+  @ParameterizedTest(name = "{0}")
+  @MethodSource
+  public void samples(String name, File grammarFile, boolean xmlGrammar) {
+    SkipReason skipReason = sampleGrammarSkipReasons.get(name);
+    assumeTrue(skipReason == null || allTests && skipReason != SkipReason.BROKEN,
+        () -> "Test was skipped: [" + skipReason + "] " + skipReason.detail);
+
+    String grammar = fileContent(grammarFile);
+    if (xmlGrammar)
+      generateFromXml(grammar);
+    else {
+      generate(grammar);
+      xmlGrammarRoundtrip(grammar);
+    }
+  }
+
+  public static Stream<Arguments> samples() throws IOException {
+    URI baseUri = ixmlFolder.toURI();
+    Path samplesFolder = new File(ixmlFolder, "samples").toPath();
+    return Files.walk(samplesFolder)
+        .filter(Files::isRegularFile)
+        .filter(path -> isIxmlGrammarFile(path) || isXmlGrammarFile(path.toFile()))
+        .sorted()
+        .map(path -> Arguments.of(baseUri.relativize(path.toUri()).toString(), path.toFile(), isXmlGrammarFile(path.toFile())));
+  }
+
   private static boolean isTestCatalog(File xmlFile) {
     try (FileInputStream fileInputStream = new FileInputStream(xmlFile)) {
       XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
@@ -366,6 +398,39 @@ public class IxmlCommunityTest extends TestBase {
             QName rootElementName = reader.getName();
             return TestCatalog.isCatalogNamespace(rootElementName.getNamespaceURI())
                 && "test-catalog".equals(rootElementName.getLocalPart());
+          }
+        }
+      }
+      catch (XMLStreamException e) {
+        return false;
+      }
+      finally {
+        reader.close();
+      }
+      return false;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  private static boolean isIxmlGrammarFile(Path path) {
+    return path.getFileName().toString().endsWith(".ixml");
+  }
+
+  private static boolean isXmlGrammarFile(File xmlFile) {
+    if (! xmlFile.getName().endsWith(".xml"))
+      return false;
+    try (FileInputStream fileInputStream = new FileInputStream(xmlFile)) {
+      XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(fileInputStream);
+      try {
+        while (reader.hasNext()) {
+          int event = reader.next();
+          if (event == XMLStreamConstants.START_ELEMENT) {
+            QName rootElementName = reader.getName();
+            String namespaceURI = rootElementName.getNamespaceURI();
+            return (namespaceURI == null || namespaceURI.isEmpty())
+                && "ixml".equals(rootElementName.getLocalPart());
           }
         }
       }
@@ -436,14 +501,9 @@ public class IxmlCommunityTest extends TestBase {
       return;
     }
 
-    String xmlForm = null;
-    if (!testCase.isXmlGrammar()) {
-      xmlForm = ixmlParser().parse(testCase.getGrammar());
-      assertEquals(
-          Ixml.parse(testCase.getGrammar()),
-          Ixml.parse(new XmlGrammarInput(xmlForm).toIxml()),
-          "XML grammar roundtrip failed");
-    }
+    String xmlForm = testCase.isXmlGrammar()
+        ? null
+        : xmlGrammarRoundtrip(testCase.getGrammar());
 
     if (testCase.isGrammarTest()) {
       assertNull(input, "Unexpected input for grammar test " + testCase.getName());
@@ -502,5 +562,14 @@ public class IxmlCommunityTest extends TestBase {
     if (ixmlParser == null)
       ixmlParser = generate(resourceContent(Blitz.IXML_GRAMMAR_RESOURCE));
     return ixmlParser;
+  }
+
+  private String xmlGrammarRoundtrip(String grammar) {
+    String xmlForm = ixmlParser().parse(grammar);
+    assertEquals(
+        Ixml.parse(grammar),
+        Ixml.parse(new XmlGrammarInput(xmlForm).toIxml()),
+        "XML grammar roundtrip failed");
+    return xmlForm;
   }
 }
