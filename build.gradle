@@ -133,6 +133,9 @@ tasks.register('htmlTestReport', TestReport) {
     testResults.from(test.binaryResultsDirectory)
     destinationDirectory = test.reports.html.outputLocation
     onlyIf { test.state.failure != null || project.hasProperty('HTML_REPORT') }
+    doLast {
+        logger.lifecycle("HTML test report: ${new File(destinationDirectory.get().asFile, 'index.html').toPath().toUri()}")
+    }
 }
 
 ext.isReleaseVersion = !version.endsWith("-SNAPSHOT")
