@@ -34,7 +34,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v6.3.0
 
     - name: Run the tests
-      run: ./gradlew test
+      run: ./gradlew -PHTML_REPORT test
       working-directory: markup-blitz
 
     - name: Upload test results
