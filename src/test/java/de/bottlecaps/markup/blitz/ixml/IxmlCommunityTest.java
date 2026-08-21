@@ -370,12 +370,11 @@ public class IxmlCommunityTest extends TestBase {
         () -> "Test was skipped: [" + skipReason + "] " + skipReason.detail);
 
     String grammar = fileContent(grammarFile);
+    xmlGrammarRoundtrip(grammar, xmlGrammar);
     if (xmlGrammar)
       generateFromXml(grammar);
-    else {
+    else
       generate(grammar);
-      xmlGrammarRoundtrip(grammar);
-    }
   }
 
   public static Stream<Arguments> samples() throws IOException {
@@ -501,17 +500,14 @@ public class IxmlCommunityTest extends TestBase {
       return;
     }
 
-    String xmlForm = testCase.isXmlGrammar()
-        ? null
-        : xmlGrammarRoundtrip(testCase.getGrammar());
+    String xmlForm = xmlGrammarRoundtrip(testCase.getGrammar(), testCase.isXmlGrammar());
 
     if (testCase.isGrammarTest()) {
       assertNull(input, "Unexpected input for grammar test " + testCase.getName());
       assertEquals(1, testCase.getOutputs().size(), "Expected a single reference output for grammar test");
-      String actual = xmlForm != null ? xmlForm : ixmlParser().parse(testCase.getGrammar());;
       String expected = testCase.getOutputs().get(0);
-      if (! (actual.equals(expected) || deepEqual(expected, actual)))
-        assertEquals(expected, actual, "Unexpected xml grammar output");
+      if (! (xmlForm.equals(expected) || deepEqual(expected, xmlForm)))
+        assertEquals(expected, xmlForm, "Unexpected xml grammar output");
     }
     else {
       assertNotNull(input, "Missing input");
@@ -564,10 +560,13 @@ public class IxmlCommunityTest extends TestBase {
     return ixmlParser;
   }
 
-  private String xmlGrammarRoundtrip(String grammar) {
-    String xmlForm = ixmlParser().parse(grammar);
+  private String xmlGrammarRoundtrip(String grammar, boolean xmlGrammar) {
+    String ixmlForm = xmlGrammar
+        ? new XmlGrammarInput(grammar).toIxml()
+        : grammar;
+    String xmlForm = ixmlParser().parse(ixmlForm);
     assertEquals(
-        Ixml.parse(grammar),
+        Ixml.parse(ixmlForm),
         Ixml.parse(new XmlGrammarInput(xmlForm).toIxml()),
         "XML grammar roundtrip failed");
     return xmlForm;
