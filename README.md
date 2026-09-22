@@ -174,6 +174,33 @@ public void parse(String input, ResultHandler resultHandler, Option... options)
 - `ResultHandler resultHandler`: the handler that receives the parse result
 - `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
 
+### de.bottlecaps.markup.blitz.Parser.parse
+
+Parse the given input, returning the resulting XML as a string, while periodically calling the given checkpoint so that a long-running or non-terminating parse (for example one caused by an infinitely ambiguous grammar) can be aborted. The checkpoint may throw a `RuntimeException` to abort the parse; that exception propagates out of `parse`.
+
+```java
+public String parse(String input, Runnable checkpoint, Option... options)
+```
+**Parameters**:
+- `String input`: the input string
+- `Runnable checkpoint`: called periodically during parsing; it may throw a `RuntimeException` to abort the parse
+- `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
+
+**Returns:** `String`: the resulting XML
+
+### de.bottlecaps.markup.blitz.Parser.parse
+
+Parse the given input, reporting the result to the given handler, while periodically calling the given checkpoint so that a long-running or non-terminating parse (for example one caused by an infinitely ambiguous grammar) can be aborted. The checkpoint may throw a `RuntimeException` to abort the parse; that exception propagates out of `parse`.
+
+```java
+public void parse(String input, ResultHandler resultHandler, Runnable checkpoint, Option... options)
+```
+**Parameters**:
+- `String input`: the input string
+- `ResultHandler resultHandler`: the handler that receives the parse result
+- `Runnable checkpoint`: called periodically during parsing; it may throw a `RuntimeException` to abort the parse
+- `Option options`: options for use at parsing time. If absent, any options passed at generation time will be in effect
+
 ### de.bottlecaps.markup.blitz.ResultHandler
 
 An implementation of `ResultHandler` receives the parse result as serialization-style callbacks, in document order. An element's attributes are reported by `attribute`, after the enclosing `startElement` and before any child content.
@@ -238,4 +265,4 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [fnInvisibleXml]: https://qt4cg.org/specifications/xpath-functions-40/Overview.html#func-invisible-xml
 [BXFiddle]: https://fiddle.basex.org/
 [markup-blitz]: https://github.com/GuntherRademacher/markup-blitz
-[maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz
+[maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz

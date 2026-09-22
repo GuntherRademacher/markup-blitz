@@ -34,7 +34,9 @@ public class Parser
   public static final String IXML_NAMESPACE = "http://invisiblexml.org/NS";
 
   private static final int STALL_THRESHOLD = 8;
-
+  /** Number of parsing steps between two checkpoint polls. */
+  private static final int CHECKPOINT_INTERVAL = 1 << 14;
+  
   private final Set<Option> defaultOptions;
   private final int[] asciiMap;
   private final CompressedMap bmpMap;
@@ -103,6 +105,35 @@ public class Parser
    */
   public void parse(String input, ResultHandler resultHandler, Option... options) {
     new ParsingContext(input).parse(resultHandler, options);
+  }
+
+  /**
+   * Parse the given input, returning the resulting XML as a string, while periodically calling the
+   * given checkpoint so that a long-running or non-terminating parse can be aborted.
+   *
+   * @param input the input string
+   * @param checkpoint called periodically during parsing; it may throw a {@link RuntimeException}
+   *        to abort the parse, which then propagates out of this method
+   * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
+   * @return the resulting XML
+   */
+  public String parse(String input, Runnable checkpoint, Option... options) {
+    return new ParsingContext(input, checkpoint).parse(options);
+  }
+
+  /**
+   * Parse the given input, reporting the result to the given handler, while periodically calling the
+   * given checkpoint so that a long-running or non-terminating parse can be aborted.
+   *
+   * @param input the input string
+   * @param resultHandler the handler that receives the parse result
+   * @param checkpoint called periodically during parsing; it may throw a {@link RuntimeException}
+   *        to abort the parse, which then propagates out of this method
+   * @param options options for use at parsing time. If absent, any options passed at generation time will be in effect
+   */
+  public void parse(String input, ResultHandler resultHandler, Runnable checkpoint,
+      Option... options) {
+    new ParsingContext(input, checkpoint).parse(resultHandler, options);
   }
 
   public void setTraceWriter(Writer w) {
@@ -747,9 +778,23 @@ public class Parser
     private int size = 0;
     private int maxId = 0;
     private boolean trace;
+    private final Runnable checkpoint;
+    private int checkpointCountdown;
 
     public ParsingContext(String input) {
+      this(input, null);
+    }
+
+    public ParsingContext(String input, Runnable checkpoint) {
       this.input = input;
+      if (checkpoint != null) {
+        this.checkpoint = checkpoint;
+        this.checkpointCountdown = CHECKPOINT_INTERVAL;
+      }
+      else {
+        this.checkpoint = () -> { };
+        this.checkpointCountdown = Integer.MAX_VALUE;
+      }
     }
 
     public String parse(Option... options) {
@@ -1034,6 +1079,10 @@ public class Parser
         int nonterminalId = -1;
         int limit = isUnambiguous ? Integer.MAX_VALUE : e0;
         for (;;) {
+          if (--checkpointCountdown == 0) {
+            checkpointCountdown = CHECKPOINT_INTERVAL;
+            checkpoint.run();
+          }
           if (trace) {
             writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" input=\"");
             if (nonterminalId >= 0) {
