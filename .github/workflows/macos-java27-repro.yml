@@ -1,0 +1,39 @@
+name: macOS Homebrew Java 27 (issue #71 repro)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 6'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Apple Silicon, matching the M4 hardware reported in issue #71.
+    runs-on: macos-15
+    continue-on-error: true
+
+    steps:
+    - name: Checkout repository with submodules
+      uses: actions/checkout@v7
+      with:
+        path: markup-blitz
+        submodules: recursive
+
+    - name: Install Java via Homebrew's plain 'openjdk' formula
+      run: |
+        brew install openjdk
+        sudo ln -sfn "$(brew --prefix openjdk)/libexec/openjdk.jdk" \
+          "/Library/Java/JavaVirtualMachines/openjdk.jdk"
+
+    - name: Show environment (as reported in issue #71)
+      run: |
+        which java
+        java --version
+        ./gradlew --version
+      working-directory: markup-blitz
+
+    - name: Build (exact command from issue #71)
+      run: ./gradlew clean jar
+      working-directory: markup-blitz
