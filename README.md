@@ -84,12 +84,16 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
                      grammar.
   <INPUT>            the input (literal, file name or URL).
 
-  <OPTION>:
-    --indent         generate resulting xml with indentation.
-    --trace          print parser trace.
-    --fail-on-error  throw an exception instead of returning an error document.
-    --timing         print timing information.
-    --verbose        print intermediate results.
+  <OPTION>:          options:
+    --indent            generate resulting xml with indentation.
+    --trace             print parser trace.
+    --fail-on-error     throw an exception instead of returning an error document.
+    --timing            print timing information.
+    --verbose           print intermediate results.
+    --reject-conflicts  fail if the grammar is not conflict-free LALR(1), which
+                        guarantees that it is unambiguous for every input. Note that
+                        internal grammar transformations may remove some ambiguities
+                        beforehand.
 
   A literal grammar or input must be preceded by an exclamation point (!).
   All inputs must be presented in UTF-8 encoding, and output is written in
@@ -228,7 +232,12 @@ public enum Option {
   /**    Parser option: Print parser trace.                        */ TRACE,
   /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
   /** Generator option: Print timing information.                  */ TIMING,
-  /** Generator option: Print information on intermediate results. */ VERBOSE;
+  /** Generator option: Print information on intermediate results. */ VERBOSE,
+  /** Generator option: Fail if there are LALR(1) conflicts, so
+                        that success guarantees an unambiguous
+                        grammar. Note that internal grammar
+                        transformations may remove some
+                        ambiguities beforehand.                    */ REJECT_CONFLICTS;
 }
 ```
 

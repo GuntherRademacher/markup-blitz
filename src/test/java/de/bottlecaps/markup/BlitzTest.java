@@ -752,6 +752,42 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testRejectConflictsAcceptsConflictFreeGrammar() {
+    generate("S: A. A: ['0'-'9']+.", Option.REJECT_CONFLICTS);
+    generate("S: digit+; letter+; empty. empty: . digit: ['0'-'9']. letter: ['a'-'z'].", Option.REJECT_CONFLICTS);
+  }
+
+  @Test
+  public void testRejectConflictsRejectsAmbiguousGrammar() {
+    BlitzException exception = assertThrows(BlitzException.class, () ->
+      generate("S: A; B. A: ['0'-'9']+. B: ['0'-'9']+.", Option.REJECT_CONFLICTS));
+    assertTrue(exception.getMessage().contains("not conflict-free LALR(1)"));
+    assertTrue(exception.getMessage().contains("reduce-reduce conflict"));
+  }
+
+  @Test
+  public void testRejectConflictsAfterInternalTransformations() {
+    // Internal grammar transformations may remove some ambiguities. Here, A and B are
+    // deleted, and the transformation merges them, so that no conflict remains. This
+    // is the same as when parsing, where this input is not reported as ambiguous.
+    generate("S: A; B. -A: 'a'. -B: 'a'.", Option.REJECT_CONFLICTS);
+    // without deletion, the alternatives are not merged
+    assertThrows(BlitzException.class, () ->
+      generate("S: A; B. A: 'a'. B: 'a'.", Option.REJECT_CONFLICTS));
+  }
+
+  @Test
+  public void testRejectConflictsRejectsNullableAlternatives() {
+    assertThrows(BlitzException.class, () ->
+      generate("S: digit*; letter*. digit: ['0'-'9']. letter: ['a'-'z'].", Option.REJECT_CONFLICTS));
+  }
+
+  @Test
+  public void testConflictsAreAcceptedByDefault() {
+    generate("S: A; B. A: ['0'-'9']+. B: ['0'-'9']+.");
+  }
+
+  @Test
   public void testFailOnError() {
     Parser parser = generate("S: 'a'.", Option.FAIL_ON_ERROR);
     BlitzParseException exception = assertThrows(BlitzParseException.class, () -> {

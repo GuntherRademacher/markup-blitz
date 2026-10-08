@@ -38,7 +38,12 @@ public class Blitz {
     /**    Parser option: Print parser trace.                        */ TRACE,
     /**    Parser option: Fail on parsing error.                     */ FAIL_ON_ERROR,
     /** Generator option: Print timing information.                  */ TIMING,
-    /** Generator option: Print information on intermediate results. */ VERBOSE;
+    /** Generator option: Print information on intermediate results. */ VERBOSE,
+    /** Generator option: Fail if there are LALR(1) conflicts, so
+                          that success guarantees an unambiguous
+                          grammar. Note that internal grammar
+                          transformations may remove some
+                          ambiguities beforehand.                    */ REJECT_CONFLICTS;
   }
 
   /**
@@ -121,6 +126,8 @@ public class Blitz {
         options.add(Option.TIMING);
       else if (args[i].equals("--verbose"))
         options.add(Option.VERBOSE);
+      else if (args[i].equals("--reject-conflicts"))
+        options.add(Option.REJECT_CONFLICTS);
       else if (args[i].startsWith("-"))
         usage(1);
       else
@@ -171,12 +178,16 @@ public class Blitz {
     System.err.println("                     grammar.");
     System.err.println("  <INPUT>            the input (literal, file name or URL).");
     System.err.println();
-    System.err.println("  <OPTION>:");
-    System.err.println("    --indent         generate resulting xml with indentation.");
-    System.err.println("    --trace          print parser trace.");
-    System.err.println("    --fail-on-error  throw an exception instead of returning an error document.");
-    System.err.println("    --timing         print timing information.");
-    System.err.println("    --verbose        print intermediate results.");
+    System.err.println("  <OPTION>:          options:");
+    System.err.println("    --indent            generate resulting xml with indentation.");
+    System.err.println("    --trace             print parser trace.");
+    System.err.println("    --fail-on-error     throw an exception instead of returning an error document.");
+    System.err.println("    --timing            print timing information.");
+    System.err.println("    --verbose           print intermediate results.");
+    System.err.println("    --reject-conflicts  fail if the grammar is not conflict-free LALR(1), which");
+    System.err.println("                        guarantees that it is unambiguous for every input. Note that");
+    System.err.println("                        internal grammar transformations may remove some ambiguities");
+    System.err.println("                        beforehand.");
     System.err.println();
     System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
     System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");

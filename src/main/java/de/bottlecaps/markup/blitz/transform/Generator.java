@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.bottlecaps.markup.Blitz.Option;
+import de.bottlecaps.markup.BlitzException;
 import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.codepoints.Codepoint;
 import de.bottlecaps.markup.blitz.codepoints.Range;
@@ -124,6 +125,9 @@ public class Generator {
 
     ci.forks = Arrays.copyOf(ci.forks, 2 * ci.forkId.size());
 
+    if (options.contains(Option.REJECT_CONFLICTS))
+      ci.rejectConflicts();
+
     ci.parserData();
 
     // report status
@@ -195,6 +199,26 @@ public class Generator {
         expectedTokens,
         ci.grammar.isMismatch(),
         ci.grammar.getVersion().isAtLeast(Grammar.Version.V1_1));
+  }
+
+  /**
+   * Fail if any state has conflicts. A conflict-free LALR(1) construction proves that
+   * the grammar is unambiguous, while the converse does not hold: conflicts do not
+   * necessarily indicate ambiguity.
+   */
+  private void rejectConflicts() {
+    List<State> conflictStates = states.keySet().stream()
+        .filter(state -> ! state.conflicts.isEmpty())
+        .collect(Collectors.toList());
+    if (conflictStates.isEmpty())
+      return;
+    StringBuilder sb = new StringBuilder();
+    sb.append("The grammar is not conflict-free LALR(1), so it cannot be guaranteed to be unambiguous.");
+    sb.append("\nConflicts do not necessarily indicate ambiguity.");
+    sb.append(" Conflict report (in terms of the grammar after transforming it to BNF):");
+    for (State state : conflictStates)
+      sb.append("\n\nstate ").append(state.id).append(":\n").append(state);
+    throw new BlitzException(sb.toString());
   }
 
   private int[] asciiMap(CompressedMap bmpMap) {
