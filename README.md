@@ -75,8 +75,11 @@ Markup Blitz can be run from command line to process some input according to an 
 
 ```txt
 Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
+       java -jar markup-blitz.jar --to-rex [<OPTION>...] <GRAMMAR>
 
   Compile an Invisible XML grammar, and parse input with the resulting parser.
+  With --to-rex, transform the grammar to REx notation instead, and write it to
+  standard output.
 
   <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation or XML.
                      XML grammars are detected automatically. When omitted, the grammar
@@ -94,6 +97,11 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
                         guarantees that it is unambiguous for every input. Note that
                         internal grammar transformations may remove some ambiguities
                         beforehand.
+    --to-rex            write the grammar in REx notation, and do not parse. Requires a
+                        grammar, and no input. When REx is run with option -a ixml,
+                        successful construction of an LALR(k) or LR(k) parser proves
+                        that the grammar is unambiguous. Note that internal grammar
+                        transformations may remove some ambiguities beforehand.
 
   A literal grammar or input must be preceded by an exclamation point (!).
   All inputs must be presented in UTF-8 encoding, and output is written in
@@ -102,6 +110,24 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 ```
 
 When the grammar is omitted, Markup Blitz uses its built-in [grammar of ixml][ixml-grammar] to parse the input as an ixml grammar, producing its XML representation.
+
+# Proving that a grammar is unambiguous
+
+Ambiguity of context-free grammars is undecidable in general, but there are sufficient conditions that can be checked. If a parser can be constructed without conflicts, the grammar is unambiguous for every input. The converse does not hold: a conflict does not necessarily indicate ambiguity, as the grammar may just not be of the class that the construction handles. Also note that the check applies to the grammar after Markup Blitz has transformed it internally, which may remove some ambiguities beforehand.
+
+- **LALR(1):** Markup Blitz constructs an LALR(1) parser, and resolves conflicts at runtime using GLR. With the option `--reject-conflicts`, it fails instead, reporting the states that have conflicts. Success guarantees that the grammar is unambiguous. Conflicts are reported in terms of the BNF grammar that results from transforming the ixml grammar.
+
+- **LALR(k) and LR(k):** With `--to-rex`, the grammar is transformed to [REx][REx] notation, and written to standard output. REx can construct LALR(k) and LR(k) parsers for k > 1. If the construction succeeds for some k, the grammar is unambiguous:
+
+  ```txt
+  java -jar markup-blitz.jar --to-rex grammar.ixml > grammar.ebnf
+  rex grammar.ebnf -lalr 3 -a ixml
+  rex grammar.ebnf -lr 3 -a ixml
+  ```
+
+  No target language is needed, as the commands serve only to check the grammar. REx exits with a non-zero exit code if the construction fails. Here as well, conflicts are reported in terms of the BNF grammar.
+
+  The option `-a ixml` is essential: Alternatives in the REx grammar are followed by an `<?ixml ...?>` annotation that holds the alternative in ixml notation, and without this option REx would ignore them. For alternatives that are just a character or token, without deletion, the annotation is for information only, as there is nothing they could be folded with, and it is abbreviated by `...` when it is long. It would then fold alternatives that look the same in the REx grammar, but differ in what they yield, e.g. with respect to insertions, deletions, marks or aliases, although they produce different XML. The grammar contains a comment as a reminder.
 
 # Running Markup Blitz online
 
@@ -152,6 +178,34 @@ public static Parser generateFromXml(String xml, Option... blitzOptions) throws 
 **Returns:** `Parser`: the generated parser
 
 **Throws:** `BlitzException`: if any error is detected while generating the parser
+
+### de.bottlecaps.markup.Blitz.toREx
+Transform an Invisible XML grammar in ixml notation to [REx][REx] notation. Alternatives are annotated with their ixml notation, which REx takes into account only when run with option `-a ixml`. With this option, successful construction of an LALR(k) or LR(k) parser proves that the grammar is unambiguous. Note that internal grammar transformations may remove some ambiguities beforehand.
+
+```java
+public static String toREx(String grammar, Option... blitzOptions) throws BlitzException
+```
+**Parameters:**
+- `String grammar`: the Invisible XML grammar in ixml notation
+- `Option... blitzOptions`: options for use at generation time
+
+**Returns:** `String`: the grammar in REx notation
+
+**Throws:** `BlitzException`: if any error is detected while transforming the grammar
+
+### de.bottlecaps.markup.Blitz.toRExFromXml
+Transform an Invisible XML grammar in XML, passed as a String, to [REx][REx] notation.
+
+```java
+public static String toRExFromXml(String xml, Option... blitzOptions) throws BlitzException
+```
+**Parameters:**
+- `String xml`: the Invisible XML grammar in XML
+- `Option... blitzOptions`: options for use at generation time
+
+**Returns:** `String`: the grammar in REx notation
+
+**Throws:** `BlitzException`: if any error is detected while transforming the grammar
 
 ### de.bottlecaps.markup.blitz.Parser.parse
 
@@ -273,5 +327,4 @@ The work in this project was supported by the [BaseX][BaseX] organization.
 [parser-generator]: https://en.wikipedia.org/wiki/Compiler-compiler
 [fnInvisibleXml]: https://qt4cg.org/specifications/xpath-functions-40/Overview.html#func-invisible-xml
 [BXFiddle]: https://fiddle.basex.org/
-[markup-blitz]: https://github.com/GuntherRademacher/markup-blitz
-[maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz
+[maven-central]: https://central.sonatype.com/artifact/de.bottlecaps/markup-blitz

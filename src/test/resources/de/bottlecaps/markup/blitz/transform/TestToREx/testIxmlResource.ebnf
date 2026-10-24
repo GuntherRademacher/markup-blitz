@@ -1,0 +1,2387 @@
+// Alternatives are followed by an <?ixml ...?> annotation that holds them in ixml notation, so that
+// they are not folded when they differ in what they yield. For alternatives that are just a
+// character or token, without deletion, the annotation is for information only, and is abbreviated
+// by ... when it is long.
+// In order to have REx take the annotations into account, use REx option: -a ixml
+
+_start        ::= ixml _end
+ixml          ::= s _ixml_option _ixml_list s     <?ixml -s, -_ixml_option, -_ixml_list, -s?>
+_ixml_option  ::=                                 <?ixml ?>
+                | prolog RS                       <?ixml ^prolog, -RS?>
+_ixml_list    ::= rule                            <?ixml ^rule?>
+                | _ixml_list RS rule              <?ixml -_ixml_list, -RS, ^rule?>
+s             ::=                                 <?ixml ?>
+                | s _s_choice                     <?ixml -s, -_s_choice?>
+_s_choice     ::= _s_deleted_chars                <?ixml -[#9-#a; #d]?>
+                | _s_deleted_chars_1              <?ixml -[' '; #a0; #1680; #2000-#200a; #202f; #205f; #3000]?>
+                | comment                         <?ixml ^comment?>
+prolog        ::= version                         <?ixml ^version?>
+RS            ::= _s_choice                       <?ixml -_s_choice?>
+                | RS _s_choice                    <?ixml -RS, -_s_choice?>
+rule          ::= naming _rule_deleted_chars s alts '.'
+                                                  <?ixml -naming, -['=:'], -s, -alts, -['.']?>
+comment       ::= '{' _comment_list_option '}'    <?ixml -['{'], -_comment_list_option, -['}']?>
+_comment_choice
+              ::= _comment_preserved_chars        <?ixml [#0-#8; #b-#c; #e-#1f; #7f-#9f]?>
+                | _s_preserved_chars              <?ixml [#9-#a; #d]?>
+                | _s_preserved_chars_1            <?ixml [' '; #a0; #1680; #2000-#200a; #202f; ...?>
+                | _dchar_preserved_chars          <?ixml ['!'; '$'-'&'; '/'; '<'; '\'; '`'; #a1...?>
+                | '"'                             <?ixml ['"']?>
+                | '#'                             <?ixml ['#']?>
+                | "'"                             <?ixml ["'"]?>
+                | '('                             <?ixml ['(']?>
+                | ')'                             <?ixml [')']?>
+                | '*'                             <?ixml ['*']?>
+                | '+'                             <?ixml ['+']?>
+                | ','                             <?ixml [',']?>
+                | '-'                             <?ixml ['-']?>
+                | '.'                             <?ixml ['.']?>
+                | _hex_preserved_chars            <?ixml ['0'-'9']?>
+                | _rule_preserved_chars           <?ixml [':'; '=']?>
+                | _alts_preserved_chars           <?ixml [';'; '|']?>
+                | '>'                             <?ixml ['>']?>
+                | '?'                             <?ixml ['?']?>
+                | '@'                             <?ixml ['@']?>
+                | _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | '['                             <?ixml ['[']?>
+                | ']'                             <?ixml [']']?>
+                | '^'                             <?ixml ['^']?>
+                | _namestart_preserved_chars      <?ixml ['_'; #aa; #b5; #ba; #c0-#d6; #d8-#f6;...?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+                | '~'                             <?ixml ['~']?>
+                | _namefollower_preserved_chars   <?ixml [#b7; #300-#36f; #483-#487; #591-#5bd;...?>
+                | comment                         <?ixml ^comment?>
+_comment_list_option
+              ::=                                 <?ixml ?>
+                | _comment_list_option _comment_choice
+                                                  <?ixml -_comment_list_option, -_comment_choice?>
+version       ::= 'i' 'x' 'm' 'l' RS 'v' 'e' 'r' 's' 'i' 'o' 'n' RS string s '.'
+                                                  <?ixml -['i'], -['x'], -['m'], -['l'], -RS, -['v'], -['e'], -['r'], -['s'], -['i'], -['o'], -['n'], -RS, @string, -s, -['.']?>
+naming        ::= _naming_option name s _naming_option_1
+                                                  <?ixml -_naming_option, @name, -s, -_naming_option_1?>
+_naming_option
+              ::=                                 <?ixml ?>
+                | mark s                          <?ixml @mark, -s?>
+_naming_option_1
+              ::=                                 <?ixml ?>
+                | '>' s alias s                   <?ixml -['>'], -s, @alias, -s?>
+alts          ::= alt                             <?ixml ^alt?>
+                | alts _alts_deleted_chars s alt  <?ixml -alts, -[';|'], -s, ^alt?>
+string        ::= '"' _string_list '"'            <?ixml -['"'], -_string_list, -['"']?>
+                | "'" _string_list_1 "'"          <?ixml -["'"], -_string_list_1, -["'"]?>
+_string_list  ::= dchar                           <?ixml ^dchar?>
+                | _string_list dchar              <?ixml -_string_list, ^dchar?>
+_string_list_1
+              ::= schar                           <?ixml ^schar?>
+                | _string_list_1 schar            <?ixml -_string_list_1, ^schar?>
+mark          ::= '-'                             <?ixml ['-']?>
+                | '@'                             <?ixml ['@']?>
+                | '^'                             <?ixml ['^']?>
+name          ::= namestart _name_list_option     <?ixml -namestart, -_name_list_option?>
+namestart     ::= _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | _namestart_preserved_chars      <?ixml ['_'; #aa; #b5; #ba; #c0-#d6; #d8-#f6;...?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+namefollower  ::= '-'                             <?ixml ['-']?>
+                | '.'                             <?ixml ['.']?>
+                | _hex_preserved_chars            <?ixml ['0'-'9']?>
+                | _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | _namestart_preserved_chars      <?ixml ['_'; #aa; #b5; #ba; #c0-#d6; #d8-#f6;...?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+                | _namefollower_preserved_chars   <?ixml [#b7; #300-#36f; #483-#487; #591-#5bd;...?>
+_name_list_option
+              ::=                                 <?ixml ?>
+                | _name_list_option namefollower  <?ixml -_name_list_option, -namefollower?>
+alias         ::= name                            <?ixml @name?>
+alt           ::=                                 <?ixml ?>
+                | _alt_list                       <?ixml -_alt_list?>
+_alt_list     ::= term                            <?ixml -term?>
+                | _alt_list ',' s term            <?ixml -_alt_list, -[','], -s, -term?>
+dchar         ::= _s_preserved_chars_1            <?ixml [' '; #a0; #1680; #2000-#200a; #202f; ...?>
+                | _dchar_preserved_chars          <?ixml ['!'; '$'-'&'; '/'; '<'; '\'; '`'; #a1...?>
+                | '#'                             <?ixml ['#']?>
+                | "'"                             <?ixml ["'"]?>
+                | '('                             <?ixml ['(']?>
+                | ')'                             <?ixml [')']?>
+                | '*'                             <?ixml ['*']?>
+                | '+'                             <?ixml ['+']?>
+                | ','                             <?ixml [',']?>
+                | '-'                             <?ixml ['-']?>
+                | '.'                             <?ixml ['.']?>
+                | _hex_preserved_chars            <?ixml ['0'-'9']?>
+                | _rule_preserved_chars           <?ixml [':'; '=']?>
+                | _alts_preserved_chars           <?ixml [';'; '|']?>
+                | '>'                             <?ixml ['>']?>
+                | '?'                             <?ixml ['?']?>
+                | '@'                             <?ixml ['@']?>
+                | _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | '['                             <?ixml ['[']?>
+                | ']'                             <?ixml [']']?>
+                | '^'                             <?ixml ['^']?>
+                | _namestart_preserved_chars      <?ixml ['_'; #aa; #b5; #ba; #c0-#d6; #d8-#f6;...?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+                | '{'                             <?ixml ['{']?>
+                | '}'                             <?ixml ['}']?>
+                | '~'                             <?ixml ['~']?>
+                | _namefollower_preserved_chars   <?ixml [#b7; #300-#36f; #483-#487; #591-#5bd;...?>
+                | '"' '"'                         <?ixml ['"'], -['"']?>
+schar         ::= _s_preserved_chars_1            <?ixml [' '; #a0; #1680; #2000-#200a; #202f; ...?>
+                | _dchar_preserved_chars          <?ixml ['!'; '$'-'&'; '/'; '<'; '\'; '`'; #a1...?>
+                | '"'                             <?ixml ['"']?>
+                | '#'                             <?ixml ['#']?>
+                | '('                             <?ixml ['(']?>
+                | ')'                             <?ixml [')']?>
+                | '*'                             <?ixml ['*']?>
+                | '+'                             <?ixml ['+']?>
+                | ','                             <?ixml [',']?>
+                | '-'                             <?ixml ['-']?>
+                | '.'                             <?ixml ['.']?>
+                | _hex_preserved_chars            <?ixml ['0'-'9']?>
+                | _rule_preserved_chars           <?ixml [':'; '=']?>
+                | _alts_preserved_chars           <?ixml [';'; '|']?>
+                | '>'                             <?ixml ['>']?>
+                | '?'                             <?ixml ['?']?>
+                | '@'                             <?ixml ['@']?>
+                | _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | '['                             <?ixml ['[']?>
+                | ']'                             <?ixml [']']?>
+                | '^'                             <?ixml ['^']?>
+                | _namestart_preserved_chars      <?ixml ['_'; #aa; #b5; #ba; #c0-#d6; #d8-#f6;...?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+                | '{'                             <?ixml ['{']?>
+                | '}'                             <?ixml ['}']?>
+                | '~'                             <?ixml ['~']?>
+                | _namefollower_preserved_chars   <?ixml [#b7; #300-#36f; #483-#487; #591-#5bd;...?>
+                | "'" "'"                         <?ixml ["'"], -["'"]?>
+term          ::= factor                          <?ixml -factor?>
+                | option                          <?ixml ^option?>
+                | repeat0                         <?ixml ^repeat0?>
+                | repeat1                         <?ixml ^repeat1?>
+factor        ::= terminal                        <?ixml -terminal?>
+                | nonterminal                     <?ixml ^nonterminal?>
+                | insertion                       <?ixml ^insertion?>
+                | '(' s alts ')' s                <?ixml -['('], -s, ^alts, -[')'], -s?>
+option        ::= factor '?' s                    <?ixml -factor, -['?'], -s?>
+repeat0       ::= factor _repeat0_choice          <?ixml -factor, -_repeat0_choice?>
+_repeat0_choice
+              ::= '*' s                           <?ixml -['*'], -s?>
+                | '*' '*' s sep                   <?ixml -['*'], -['*'], -s, ^sep?>
+repeat1       ::= factor _repeat1_choice          <?ixml -factor, -_repeat1_choice?>
+_repeat1_choice
+              ::= '+' s                           <?ixml -['+'], -s?>
+                | '+' '+' s sep                   <?ixml -['+'], -['+'], -s, ^sep?>
+terminal      ::= literal                         <?ixml ^literal?>
+                | charset                         <?ixml -charset?>
+nonterminal   ::= naming                          <?ixml -naming?>
+insertion     ::= '+' s _insertion_choice s       <?ixml -['+'], -s, -_insertion_choice, -s?>
+_insertion_choice
+              ::= string                          <?ixml @string?>
+                | '#' hex                         <?ixml -['#'], @hex?>
+sep           ::= factor                          <?ixml -factor?>
+literal       ::= quoted                          <?ixml -quoted?>
+                | encoded                         <?ixml -encoded?>
+charset       ::= inclusion                       <?ixml ^inclusion?>
+                | exclusion                       <?ixml ^exclusion?>
+hex           ::= _hex_choice                     <?ixml -_hex_choice?>
+                | hex _hex_choice                 <?ixml -hex, -_hex_choice?>
+_hex_choice   ::= _hex_preserved_chars            <?ixml ['0'-'9']?>
+                | _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+quoted        ::= _quoted_option string s         <?ixml -_quoted_option, @string, -s?>
+_quoted_option
+              ::=                                 <?ixml ?>
+                | tmark s                         <?ixml @tmark, -s?>
+encoded       ::= _quoted_option '#' hex s        <?ixml -_quoted_option, -['#'], @hex, -s?>
+inclusion     ::= _quoted_option set              <?ixml -_quoted_option, -set?>
+exclusion     ::= _quoted_option '~' s set        <?ixml -_quoted_option, -['~'], -s, -set?>
+tmark         ::= '-'                             <?ixml ['-']?>
+                | '^'                             <?ixml ['^']?>
+set           ::= '[' s _set_list_option ']' s    <?ixml -['['], -s, -_set_list_option, -[']'], -s?>
+_set_list     ::= member s                        <?ixml ^member, -s?>
+                | _set_list _alts_deleted_chars s member s
+                                                  <?ixml -_set_list, -[';|'], -s, ^member, -s?>
+_set_list_option
+              ::=                                 <?ixml ?>
+                | _set_list                       <?ixml -_set_list?>
+member        ::= string                          <?ixml @string?>
+                | '#' hex                         <?ixml -['#'], @hex?>
+                | range                           <?ixml -range?>
+                | class                           <?ixml -class?>
+range         ::= from s '-' s to                 <?ixml @from, -s, -['-'], -s, @to?>
+class         ::= code                            <?ixml @code?>
+from          ::= character                       <?ixml -character?>
+to            ::= character                       <?ixml -character?>
+code          ::= capital _code_option            <?ixml -capital, -_code_option?>
+capital       ::= _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+letter        ::= _hex_preserved_chars_1          <?ixml ['A'-'F']?>
+                | _capital_preserved_chars        <?ixml ['G'-'Z']?>
+                | _hex_preserved_chars_2          <?ixml ['a'-'d'; 'f']?>
+                | 'e'                             <?ixml ['e']?>
+                | _letter_preserved_chars         <?ixml ['g'-'h'; 'j'-'k'; 'p'-'q'; 't'-'u'; '...?>
+                | 'i'                             <?ixml ['i']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'm'                             <?ixml ['m']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'o'                             <?ixml ['o']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 'v'                             <?ixml ['v']?>
+                | 'x'                             <?ixml ['x']?>
+_code_option  ::=                                 <?ixml ?>
+                | letter                          <?ixml -letter?>
+character     ::= '"' dchar '"'                   <?ixml -['"'], ^dchar, -['"']?>
+                | "'" schar "'"                   <?ixml -["'"], ^schar, -["'"]?>
+                | '#' hex                         <?ixml ['#'], @hex?>
+
+<?TOKENS?>
+
+_end          ::= $
+_s_deleted_chars
+              ::= [#x9-#xa]
+                | #xd
+_s_deleted_chars_1
+              ::= ' '
+                | #xa0
+                | #x1680
+                | [#x2000-#x200a]
+                | #x202f
+                | #x205f
+                | #x3000
+_rule_deleted_chars
+              ::= ':'
+                | '='
+_comment_preserved_chars
+              ::= [#x0-#x8]
+                | [#xb-#xc]
+                | [#xe-#x1f]
+                | [#x7f-#x9f]
+_s_preserved_chars
+              ::= [#x9-#xa]
+                | #xd
+_s_preserved_chars_1
+              ::= ' '
+                | #xa0
+                | #x1680
+                | [#x2000-#x200a]
+                | #x202f
+                | #x205f
+                | #x3000
+_dchar_preserved_chars
+              ::= '!'
+                | [$-&]
+                | '/'
+                | '<'
+                | '\'
+                | '`'
+                | [#xa1-#xa9]
+                | [#xab-#xb4]
+                | #xb6
+                | [#xb8-#xb9]
+                | [#xbb-#xbf]
+                | #xd7
+                | #xf7
+                | [#x2c2-#x2c5]
+                | [#x2d2-#x2df]
+                | [#x2e5-#x2eb]
+                | #x2ed
+                | [#x2ef-#x2ff]
+                | #x375
+                | [#x378-#x379]
+                | #x37e
+                | [#x380-#x385]
+                | #x387
+                | #x38b
+                | #x38d
+                | #x3a2
+                | #x3f6
+                | #x482
+                | [#x488-#x489]
+                | #x530
+                | [#x557-#x558]
+                | [#x55a-#x55f]
+                | [#x589-#x590]
+                | #x5be
+                | #x5c0
+                | #x5c3
+                | #x5c6
+                | [#x5c8-#x5cf]
+                | [#x5eb-#x5ee]
+                | [#x5f3-#x60f]
+                | [#x61b-#x61f]
+                | [#x66a-#x66d]
+                | #x6d4
+                | [#x6dd-#x6de]
+                | #x6e9
+                | [#x6fd-#x6fe]
+                | [#x700-#x70f]
+                | [#x74b-#x74c]
+                | [#x7b2-#x7bf]
+                | [#x7f6-#x7f9]
+                | [#x7fb-#x7fc]
+                | [#x7fe-#x7ff]
+                | [#x82e-#x83f]
+                | [#x85c-#x85f]
+                | [#x86b-#x86f]
+                | #x888
+                | [#x890-#x896]
+                | #x8e2
+                | #x903
+                | #x93b
+                | [#x93e-#x940]
+                | [#x949-#x94c]
+                | [#x94e-#x94f]
+                | [#x964-#x965]
+                | #x970
+                | [#x982-#x984]
+                | [#x98d-#x98e]
+                | [#x991-#x992]
+                | #x9a9
+                | #x9b1
+                | [#x9b3-#x9b5]
+                | [#x9ba-#x9bb]
+                | [#x9be-#x9c0]
+                | [#x9c5-#x9cc]
+                | [#x9cf-#x9db]
+                | #x9de
+                | [#x9e4-#x9e5]
+                | [#x9f2-#x9fb]
+                | #x9fd
+                | [#x9ff-#xa00]
+                | [#xa03-#xa04]
+                | [#xa0b-#xa0e]
+                | [#xa11-#xa12]
+                | #xa29
+                | #xa31
+                | #xa34
+                | #xa37
+                | [#xa3a-#xa3b]
+                | [#xa3d-#xa40]
+                | [#xa43-#xa46]
+                | [#xa49-#xa4a]
+                | [#xa4e-#xa50]
+                | [#xa52-#xa58]
+                | #xa5d
+                | [#xa5f-#xa65]
+                | [#xa76-#xa80]
+                | [#xa83-#xa84]
+                | #xa8e
+                | #xa92
+                | #xaa9
+                | #xab1
+                | #xab4
+                | [#xaba-#xabb]
+                | [#xabe-#xac0]
+                | #xac6
+                | [#xac9-#xacc]
+                | [#xace-#xacf]
+                | [#xad1-#xadf]
+                | [#xae4-#xae5]
+                | [#xaf0-#xaf8]
+                | #xb00
+                | [#xb02-#xb04]
+                | [#xb0d-#xb0e]
+                | [#xb11-#xb12]
+                | #xb29
+                | #xb31
+                | #xb34
+                | [#xb3a-#xb3b]
+                | #xb3e
+                | #xb40
+                | [#xb45-#xb4c]
+                | [#xb4e-#xb54]
+                | [#xb57-#xb5b]
+                | #xb5e
+                | [#xb64-#xb65]
+                | #xb70
+                | [#xb72-#xb81]
+                | #xb84
+                | [#xb8b-#xb8d]
+                | #xb91
+                | [#xb96-#xb98]
+                | #xb9b
+                | #xb9d
+                | [#xba0-#xba2]
+                | [#xba5-#xba7]
+                | [#xbab-#xbad]
+                | [#xbba-#xbbf]
+                | [#xbc1-#xbcc]
+                | [#xbce-#xbcf]
+                | [#xbd1-#xbe5]
+                | [#xbf0-#xbff]
+                | [#xc01-#xc03]
+                | #xc0d
+                | #xc11
+                | #xc29
+                | [#xc3a-#xc3b]
+                | [#xc41-#xc45]
+                | #xc49
+                | [#xc4e-#xc54]
+                | #xc57
+                | #xc5b
+                | [#xc5e-#xc5f]
+                | [#xc64-#xc65]
+                | [#xc70-#xc7f]
+                | [#xc82-#xc84]
+                | #xc8d
+                | #xc91
+                | #xca9
+                | #xcb4
+                | [#xcba-#xcbb]
+                | #xcbe
+                | [#xcc0-#xcc5]
+                | [#xcc7-#xccb]
+                | [#xcce-#xcdb]
+                | #xcdf
+                | [#xce4-#xce5]
+                | #xcf0
+                | [#xcf3-#xcff]
+                | [#xd02-#xd03]
+                | #xd0d
+                | #xd11
+                | [#xd3e-#xd40]
+                | [#xd45-#xd4c]
+                | [#xd4f-#xd53]
+                | [#xd57-#xd5e]
+                | [#xd64-#xd65]
+                | [#xd70-#xd79]
+                | #xd80
+                | [#xd82-#xd84]
+                | [#xd97-#xd99]
+                | #xdb2
+                | #xdbc
+                | [#xdbe-#xdbf]
+                | [#xdc7-#xdc9]
+                | [#xdcb-#xdd1]
+                | #xdd5
+                | [#xdd7-#xde5]
+                | [#xdf0-#xe00]
+                | [#xe3b-#xe3f]
+                | #xe4f
+                | [#xe5a-#xe80]
+                | #xe83
+                | #xe85
+                | #xe8b
+                | #xea4
+                | #xea6
+                | [#xebe-#xebf]
+                | #xec5
+                | #xec7
+                | #xecf
+                | [#xeda-#xedb]
+                | [#xee0-#xeff]
+                | [#xf01-#xf17]
+                | [#xf1a-#xf1f]
+                | [#xf2a-#xf34]
+                | #xf36
+                | #xf38
+                | [#xf3a-#xf3f]
+                | #xf48
+                | [#xf6d-#xf70]
+                | #xf7f
+                | #xf85
+                | #xf98
+                | [#xfbd-#xfc5]
+                | [#xfc7-#xfff]
+                | [#x102b-#x102c]
+                | #x1031
+                | #x1038
+                | [#x103b-#x103c]
+                | [#x104a-#x104f]
+                | [#x1056-#x1057]
+                | [#x1062-#x1064]
+                | [#x1067-#x106d]
+                | [#x1083-#x1084]
+                | [#x1087-#x108c]
+                | #x108f
+                | [#x109a-#x109c]
+                | [#x109e-#x109f]
+                | #x10c6
+                | [#x10c8-#x10cc]
+                | [#x10ce-#x10cf]
+                | #x10fb
+                | #x1249
+                | [#x124e-#x124f]
+                | #x1257
+                | #x1259
+                | [#x125e-#x125f]
+                | #x1289
+                | [#x128e-#x128f]
+                | #x12b1
+                | [#x12b6-#x12b7]
+                | #x12bf
+                | #x12c1
+                | [#x12c6-#x12c7]
+                | #x12d7
+                | #x1311
+                | [#x1316-#x1317]
+                | [#x135b-#x135c]
+                | [#x1360-#x137f]
+                | [#x1390-#x139f]
+                | [#x13f6-#x13f7]
+                | [#x13fe-#x1400]
+                | [#x166d-#x166e]
+                | [#x169b-#x169f]
+                | [#x16eb-#x16f0]
+                | [#x16f9-#x16ff]
+                | [#x1715-#x171e]
+                | [#x1734-#x173f]
+                | [#x1754-#x175f]
+                | #x176d
+                | #x1771
+                | [#x1774-#x177f]
+                | #x17b6
+                | [#x17be-#x17c5]
+                | [#x17c7-#x17c8]
+                | [#x17d4-#x17d6]
+                | [#x17d8-#x17db]
+                | [#x17de-#x17df]
+                | [#x17ea-#x180a]
+                | #x180e
+                | [#x181a-#x181f]
+                | [#x1879-#x187f]
+                | [#x18ab-#x18af]
+                | [#x18f6-#x18ff]
+                | #x191f
+                | [#x1923-#x1926]
+                | [#x1929-#x1931]
+                | [#x1933-#x1938]
+                | [#x193c-#x1945]
+                | [#x196e-#x196f]
+                | [#x1975-#x197f]
+                | [#x19ac-#x19af]
+                | [#x19ca-#x19cf]
+                | [#x19da-#x19ff]
+                | [#x1a19-#x1a1a]
+                | [#x1a1c-#x1a1f]
+                | #x1a55
+                | #x1a57
+                | #x1a5f
+                | #x1a61
+                | [#x1a63-#x1a64]
+                | [#x1a6d-#x1a72]
+                | [#x1a7d-#x1a7e]
+                | [#x1a8a-#x1a8f]
+                | [#x1a9a-#x1aa6]
+                | [#x1aa8-#x1aaf]
+                | #x1abe
+                | [#x1ade-#x1adf]
+                | [#x1aec-#x1aff]
+                | #x1b04
+                | #x1b35
+                | #x1b3b
+                | [#x1b3d-#x1b41]
+                | [#x1b43-#x1b44]
+                | [#x1b4d-#x1b4f]
+                | [#x1b5a-#x1b6a]
+                | [#x1b74-#x1b7f]
+                | #x1b82
+                | #x1ba1
+                | [#x1ba6-#x1ba7]
+                | #x1baa
+                | #x1be7
+                | [#x1bea-#x1bec]
+                | #x1bee
+                | [#x1bf2-#x1bff]
+                | [#x1c24-#x1c2b]
+                | [#x1c34-#x1c35]
+                | [#x1c38-#x1c3f]
+                | [#x1c4a-#x1c4c]
+                | [#x1c7e-#x1c7f]
+                | [#x1c8b-#x1c8f]
+                | [#x1cbb-#x1cbc]
+                | [#x1cc0-#x1ccf]
+                | #x1cd3
+                | #x1ce1
+                | #x1cf7
+                | [#x1cfb-#x1cff]
+                | [#x1f16-#x1f17]
+                | [#x1f1e-#x1f1f]
+                | [#x1f46-#x1f47]
+                | [#x1f4e-#x1f4f]
+                | #x1f58
+                | #x1f5a
+                | #x1f5c
+                | #x1f5e
+                | [#x1f7e-#x1f7f]
+                | #x1fb5
+                | #x1fbd
+                | [#x1fbf-#x1fc1]
+                | #x1fc5
+                | [#x1fcd-#x1fcf]
+                | [#x1fd4-#x1fd5]
+                | [#x1fdc-#x1fdf]
+                | [#x1fed-#x1ff1]
+                | #x1ff5
+                | [#x1ffd-#x1fff]
+                | [#x200b-#x202e]
+                | [#x2030-#x203e]
+                | [#x2041-#x205e]
+                | [#x2060-#x2070]
+                | [#x2072-#x207e]
+                | [#x2080-#x208f]
+                | [#x209d-#x20cf]
+                | [#x20dd-#x20e0]
+                | [#x20e2-#x20e4]
+                | [#x20f1-#x2101]
+                | [#x2103-#x2106]
+                | [#x2108-#x2109]
+                | #x2114
+                | [#x2116-#x2118]
+                | [#x211e-#x2123]
+                | #x2125
+                | #x2127
+                | #x2129
+                | #x212e
+                | [#x213a-#x213b]
+                | [#x2140-#x2144]
+                | [#x214a-#x214d]
+                | [#x214f-#x2182]
+                | [#x2185-#x2bff]
+                | [#x2ce5-#x2cea]
+                | [#x2cf4-#x2cff]
+                | #x2d26
+                | [#x2d28-#x2d2c]
+                | [#x2d2e-#x2d2f]
+                | [#x2d68-#x2d6e]
+                | [#x2d70-#x2d7e]
+                | [#x2d97-#x2d9f]
+                | #x2da7
+                | #x2daf
+                | #x2db7
+                | #x2dbf
+                | #x2dc7
+                | #x2dcf
+                | #x2dd7
+                | #x2ddf
+                | [#x2e00-#x2e2e]
+                | [#x2e30-#x2fff]
+                | [#x3001-#x3004]
+                | [#x3007-#x3029]
+                | [#x302e-#x3030]
+                | [#x3036-#x303a]
+                | [#x303d-#x3040]
+                | [#x3097-#x3098]
+                | [#x309b-#x309c]
+                | #x30a0
+                | #x30fb
+                | [#x3100-#x3104]
+                | #x3130
+                | [#x318f-#x319f]
+                | [#x31c0-#x31ef]
+                | [#x3200-#x33ff]
+                | [#x4dc0-#x4dff]
+                | [#xa48d-#xa4cf]
+                | [#xa4fe-#xa4ff]
+                | [#xa60d-#xa60f]
+                | [#xa62c-#xa63f]
+                | [#xa670-#xa673]
+                | #xa67e
+                | [#xa6e6-#xa6ef]
+                | [#xa6f2-#xa716]
+                | [#xa720-#xa721]
+                | [#xa789-#xa78a]
+                | [#xa7dd-#xa7f0]
+                | [#xa823-#xa824]
+                | [#xa827-#xa82b]
+                | [#xa82d-#xa83f]
+                | [#xa874-#xa881]
+                | [#xa8b4-#xa8c3]
+                | [#xa8c6-#xa8cf]
+                | [#xa8da-#xa8df]
+                | [#xa8f8-#xa8fa]
+                | #xa8fc
+                | [#xa92e-#xa92f]
+                | [#xa952-#xa95f]
+                | [#xa97d-#xa97f]
+                | #xa983
+                | [#xa9b4-#xa9b5]
+                | [#xa9ba-#xa9bb]
+                | [#xa9be-#xa9ce]
+                | [#xa9da-#xa9df]
+                | #xa9ff
+                | [#xaa2f-#xaa30]
+                | [#xaa33-#xaa34]
+                | [#xaa37-#xaa3f]
+                | [#xaa4d-#xaa4f]
+                | [#xaa5a-#xaa5f]
+                | [#xaa77-#xaa79]
+                | #xaa7b
+                | #xaa7d
+                | [#xaac3-#xaada]
+                | [#xaade-#xaadf]
+                | #xaaeb
+                | [#xaaee-#xaaf1]
+                | #xaaf5
+                | [#xaaf7-#xab00]
+                | [#xab07-#xab08]
+                | [#xab0f-#xab10]
+                | [#xab17-#xab1f]
+                | #xab27
+                | #xab2f
+                | #xab5b
+                | [#xab6a-#xab6f]
+                | [#xabe3-#xabe4]
+                | [#xabe6-#xabe7]
+                | [#xabe9-#xabec]
+                | [#xabee-#xabef]
+                | [#xabfa-#xabff]
+                | [#xd7a4-#xd7af]
+                | [#xd7c7-#xd7ca]
+                | [#xd7fc-#xd7ff]
+                | [#xe000-#xf8ff]
+                | [#xfa6e-#xfa6f]
+                | [#xfada-#xfaff]
+                | [#xfb07-#xfb12]
+                | [#xfb18-#xfb1c]
+                | #xfb29
+                | #xfb37
+                | #xfb3d
+                | #xfb3f
+                | #xfb42
+                | #xfb45
+                | [#xfbb2-#xfbd2]
+                | [#xfd3e-#xfd4f]
+                | [#xfd90-#xfd91]
+                | [#xfdc8-#xfdcf]
+                | [#xfdfc-#xfdff]
+                | [#xfe10-#xfe1f]
+                | [#xfe30-#xfe6f]
+                | #xfe75
+                | [#xfefd-#xff0f]
+                | [#xff1a-#xff20]
+                | [#xff3b-#xff40]
+                | [#xff5b-#xff65]
+                | [#xffbf-#xffc1]
+                | [#xffc8-#xffc9]
+                | [#xffd0-#xffd1]
+                | [#xffd8-#xffd9]
+                | [#xffdd-#xfffd]
+                | #x1000c
+                | #x10027
+                | #x1003b
+                | #x1003e
+                | [#x1004e-#x1004f]
+                | [#x1005e-#x1007f]
+                | [#x100fb-#x101fc]
+                | [#x101fe-#x1027f]
+                | [#x1029d-#x1029f]
+                | [#x102d1-#x102df]
+                | [#x102e1-#x102ff]
+                | [#x10320-#x1032c]
+                | #x10341
+                | [#x1034a-#x1034f]
+                | [#x1037b-#x1037f]
+                | [#x1039e-#x1039f]
+                | [#x103c4-#x103c7]
+                | [#x103d0-#x103ff]
+                | [#x1049e-#x1049f]
+                | [#x104aa-#x104af]
+                | [#x104d4-#x104d7]
+                | [#x104fc-#x104ff]
+                | [#x10528-#x1052f]
+                | [#x10564-#x1056f]
+                | #x1057b
+                | #x1058b
+                | #x10593
+                | #x10596
+                | #x105a2
+                | #x105b2
+                | #x105ba
+                | [#x105bd-#x105bf]
+                | [#x105f4-#x105ff]
+                | [#x10737-#x1073f]
+                | [#x10756-#x1075f]
+                | [#x10768-#x1077f]
+                | #x10786
+                | #x107b1
+                | [#x107bb-#x107ff]
+                | [#x10806-#x10807]
+                | #x10809
+                | #x10836
+                | [#x10839-#x1083b]
+                | [#x1083d-#x1083e]
+                | [#x10856-#x1085f]
+                | [#x10877-#x1087f]
+                | [#x1089f-#x108df]
+                | #x108f3
+                | [#x108f6-#x108ff]
+                | [#x10916-#x1091f]
+                | [#x1093a-#x1093f]
+                | [#x1095a-#x1097f]
+                | [#x109b8-#x109bd]
+                | [#x109c0-#x109ff]
+                | #x10a04
+                | [#x10a07-#x10a0b]
+                | #x10a14
+                | #x10a18
+                | [#x10a36-#x10a37]
+                | [#x10a3b-#x10a3e]
+                | [#x10a40-#x10a5f]
+                | [#x10a7d-#x10a7f]
+                | [#x10a9d-#x10abf]
+                | #x10ac8
+                | [#x10ae7-#x10aff]
+                | [#x10b36-#x10b3f]
+                | [#x10b56-#x10b5f]
+                | [#x10b73-#x10b7f]
+                | [#x10b92-#x10bff]
+                | [#x10c49-#x10c7f]
+                | [#x10cb3-#x10cbf]
+                | [#x10cf3-#x10cff]
+                | [#x10d28-#x10d2f]
+                | [#x10d3a-#x10d3f]
+                | [#x10d66-#x10d68]
+                | #x10d6e
+                | [#x10d86-#x10e7f]
+                | #x10eaa
+                | [#x10ead-#x10eaf]
+                | [#x10eb2-#x10ec1]
+                | [#x10ec8-#x10ef9]
+                | [#x10f1d-#x10f26]
+                | [#x10f28-#x10f2f]
+                | [#x10f51-#x10f6f]
+                | [#x10f86-#x10faf]
+                | [#x10fc5-#x10fdf]
+                | [#x10ff7-#x11000]
+                | #x11002
+                | [#x11047-#x11065]
+                | [#x11076-#x1107e]
+                | #x11082
+                | [#x110b0-#x110b2]
+                | [#x110b7-#x110b8]
+                | [#x110bb-#x110c1]
+                | [#x110c3-#x110cf]
+                | [#x110e9-#x110ef]
+                | [#x110fa-#x110ff]
+                | #x1112c
+                | #x11135
+                | [#x11140-#x11143]
+                | [#x11145-#x11146]
+                | [#x11148-#x1114f]
+                | [#x11174-#x11175]
+                | [#x11177-#x1117f]
+                | #x11182
+                | [#x111b3-#x111b5]
+                | [#x111bf-#x111c0]
+                | [#x111c5-#x111c8]
+                | [#x111cd-#x111ce]
+                | #x111db
+                | [#x111dd-#x111ff]
+                | #x11212
+                | [#x1122c-#x1122e]
+                | [#x11232-#x11233]
+                | #x11235
+                | [#x11238-#x1123d]
+                | [#x11242-#x1127f]
+                | #x11287
+                | #x11289
+                | #x1128e
+                | #x1129e
+                | [#x112a9-#x112af]
+                | [#x112e0-#x112e2]
+                | [#x112eb-#x112ef]
+                | [#x112fa-#x112ff]
+                | [#x11302-#x11304]
+                | [#x1130d-#x1130e]
+                | [#x11311-#x11312]
+                | #x11329
+                | #x11331
+                | #x11334
+                | #x1133a
+                | [#x1133e-#x1133f]
+                | [#x11341-#x1134f]
+                | [#x11351-#x1135c]
+                | [#x11362-#x11365]
+                | [#x1136d-#x1136f]
+                | [#x11375-#x1137f]
+                | #x1138a
+                | [#x1138c-#x1138d]
+                | #x1138f
+                | #x113b6
+                | [#x113b8-#x113ba]
+                | [#x113c1-#x113cd]
+                | #x113cf
+                | [#x113d4-#x113e0]
+                | [#x113e3-#x113ff]
+                | [#x11435-#x11437]
+                | [#x11440-#x11441]
+                | #x11445
+                | [#x1144b-#x1144f]
+                | [#x1145a-#x1145d]
+                | [#x11462-#x1147f]
+                | [#x114b0-#x114b2]
+                | #x114b9
+                | [#x114bb-#x114be]
+                | #x114c1
+                | #x114c6
+                | [#x114c8-#x114cf]
+                | [#x114da-#x1157f]
+                | [#x115af-#x115b1]
+                | [#x115b6-#x115bb]
+                | #x115be
+                | [#x115c1-#x115d7]
+                | [#x115de-#x115ff]
+                | [#x11630-#x11632]
+                | [#x1163b-#x1163c]
+                | #x1163e
+                | [#x11641-#x11643]
+                | [#x11645-#x1164f]
+                | [#x1165a-#x1167f]
+                | #x116ac
+                | [#x116ae-#x116af]
+                | #x116b6
+                | [#x116b9-#x116bf]
+                | [#x116ca-#x116cf]
+                | [#x116e4-#x116ff]
+                | [#x1171b-#x1171c]
+                | #x1171e
+                | [#x11720-#x11721]
+                | #x11726
+                | [#x1172c-#x1172f]
+                | [#x1173a-#x1173f]
+                | [#x11747-#x117ff]
+                | [#x1182c-#x1182e]
+                | #x11838
+                | [#x1183b-#x1189f]
+                | [#x118ea-#x118fe]
+                | [#x11907-#x11908]
+                | [#x1190a-#x1190b]
+                | #x11914
+                | #x11917
+                | [#x11930-#x1193a]
+                | #x1193d
+                | #x11940
+                | #x11942
+                | [#x11944-#x1194f]
+                | [#x1195a-#x1199f]
+                | [#x119a8-#x119a9]
+                | [#x119d1-#x119d3]
+                | [#x119d8-#x119d9]
+                | [#x119dc-#x119df]
+                | #x119e2
+                | [#x119e4-#x119ff]
+                | #x11a39
+                | [#x11a3f-#x11a46]
+                | [#x11a48-#x11a4f]
+                | [#x11a57-#x11a58]
+                | #x11a97
+                | [#x11a9a-#x11a9c]
+                | [#x11a9e-#x11aaf]
+                | [#x11af9-#x11b5f]
+                | #x11b61
+                | #x11b65
+                | [#x11b67-#x11bbf]
+                | [#x11be1-#x11bef]
+                | [#x11bfa-#x11bff]
+                | #x11c09
+                | #x11c2f
+                | #x11c37
+                | #x11c3e
+                | [#x11c41-#x11c4f]
+                | [#x11c5a-#x11c71]
+                | [#x11c90-#x11c91]
+                | [#x11ca8-#x11ca9]
+                | #x11cb1
+                | #x11cb4
+                | [#x11cb7-#x11cff]
+                | #x11d07
+                | #x11d0a
+                | [#x11d37-#x11d39]
+                | #x11d3b
+                | #x11d3e
+                | [#x11d48-#x11d4f]
+                | [#x11d5a-#x11d5f]
+                | #x11d66
+                | #x11d69
+                | [#x11d8a-#x11d8f]
+                | [#x11d92-#x11d94]
+                | #x11d96
+                | [#x11d99-#x11d9f]
+                | [#x11daa-#x11daf]
+                | [#x11ddc-#x11ddf]
+                | [#x11dea-#x11edf]
+                | [#x11ef5-#x11eff]
+                | #x11f03
+                | #x11f11
+                | [#x11f34-#x11f35]
+                | [#x11f3b-#x11f3f]
+                | #x11f41
+                | [#x11f43-#x11f4f]
+                | [#x11f5b-#x11faf]
+                | [#x11fb1-#x11fff]
+                | [#x1239a-#x1247f]
+                | [#x12544-#x12f8f]
+                | [#x12ff1-#x12fff]
+                | [#x13430-#x1343f]
+                | [#x13456-#x1345f]
+                | [#x143fb-#x143ff]
+                | [#x14647-#x160ff]
+                | [#x1612a-#x1612c]
+                | [#x1613a-#x167ff]
+                | [#x16a39-#x16a3f]
+                | #x16a5f
+                | [#x16a6a-#x16a6f]
+                | #x16abf
+                | [#x16aca-#x16acf]
+                | [#x16aee-#x16aef]
+                | [#x16af5-#x16aff]
+                | [#x16b37-#x16b3f]
+                | [#x16b44-#x16b4f]
+                | [#x16b5a-#x16b62]
+                | [#x16b78-#x16b7c]
+                | [#x16b90-#x16d3f]
+                | [#x16d6d-#x16d6f]
+                | [#x16d7a-#x16e3f]
+                | [#x16e80-#x16e9f]
+                | [#x16eb9-#x16eba]
+                | [#x16ed4-#x16eff]
+                | [#x16f4b-#x16f4e]
+                | [#x16f51-#x16f8e]
+                | [#x16fa0-#x16fdf]
+                | #x16fe2
+                | [#x16fe5-#x16ff1]
+                | [#x16ff4-#x16fff]
+                | [#x18cd6-#x18cfe]
+                | [#x18d1f-#x18d7f]
+                | [#x18df3-#x1afef]
+                | #x1aff4
+                | #x1affc
+                | #x1afff
+                | [#x1b123-#x1b131]
+                | [#x1b133-#x1b14f]
+                | [#x1b153-#x1b154]
+                | [#x1b156-#x1b163]
+                | [#x1b168-#x1b16f]
+                | [#x1b2fc-#x1bbff]
+                | [#x1bc6b-#x1bc6f]
+                | [#x1bc7d-#x1bc7f]
+                | [#x1bc89-#x1bc8f]
+                | [#x1bc9a-#x1bc9c]
+                | [#x1bc9f-#x1ccef]
+                | [#x1ccfa-#x1ceff]
+                | [#x1cf2e-#x1cf2f]
+                | [#x1cf47-#x1d166]
+                | [#x1d16a-#x1d17a]
+                | [#x1d183-#x1d184]
+                | [#x1d18c-#x1d1a9]
+                | [#x1d1ae-#x1d241]
+                | [#x1d245-#x1d3ff]
+                | #x1d455
+                | #x1d49d
+                | [#x1d4a0-#x1d4a1]
+                | [#x1d4a3-#x1d4a4]
+                | [#x1d4a7-#x1d4a8]
+                | #x1d4ad
+                | #x1d4ba
+                | #x1d4bc
+                | #x1d4c4
+                | #x1d506
+                | [#x1d50b-#x1d50c]
+                | #x1d515
+                | #x1d51d
+                | #x1d53a
+                | #x1d53f
+                | #x1d545
+                | [#x1d547-#x1d549]
+                | #x1d551
+                | [#x1d6a6-#x1d6a7]
+                | #x1d6c1
+                | #x1d6db
+                | #x1d6fb
+                | #x1d715
+                | #x1d735
+                | #x1d74f
+                | #x1d76f
+                | #x1d789
+                | #x1d7a9
+                | #x1d7c3
+                | [#x1d7cc-#x1d7cd]
+                | [#x1d800-#x1d9ff]
+                | [#x1da37-#x1da3a]
+                | [#x1da6d-#x1da74]
+                | [#x1da76-#x1da83]
+                | [#x1da85-#x1da9a]
+                | #x1daa0
+                | [#x1dab0-#x1deff]
+                | [#x1df1f-#x1df24]
+                | [#x1df2b-#x1dfff]
+                | #x1e007
+                | [#x1e019-#x1e01a]
+                | #x1e022
+                | #x1e025
+                | [#x1e02b-#x1e02f]
+                | [#x1e06e-#x1e08e]
+                | [#x1e090-#x1e0ff]
+                | [#x1e12d-#x1e12f]
+                | [#x1e13e-#x1e13f]
+                | [#x1e14a-#x1e14d]
+                | [#x1e14f-#x1e28f]
+                | [#x1e2af-#x1e2bf]
+                | [#x1e2fa-#x1e4cf]
+                | [#x1e4fa-#x1e5cf]
+                | [#x1e5fb-#x1e6bf]
+                | #x1e6df
+                | [#x1e6f6-#x1e6fd]
+                | [#x1e700-#x1e7df]
+                | #x1e7e7
+                | #x1e7ec
+                | #x1e7ef
+                | #x1e7ff
+                | [#x1e8c5-#x1e8cf]
+                | [#x1e8d7-#x1e8ff]
+                | [#x1e94c-#x1e94f]
+                | [#x1e95a-#x1edff]
+                | #x1ee04
+                | #x1ee20
+                | #x1ee23
+                | [#x1ee25-#x1ee26]
+                | #x1ee28
+                | #x1ee33
+                | #x1ee38
+                | #x1ee3a
+                | [#x1ee3c-#x1ee41]
+                | [#x1ee43-#x1ee46]
+                | #x1ee48
+                | #x1ee4a
+                | #x1ee4c
+                | #x1ee50
+                | #x1ee53
+                | [#x1ee55-#x1ee56]
+                | #x1ee58
+                | #x1ee5a
+                | #x1ee5c
+                | #x1ee5e
+                | #x1ee60
+                | #x1ee63
+                | [#x1ee65-#x1ee66]
+                | #x1ee6b
+                | #x1ee73
+                | #x1ee78
+                | #x1ee7d
+                | #x1ee7f
+                | #x1ee8a
+                | [#x1ee9c-#x1eea0]
+                | #x1eea4
+                | #x1eeaa
+                | [#x1eebc-#x1fbef]
+                | [#x1fbfa-#x1fffd]
+                | [#x2a6e0-#x2a6ff]
+                | [#x2b81e-#x2b81f]
+                | [#x2ceae-#x2ceaf]
+                | [#x2ebe1-#x2ebef]
+                | [#x2ee5e-#x2f7ff]
+                | [#x2fa1e-#x2fffd]
+                | [#x3134b-#x3134f]
+                | [#x3347a-#x3fffd]
+                | [#x40000-#x4fffd]
+                | [#x50000-#x5fffd]
+                | [#x60000-#x6fffd]
+                | [#x70000-#x7fffd]
+                | [#x80000-#x8fffd]
+                | [#x90000-#x9fffd]
+                | [#xa0000-#xafffd]
+                | [#xb0000-#xbfffd]
+                | [#xc0000-#xcfffd]
+                | [#xd0000-#xdfffd]
+                | [#xe0000-#xe00ff]
+                | [#xe01f0-#xefffd]
+                | [#xf0000-#xffffd]
+                | [#x100000-#x10fffd]
+_hex_preserved_chars
+              ::= [0-9]
+_rule_preserved_chars
+              ::= ':'
+                | '='
+_alts_preserved_chars
+              ::= ';'
+                | '|'
+_hex_preserved_chars_1
+              ::= [A-F]
+_capital_preserved_chars
+              ::= [G-Z]
+_namestart_preserved_chars
+              ::= '_'
+                | #xaa
+                | #xb5
+                | #xba
+                | [#xc0-#xd6]
+                | [#xd8-#xf6]
+                | [#xf8-#x2c1]
+                | [#x2c6-#x2d1]
+                | [#x2e0-#x2e4]
+                | #x2ec
+                | #x2ee
+                | [#x370-#x374]
+                | [#x376-#x377]
+                | [#x37a-#x37d]
+                | #x37f
+                | #x386
+                | [#x388-#x38a]
+                | #x38c
+                | [#x38e-#x3a1]
+                | [#x3a3-#x3f5]
+                | [#x3f7-#x481]
+                | [#x48a-#x52f]
+                | [#x531-#x556]
+                | #x559
+                | [#x560-#x588]
+                | [#x5d0-#x5ea]
+                | [#x5ef-#x5f2]
+                | [#x620-#x64a]
+                | [#x66e-#x66f]
+                | [#x671-#x6d3]
+                | #x6d5
+                | [#x6e5-#x6e6]
+                | [#x6ee-#x6ef]
+                | [#x6fa-#x6fc]
+                | #x6ff
+                | #x710
+                | [#x712-#x72f]
+                | [#x74d-#x7a5]
+                | #x7b1
+                | [#x7ca-#x7ea]
+                | [#x7f4-#x7f5]
+                | #x7fa
+                | [#x800-#x815]
+                | #x81a
+                | #x824
+                | #x828
+                | [#x840-#x858]
+                | [#x860-#x86a]
+                | [#x870-#x887]
+                | [#x889-#x88f]
+                | [#x8a0-#x8c9]
+                | [#x904-#x939]
+                | #x93d
+                | #x950
+                | [#x958-#x961]
+                | [#x971-#x980]
+                | [#x985-#x98c]
+                | [#x98f-#x990]
+                | [#x993-#x9a8]
+                | [#x9aa-#x9b0]
+                | #x9b2
+                | [#x9b6-#x9b9]
+                | #x9bd
+                | #x9ce
+                | [#x9dc-#x9dd]
+                | [#x9df-#x9e1]
+                | [#x9f0-#x9f1]
+                | #x9fc
+                | [#xa05-#xa0a]
+                | [#xa0f-#xa10]
+                | [#xa13-#xa28]
+                | [#xa2a-#xa30]
+                | [#xa32-#xa33]
+                | [#xa35-#xa36]
+                | [#xa38-#xa39]
+                | [#xa59-#xa5c]
+                | #xa5e
+                | [#xa72-#xa74]
+                | [#xa85-#xa8d]
+                | [#xa8f-#xa91]
+                | [#xa93-#xaa8]
+                | [#xaaa-#xab0]
+                | [#xab2-#xab3]
+                | [#xab5-#xab9]
+                | #xabd
+                | #xad0
+                | [#xae0-#xae1]
+                | #xaf9
+                | [#xb05-#xb0c]
+                | [#xb0f-#xb10]
+                | [#xb13-#xb28]
+                | [#xb2a-#xb30]
+                | [#xb32-#xb33]
+                | [#xb35-#xb39]
+                | #xb3d
+                | [#xb5c-#xb5d]
+                | [#xb5f-#xb61]
+                | #xb71
+                | #xb83
+                | [#xb85-#xb8a]
+                | [#xb8e-#xb90]
+                | [#xb92-#xb95]
+                | [#xb99-#xb9a]
+                | #xb9c
+                | [#xb9e-#xb9f]
+                | [#xba3-#xba4]
+                | [#xba8-#xbaa]
+                | [#xbae-#xbb9]
+                | #xbd0
+                | [#xc05-#xc0c]
+                | [#xc0e-#xc10]
+                | [#xc12-#xc28]
+                | [#xc2a-#xc39]
+                | #xc3d
+                | [#xc58-#xc5a]
+                | [#xc5c-#xc5d]
+                | [#xc60-#xc61]
+                | #xc80
+                | [#xc85-#xc8c]
+                | [#xc8e-#xc90]
+                | [#xc92-#xca8]
+                | [#xcaa-#xcb3]
+                | [#xcb5-#xcb9]
+                | #xcbd
+                | [#xcdc-#xcde]
+                | [#xce0-#xce1]
+                | [#xcf1-#xcf2]
+                | [#xd04-#xd0c]
+                | [#xd0e-#xd10]
+                | [#xd12-#xd3a]
+                | #xd3d
+                | #xd4e
+                | [#xd54-#xd56]
+                | [#xd5f-#xd61]
+                | [#xd7a-#xd7f]
+                | [#xd85-#xd96]
+                | [#xd9a-#xdb1]
+                | [#xdb3-#xdbb]
+                | #xdbd
+                | [#xdc0-#xdc6]
+                | [#xe01-#xe30]
+                | [#xe32-#xe33]
+                | [#xe40-#xe46]
+                | [#xe81-#xe82]
+                | #xe84
+                | [#xe86-#xe8a]
+                | [#xe8c-#xea3]
+                | #xea5
+                | [#xea7-#xeb0]
+                | [#xeb2-#xeb3]
+                | #xebd
+                | [#xec0-#xec4]
+                | #xec6
+                | [#xedc-#xedf]
+                | #xf00
+                | [#xf40-#xf47]
+                | [#xf49-#xf6c]
+                | [#xf88-#xf8c]
+                | [#x1000-#x102a]
+                | #x103f
+                | [#x1050-#x1055]
+                | [#x105a-#x105d]
+                | #x1061
+                | [#x1065-#x1066]
+                | [#x106e-#x1070]
+                | [#x1075-#x1081]
+                | #x108e
+                | [#x10a0-#x10c5]
+                | #x10c7
+                | #x10cd
+                | [#x10d0-#x10fa]
+                | [#x10fc-#x1248]
+                | [#x124a-#x124d]
+                | [#x1250-#x1256]
+                | #x1258
+                | [#x125a-#x125d]
+                | [#x1260-#x1288]
+                | [#x128a-#x128d]
+                | [#x1290-#x12b0]
+                | [#x12b2-#x12b5]
+                | [#x12b8-#x12be]
+                | #x12c0
+                | [#x12c2-#x12c5]
+                | [#x12c8-#x12d6]
+                | [#x12d8-#x1310]
+                | [#x1312-#x1315]
+                | [#x1318-#x135a]
+                | [#x1380-#x138f]
+                | [#x13a0-#x13f5]
+                | [#x13f8-#x13fd]
+                | [#x1401-#x166c]
+                | [#x166f-#x167f]
+                | [#x1681-#x169a]
+                | [#x16a0-#x16ea]
+                | [#x16f1-#x16f8]
+                | [#x1700-#x1711]
+                | [#x171f-#x1731]
+                | [#x1740-#x1751]
+                | [#x1760-#x176c]
+                | [#x176e-#x1770]
+                | [#x1780-#x17b3]
+                | #x17d7
+                | #x17dc
+                | [#x1820-#x1878]
+                | [#x1880-#x1884]
+                | [#x1887-#x18a8]
+                | #x18aa
+                | [#x18b0-#x18f5]
+                | [#x1900-#x191e]
+                | [#x1950-#x196d]
+                | [#x1970-#x1974]
+                | [#x1980-#x19ab]
+                | [#x19b0-#x19c9]
+                | [#x1a00-#x1a16]
+                | [#x1a20-#x1a54]
+                | #x1aa7
+                | [#x1b05-#x1b33]
+                | [#x1b45-#x1b4c]
+                | [#x1b83-#x1ba0]
+                | [#x1bae-#x1baf]
+                | [#x1bba-#x1be5]
+                | [#x1c00-#x1c23]
+                | [#x1c4d-#x1c4f]
+                | [#x1c5a-#x1c7d]
+                | [#x1c80-#x1c8a]
+                | [#x1c90-#x1cba]
+                | [#x1cbd-#x1cbf]
+                | [#x1ce9-#x1cec]
+                | [#x1cee-#x1cf3]
+                | [#x1cf5-#x1cf6]
+                | #x1cfa
+                | [#x1d00-#x1dbf]
+                | [#x1e00-#x1f15]
+                | [#x1f18-#x1f1d]
+                | [#x1f20-#x1f45]
+                | [#x1f48-#x1f4d]
+                | [#x1f50-#x1f57]
+                | #x1f59
+                | #x1f5b
+                | #x1f5d
+                | [#x1f5f-#x1f7d]
+                | [#x1f80-#x1fb4]
+                | [#x1fb6-#x1fbc]
+                | #x1fbe
+                | [#x1fc2-#x1fc4]
+                | [#x1fc6-#x1fcc]
+                | [#x1fd0-#x1fd3]
+                | [#x1fd6-#x1fdb]
+                | [#x1fe0-#x1fec]
+                | [#x1ff2-#x1ff4]
+                | [#x1ff6-#x1ffc]
+                | #x2071
+                | #x207f
+                | [#x2090-#x209c]
+                | #x2102
+                | #x2107
+                | [#x210a-#x2113]
+                | #x2115
+                | [#x2119-#x211d]
+                | #x2124
+                | #x2126
+                | #x2128
+                | [#x212a-#x212d]
+                | [#x212f-#x2139]
+                | [#x213c-#x213f]
+                | [#x2145-#x2149]
+                | #x214e
+                | [#x2183-#x2184]
+                | [#x2c00-#x2ce4]
+                | [#x2ceb-#x2cee]
+                | [#x2cf2-#x2cf3]
+                | [#x2d00-#x2d25]
+                | #x2d27
+                | #x2d2d
+                | [#x2d30-#x2d67]
+                | #x2d6f
+                | [#x2d80-#x2d96]
+                | [#x2da0-#x2da6]
+                | [#x2da8-#x2dae]
+                | [#x2db0-#x2db6]
+                | [#x2db8-#x2dbe]
+                | [#x2dc0-#x2dc6]
+                | [#x2dc8-#x2dce]
+                | [#x2dd0-#x2dd6]
+                | [#x2dd8-#x2dde]
+                | #x2e2f
+                | [#x3005-#x3006]
+                | [#x3031-#x3035]
+                | [#x303b-#x303c]
+                | [#x3041-#x3096]
+                | [#x309d-#x309f]
+                | [#x30a1-#x30fa]
+                | [#x30fc-#x30ff]
+                | [#x3105-#x312f]
+                | [#x3131-#x318e]
+                | [#x31a0-#x31bf]
+                | [#x31f0-#x31ff]
+                | [#x3400-#x4dbf]
+                | [#x4e00-#xa48c]
+                | [#xa4d0-#xa4fd]
+                | [#xa500-#xa60c]
+                | [#xa610-#xa61f]
+                | [#xa62a-#xa62b]
+                | [#xa640-#xa66e]
+                | [#xa67f-#xa69d]
+                | [#xa6a0-#xa6e5]
+                | [#xa717-#xa71f]
+                | [#xa722-#xa788]
+                | [#xa78b-#xa7dc]
+                | [#xa7f1-#xa801]
+                | [#xa803-#xa805]
+                | [#xa807-#xa80a]
+                | [#xa80c-#xa822]
+                | [#xa840-#xa873]
+                | [#xa882-#xa8b3]
+                | [#xa8f2-#xa8f7]
+                | #xa8fb
+                | [#xa8fd-#xa8fe]
+                | [#xa90a-#xa925]
+                | [#xa930-#xa946]
+                | [#xa960-#xa97c]
+                | [#xa984-#xa9b2]
+                | #xa9cf
+                | [#xa9e0-#xa9e4]
+                | [#xa9e6-#xa9ef]
+                | [#xa9fa-#xa9fe]
+                | [#xaa00-#xaa28]
+                | [#xaa40-#xaa42]
+                | [#xaa44-#xaa4b]
+                | [#xaa60-#xaa76]
+                | #xaa7a
+                | [#xaa7e-#xaaaf]
+                | #xaab1
+                | [#xaab5-#xaab6]
+                | [#xaab9-#xaabd]
+                | #xaac0
+                | #xaac2
+                | [#xaadb-#xaadd]
+                | [#xaae0-#xaaea]
+                | [#xaaf2-#xaaf4]
+                | [#xab01-#xab06]
+                | [#xab09-#xab0e]
+                | [#xab11-#xab16]
+                | [#xab20-#xab26]
+                | [#xab28-#xab2e]
+                | [#xab30-#xab5a]
+                | [#xab5c-#xab69]
+                | [#xab70-#xabe2]
+                | [#xac00-#xd7a3]
+                | [#xd7b0-#xd7c6]
+                | [#xd7cb-#xd7fb]
+                | [#xf900-#xfa6d]
+                | [#xfa70-#xfad9]
+                | [#xfb00-#xfb06]
+                | [#xfb13-#xfb17]
+                | #xfb1d
+                | [#xfb1f-#xfb28]
+                | [#xfb2a-#xfb36]
+                | [#xfb38-#xfb3c]
+                | #xfb3e
+                | [#xfb40-#xfb41]
+                | [#xfb43-#xfb44]
+                | [#xfb46-#xfbb1]
+                | [#xfbd3-#xfd3d]
+                | [#xfd50-#xfd8f]
+                | [#xfd92-#xfdc7]
+                | [#xfdf0-#xfdfb]
+                | [#xfe70-#xfe74]
+                | [#xfe76-#xfefc]
+                | [#xff21-#xff3a]
+                | [#xff41-#xff5a]
+                | [#xff66-#xffbe]
+                | [#xffc2-#xffc7]
+                | [#xffca-#xffcf]
+                | [#xffd2-#xffd7]
+                | [#xffda-#xffdc]
+                | [#x10000-#x1000b]
+                | [#x1000d-#x10026]
+                | [#x10028-#x1003a]
+                | [#x1003c-#x1003d]
+                | [#x1003f-#x1004d]
+                | [#x10050-#x1005d]
+                | [#x10080-#x100fa]
+                | [#x10280-#x1029c]
+                | [#x102a0-#x102d0]
+                | [#x10300-#x1031f]
+                | [#x1032d-#x10340]
+                | [#x10342-#x10349]
+                | [#x10350-#x10375]
+                | [#x10380-#x1039d]
+                | [#x103a0-#x103c3]
+                | [#x103c8-#x103cf]
+                | [#x10400-#x1049d]
+                | [#x104b0-#x104d3]
+                | [#x104d8-#x104fb]
+                | [#x10500-#x10527]
+                | [#x10530-#x10563]
+                | [#x10570-#x1057a]
+                | [#x1057c-#x1058a]
+                | [#x1058c-#x10592]
+                | [#x10594-#x10595]
+                | [#x10597-#x105a1]
+                | [#x105a3-#x105b1]
+                | [#x105b3-#x105b9]
+                | [#x105bb-#x105bc]
+                | [#x105c0-#x105f3]
+                | [#x10600-#x10736]
+                | [#x10740-#x10755]
+                | [#x10760-#x10767]
+                | [#x10780-#x10785]
+                | [#x10787-#x107b0]
+                | [#x107b2-#x107ba]
+                | [#x10800-#x10805]
+                | #x10808
+                | [#x1080a-#x10835]
+                | [#x10837-#x10838]
+                | #x1083c
+                | [#x1083f-#x10855]
+                | [#x10860-#x10876]
+                | [#x10880-#x1089e]
+                | [#x108e0-#x108f2]
+                | [#x108f4-#x108f5]
+                | [#x10900-#x10915]
+                | [#x10920-#x10939]
+                | [#x10940-#x10959]
+                | [#x10980-#x109b7]
+                | [#x109be-#x109bf]
+                | #x10a00
+                | [#x10a10-#x10a13]
+                | [#x10a15-#x10a17]
+                | [#x10a19-#x10a35]
+                | [#x10a60-#x10a7c]
+                | [#x10a80-#x10a9c]
+                | [#x10ac0-#x10ac7]
+                | [#x10ac9-#x10ae4]
+                | [#x10b00-#x10b35]
+                | [#x10b40-#x10b55]
+                | [#x10b60-#x10b72]
+                | [#x10b80-#x10b91]
+                | [#x10c00-#x10c48]
+                | [#x10c80-#x10cb2]
+                | [#x10cc0-#x10cf2]
+                | [#x10d00-#x10d23]
+                | [#x10d4a-#x10d65]
+                | [#x10d6f-#x10d85]
+                | [#x10e80-#x10ea9]
+                | [#x10eb0-#x10eb1]
+                | [#x10ec2-#x10ec7]
+                | [#x10f00-#x10f1c]
+                | #x10f27
+                | [#x10f30-#x10f45]
+                | [#x10f70-#x10f81]
+                | [#x10fb0-#x10fc4]
+                | [#x10fe0-#x10ff6]
+                | [#x11003-#x11037]
+                | [#x11071-#x11072]
+                | #x11075
+                | [#x11083-#x110af]
+                | [#x110d0-#x110e8]
+                | [#x11103-#x11126]
+                | #x11144
+                | #x11147
+                | [#x11150-#x11172]
+                | #x11176
+                | [#x11183-#x111b2]
+                | [#x111c1-#x111c4]
+                | #x111da
+                | #x111dc
+                | [#x11200-#x11211]
+                | [#x11213-#x1122b]
+                | [#x1123f-#x11240]
+                | [#x11280-#x11286]
+                | #x11288
+                | [#x1128a-#x1128d]
+                | [#x1128f-#x1129d]
+                | [#x1129f-#x112a8]
+                | [#x112b0-#x112de]
+                | [#x11305-#x1130c]
+                | [#x1130f-#x11310]
+                | [#x11313-#x11328]
+                | [#x1132a-#x11330]
+                | [#x11332-#x11333]
+                | [#x11335-#x11339]
+                | #x1133d
+                | #x11350
+                | [#x1135d-#x11361]
+                | [#x11380-#x11389]
+                | #x1138b
+                | #x1138e
+                | [#x11390-#x113b5]
+                | #x113b7
+                | #x113d1
+                | #x113d3
+                | [#x11400-#x11434]
+                | [#x11447-#x1144a]
+                | [#x1145f-#x11461]
+                | [#x11480-#x114af]
+                | [#x114c4-#x114c5]
+                | #x114c7
+                | [#x11580-#x115ae]
+                | [#x115d8-#x115db]
+                | [#x11600-#x1162f]
+                | #x11644
+                | [#x11680-#x116aa]
+                | #x116b8
+                | [#x11700-#x1171a]
+                | [#x11740-#x11746]
+                | [#x11800-#x1182b]
+                | [#x118a0-#x118df]
+                | [#x118ff-#x11906]
+                | #x11909
+                | [#x1190c-#x11913]
+                | [#x11915-#x11916]
+                | [#x11918-#x1192f]
+                | #x1193f
+                | #x11941
+                | [#x119a0-#x119a7]
+                | [#x119aa-#x119d0]
+                | #x119e1
+                | #x119e3
+                | #x11a00
+                | [#x11a0b-#x11a32]
+                | #x11a3a
+                | #x11a50
+                | [#x11a5c-#x11a89]
+                | #x11a9d
+                | [#x11ab0-#x11af8]
+                | [#x11bc0-#x11be0]
+                | [#x11c00-#x11c08]
+                | [#x11c0a-#x11c2e]
+                | #x11c40
+                | [#x11c72-#x11c8f]
+                | [#x11d00-#x11d06]
+                | [#x11d08-#x11d09]
+                | [#x11d0b-#x11d30]
+                | #x11d46
+                | [#x11d60-#x11d65]
+                | [#x11d67-#x11d68]
+                | [#x11d6a-#x11d89]
+                | #x11d98
+                | [#x11db0-#x11ddb]
+                | [#x11ee0-#x11ef2]
+                | #x11f02
+                | [#x11f04-#x11f10]
+                | [#x11f12-#x11f33]
+                | #x11fb0
+                | [#x12000-#x12399]
+                | [#x12480-#x12543]
+                | [#x12f90-#x12ff0]
+                | [#x13000-#x1342f]
+                | [#x13441-#x13446]
+                | [#x13460-#x143fa]
+                | [#x14400-#x14646]
+                | [#x16100-#x1611d]
+                | [#x16800-#x16a38]
+                | [#x16a40-#x16a5e]
+                | [#x16a70-#x16abe]
+                | [#x16ad0-#x16aed]
+                | [#x16b00-#x16b2f]
+                | [#x16b40-#x16b43]
+                | [#x16b63-#x16b77]
+                | [#x16b7d-#x16b8f]
+                | [#x16d40-#x16d6c]
+                | [#x16e40-#x16e7f]
+                | [#x16ea0-#x16eb8]
+                | [#x16ebb-#x16ed3]
+                | [#x16f00-#x16f4a]
+                | #x16f50
+                | [#x16f93-#x16f9f]
+                | [#x16fe0-#x16fe1]
+                | #x16fe3
+                | [#x16ff2-#x16ff3]
+                | [#x17000-#x18cd5]
+                | [#x18cff-#x18d1e]
+                | [#x18d80-#x18df2]
+                | [#x1aff0-#x1aff3]
+                | [#x1aff5-#x1affb]
+                | [#x1affd-#x1affe]
+                | [#x1b000-#x1b122]
+                | #x1b132
+                | [#x1b150-#x1b152]
+                | #x1b155
+                | [#x1b164-#x1b167]
+                | [#x1b170-#x1b2fb]
+                | [#x1bc00-#x1bc6a]
+                | [#x1bc70-#x1bc7c]
+                | [#x1bc80-#x1bc88]
+                | [#x1bc90-#x1bc99]
+                | [#x1d400-#x1d454]
+                | [#x1d456-#x1d49c]
+                | [#x1d49e-#x1d49f]
+                | #x1d4a2
+                | [#x1d4a5-#x1d4a6]
+                | [#x1d4a9-#x1d4ac]
+                | [#x1d4ae-#x1d4b9]
+                | #x1d4bb
+                | [#x1d4bd-#x1d4c3]
+                | [#x1d4c5-#x1d505]
+                | [#x1d507-#x1d50a]
+                | [#x1d50d-#x1d514]
+                | [#x1d516-#x1d51c]
+                | [#x1d51e-#x1d539]
+                | [#x1d53b-#x1d53e]
+                | [#x1d540-#x1d544]
+                | #x1d546
+                | [#x1d54a-#x1d550]
+                | [#x1d552-#x1d6a5]
+                | [#x1d6a8-#x1d6c0]
+                | [#x1d6c2-#x1d6da]
+                | [#x1d6dc-#x1d6fa]
+                | [#x1d6fc-#x1d714]
+                | [#x1d716-#x1d734]
+                | [#x1d736-#x1d74e]
+                | [#x1d750-#x1d76e]
+                | [#x1d770-#x1d788]
+                | [#x1d78a-#x1d7a8]
+                | [#x1d7aa-#x1d7c2]
+                | [#x1d7c4-#x1d7cb]
+                | [#x1df00-#x1df1e]
+                | [#x1df25-#x1df2a]
+                | [#x1e030-#x1e06d]
+                | [#x1e100-#x1e12c]
+                | [#x1e137-#x1e13d]
+                | #x1e14e
+                | [#x1e290-#x1e2ad]
+                | [#x1e2c0-#x1e2eb]
+                | [#x1e4d0-#x1e4eb]
+                | [#x1e5d0-#x1e5ed]
+                | #x1e5f0
+                | [#x1e6c0-#x1e6de]
+                | [#x1e6e0-#x1e6e2]
+                | [#x1e6e4-#x1e6e5]
+                | [#x1e6e7-#x1e6ed]
+                | [#x1e6f0-#x1e6f4]
+                | [#x1e6fe-#x1e6ff]
+                | [#x1e7e0-#x1e7e6]
+                | [#x1e7e8-#x1e7eb]
+                | [#x1e7ed-#x1e7ee]
+                | [#x1e7f0-#x1e7fe]
+                | [#x1e800-#x1e8c4]
+                | [#x1e900-#x1e943]
+                | #x1e94b
+                | [#x1ee00-#x1ee03]
+                | [#x1ee05-#x1ee1f]
+                | [#x1ee21-#x1ee22]
+                | #x1ee24
+                | #x1ee27
+                | [#x1ee29-#x1ee32]
+                | [#x1ee34-#x1ee37]
+                | #x1ee39
+                | #x1ee3b
+                | #x1ee42
+                | #x1ee47
+                | #x1ee49
+                | #x1ee4b
+                | [#x1ee4d-#x1ee4f]
+                | [#x1ee51-#x1ee52]
+                | #x1ee54
+                | #x1ee57
+                | #x1ee59
+                | #x1ee5b
+                | #x1ee5d
+                | #x1ee5f
+                | [#x1ee61-#x1ee62]
+                | #x1ee64
+                | [#x1ee67-#x1ee6a]
+                | [#x1ee6c-#x1ee72]
+                | [#x1ee74-#x1ee77]
+                | [#x1ee79-#x1ee7c]
+                | #x1ee7e
+                | [#x1ee80-#x1ee89]
+                | [#x1ee8b-#x1ee9b]
+                | [#x1eea1-#x1eea3]
+                | [#x1eea5-#x1eea9]
+                | [#x1eeab-#x1eebb]
+                | [#x20000-#x2a6df]
+                | [#x2a700-#x2b81d]
+                | [#x2b820-#x2cead]
+                | [#x2ceb0-#x2ebe0]
+                | [#x2ebf0-#x2ee5d]
+                | [#x2f800-#x2fa1d]
+                | [#x30000-#x3134a]
+                | [#x31350-#x33479]
+_hex_preserved_chars_2
+              ::= [a-d]
+                | 'f'
+_letter_preserved_chars
+              ::= [g-h]
+                | [j-k]
+                | [p-q]
+                | [t-u]
+                | 'w'
+                | [y-z]
+_namefollower_preserved_chars
+              ::= #xb7
+                | [#x300-#x36f]
+                | [#x483-#x487]
+                | [#x591-#x5bd]
+                | #x5bf
+                | [#x5c1-#x5c2]
+                | [#x5c4-#x5c5]
+                | #x5c7
+                | [#x610-#x61a]
+                | [#x64b-#x669]
+                | #x670
+                | [#x6d6-#x6dc]
+                | [#x6df-#x6e4]
+                | [#x6e7-#x6e8]
+                | [#x6ea-#x6ed]
+                | [#x6f0-#x6f9]
+                | #x711
+                | [#x730-#x74a]
+                | [#x7a6-#x7b0]
+                | [#x7c0-#x7c9]
+                | [#x7eb-#x7f3]
+                | #x7fd
+                | [#x816-#x819]
+                | [#x81b-#x823]
+                | [#x825-#x827]
+                | [#x829-#x82d]
+                | [#x859-#x85b]
+                | [#x897-#x89f]
+                | [#x8ca-#x8e1]
+                | [#x8e3-#x902]
+                | #x93a
+                | #x93c
+                | [#x941-#x948]
+                | #x94d
+                | [#x951-#x957]
+                | [#x962-#x963]
+                | [#x966-#x96f]
+                | #x981
+                | #x9bc
+                | [#x9c1-#x9c4]
+                | #x9cd
+                | [#x9e2-#x9e3]
+                | [#x9e6-#x9ef]
+                | #x9fe
+                | [#xa01-#xa02]
+                | #xa3c
+                | [#xa41-#xa42]
+                | [#xa47-#xa48]
+                | [#xa4b-#xa4d]
+                | #xa51
+                | [#xa66-#xa71]
+                | #xa75
+                | [#xa81-#xa82]
+                | #xabc
+                | [#xac1-#xac5]
+                | [#xac7-#xac8]
+                | #xacd
+                | [#xae2-#xae3]
+                | [#xae6-#xaef]
+                | [#xafa-#xaff]
+                | #xb01
+                | #xb3c
+                | #xb3f
+                | [#xb41-#xb44]
+                | #xb4d
+                | [#xb55-#xb56]
+                | [#xb62-#xb63]
+                | [#xb66-#xb6f]
+                | #xb82
+                | #xbc0
+                | #xbcd
+                | [#xbe6-#xbef]
+                | #xc00
+                | #xc04
+                | #xc3c
+                | [#xc3e-#xc40]
+                | [#xc46-#xc48]
+                | [#xc4a-#xc4d]
+                | [#xc55-#xc56]
+                | [#xc62-#xc63]
+                | [#xc66-#xc6f]
+                | #xc81
+                | #xcbc
+                | #xcbf
+                | #xcc6
+                | [#xccc-#xccd]
+                | [#xce2-#xce3]
+                | [#xce6-#xcef]
+                | [#xd00-#xd01]
+                | [#xd3b-#xd3c]
+                | [#xd41-#xd44]
+                | #xd4d
+                | [#xd62-#xd63]
+                | [#xd66-#xd6f]
+                | #xd81
+                | #xdca
+                | [#xdd2-#xdd4]
+                | #xdd6
+                | [#xde6-#xdef]
+                | #xe31
+                | [#xe34-#xe3a]
+                | [#xe47-#xe4e]
+                | [#xe50-#xe59]
+                | #xeb1
+                | [#xeb4-#xebc]
+                | [#xec8-#xece]
+                | [#xed0-#xed9]
+                | [#xf18-#xf19]
+                | [#xf20-#xf29]
+                | #xf35
+                | #xf37
+                | #xf39
+                | [#xf71-#xf7e]
+                | [#xf80-#xf84]
+                | [#xf86-#xf87]
+                | [#xf8d-#xf97]
+                | [#xf99-#xfbc]
+                | #xfc6
+                | [#x102d-#x1030]
+                | [#x1032-#x1037]
+                | [#x1039-#x103a]
+                | [#x103d-#x103e]
+                | [#x1040-#x1049]
+                | [#x1058-#x1059]
+                | [#x105e-#x1060]
+                | [#x1071-#x1074]
+                | #x1082
+                | [#x1085-#x1086]
+                | #x108d
+                | [#x1090-#x1099]
+                | #x109d
+                | [#x135d-#x135f]
+                | [#x1712-#x1714]
+                | [#x1732-#x1733]
+                | [#x1752-#x1753]
+                | [#x1772-#x1773]
+                | [#x17b4-#x17b5]
+                | [#x17b7-#x17bd]
+                | #x17c6
+                | [#x17c9-#x17d3]
+                | #x17dd
+                | [#x17e0-#x17e9]
+                | [#x180b-#x180d]
+                | [#x180f-#x1819]
+                | [#x1885-#x1886]
+                | #x18a9
+                | [#x1920-#x1922]
+                | [#x1927-#x1928]
+                | #x1932
+                | [#x1939-#x193b]
+                | [#x1946-#x194f]
+                | [#x19d0-#x19d9]
+                | [#x1a17-#x1a18]
+                | #x1a1b
+                | #x1a56
+                | [#x1a58-#x1a5e]
+                | #x1a60
+                | #x1a62
+                | [#x1a65-#x1a6c]
+                | [#x1a73-#x1a7c]
+                | [#x1a7f-#x1a89]
+                | [#x1a90-#x1a99]
+                | [#x1ab0-#x1abd]
+                | [#x1abf-#x1add]
+                | [#x1ae0-#x1aeb]
+                | [#x1b00-#x1b03]
+                | #x1b34
+                | [#x1b36-#x1b3a]
+                | #x1b3c
+                | #x1b42
+                | [#x1b50-#x1b59]
+                | [#x1b6b-#x1b73]
+                | [#x1b80-#x1b81]
+                | [#x1ba2-#x1ba5]
+                | [#x1ba8-#x1ba9]
+                | [#x1bab-#x1bad]
+                | [#x1bb0-#x1bb9]
+                | #x1be6
+                | [#x1be8-#x1be9]
+                | #x1bed
+                | [#x1bef-#x1bf1]
+                | [#x1c2c-#x1c33]
+                | [#x1c36-#x1c37]
+                | [#x1c40-#x1c49]
+                | [#x1c50-#x1c59]
+                | [#x1cd0-#x1cd2]
+                | [#x1cd4-#x1ce0]
+                | [#x1ce2-#x1ce8]
+                | #x1ced
+                | #x1cf4
+                | [#x1cf8-#x1cf9]
+                | [#x1dc0-#x1dff]
+                | [#x203f-#x2040]
+                | [#x20d0-#x20dc]
+                | #x20e1
+                | [#x20e5-#x20f0]
+                | [#x2cef-#x2cf1]
+                | #x2d7f
+                | [#x2de0-#x2dff]
+                | [#x302a-#x302d]
+                | [#x3099-#x309a]
+                | [#xa620-#xa629]
+                | #xa66f
+                | [#xa674-#xa67d]
+                | [#xa69e-#xa69f]
+                | [#xa6f0-#xa6f1]
+                | #xa802
+                | #xa806
+                | #xa80b
+                | [#xa825-#xa826]
+                | #xa82c
+                | [#xa8c4-#xa8c5]
+                | [#xa8d0-#xa8d9]
+                | [#xa8e0-#xa8f1]
+                | [#xa8ff-#xa909]
+                | [#xa926-#xa92d]
+                | [#xa947-#xa951]
+                | [#xa980-#xa982]
+                | #xa9b3
+                | [#xa9b6-#xa9b9]
+                | [#xa9bc-#xa9bd]
+                | [#xa9d0-#xa9d9]
+                | #xa9e5
+                | [#xa9f0-#xa9f9]
+                | [#xaa29-#xaa2e]
+                | [#xaa31-#xaa32]
+                | [#xaa35-#xaa36]
+                | #xaa43
+                | #xaa4c
+                | [#xaa50-#xaa59]
+                | #xaa7c
+                | #xaab0
+                | [#xaab2-#xaab4]
+                | [#xaab7-#xaab8]
+                | [#xaabe-#xaabf]
+                | #xaac1
+                | [#xaaec-#xaaed]
+                | #xaaf6
+                | #xabe5
+                | #xabe8
+                | #xabed
+                | [#xabf0-#xabf9]
+                | #xfb1e
+                | [#xfe00-#xfe0f]
+                | [#xfe20-#xfe2f]
+                | [#xff10-#xff19]
+                | #x101fd
+                | #x102e0
+                | [#x10376-#x1037a]
+                | [#x104a0-#x104a9]
+                | [#x10a01-#x10a03]
+                | [#x10a05-#x10a06]
+                | [#x10a0c-#x10a0f]
+                | [#x10a38-#x10a3a]
+                | #x10a3f
+                | [#x10ae5-#x10ae6]
+                | [#x10d24-#x10d27]
+                | [#x10d30-#x10d39]
+                | [#x10d40-#x10d49]
+                | [#x10d69-#x10d6d]
+                | [#x10eab-#x10eac]
+                | [#x10efa-#x10eff]
+                | [#x10f46-#x10f50]
+                | [#x10f82-#x10f85]
+                | #x11001
+                | [#x11038-#x11046]
+                | [#x11066-#x11070]
+                | [#x11073-#x11074]
+                | [#x1107f-#x11081]
+                | [#x110b3-#x110b6]
+                | [#x110b9-#x110ba]
+                | #x110c2
+                | [#x110f0-#x110f9]
+                | [#x11100-#x11102]
+                | [#x11127-#x1112b]
+                | [#x1112d-#x11134]
+                | [#x11136-#x1113f]
+                | #x11173
+                | [#x11180-#x11181]
+                | [#x111b6-#x111be]
+                | [#x111c9-#x111cc]
+                | [#x111cf-#x111d9]
+                | [#x1122f-#x11231]
+                | #x11234
+                | [#x11236-#x11237]
+                | #x1123e
+                | #x11241
+                | #x112df
+                | [#x112e3-#x112ea]
+                | [#x112f0-#x112f9]
+                | [#x11300-#x11301]
+                | [#x1133b-#x1133c]
+                | #x11340
+                | [#x11366-#x1136c]
+                | [#x11370-#x11374]
+                | [#x113bb-#x113c0]
+                | #x113ce
+                | #x113d0
+                | #x113d2
+                | [#x113e1-#x113e2]
+                | [#x11438-#x1143f]
+                | [#x11442-#x11444]
+                | #x11446
+                | [#x11450-#x11459]
+                | #x1145e
+                | [#x114b3-#x114b8]
+                | #x114ba
+                | [#x114bf-#x114c0]
+                | [#x114c2-#x114c3]
+                | [#x114d0-#x114d9]
+                | [#x115b2-#x115b5]
+                | [#x115bc-#x115bd]
+                | [#x115bf-#x115c0]
+                | [#x115dc-#x115dd]
+                | [#x11633-#x1163a]
+                | #x1163d
+                | [#x1163f-#x11640]
+                | [#x11650-#x11659]
+                | #x116ab
+                | #x116ad
+                | [#x116b0-#x116b5]
+                | #x116b7
+                | [#x116c0-#x116c9]
+                | [#x116d0-#x116e3]
+                | #x1171d
+                | #x1171f
+                | [#x11722-#x11725]
+                | [#x11727-#x1172b]
+                | [#x11730-#x11739]
+                | [#x1182f-#x11837]
+                | [#x11839-#x1183a]
+                | [#x118e0-#x118e9]
+                | [#x1193b-#x1193c]
+                | #x1193e
+                | #x11943
+                | [#x11950-#x11959]
+                | [#x119d4-#x119d7]
+                | [#x119da-#x119db]
+                | #x119e0
+                | [#x11a01-#x11a0a]
+                | [#x11a33-#x11a38]
+                | [#x11a3b-#x11a3e]
+                | #x11a47
+                | [#x11a51-#x11a56]
+                | [#x11a59-#x11a5b]
+                | [#x11a8a-#x11a96]
+                | [#x11a98-#x11a99]
+                | #x11b60
+                | [#x11b62-#x11b64]
+                | #x11b66
+                | [#x11bf0-#x11bf9]
+                | [#x11c30-#x11c36]
+                | [#x11c38-#x11c3d]
+                | #x11c3f
+                | [#x11c50-#x11c59]
+                | [#x11c92-#x11ca7]
+                | [#x11caa-#x11cb0]
+                | [#x11cb2-#x11cb3]
+                | [#x11cb5-#x11cb6]
+                | [#x11d31-#x11d36]
+                | #x11d3a
+                | [#x11d3c-#x11d3d]
+                | [#x11d3f-#x11d45]
+                | #x11d47
+                | [#x11d50-#x11d59]
+                | [#x11d90-#x11d91]
+                | #x11d95
+                | #x11d97
+                | [#x11da0-#x11da9]
+                | [#x11de0-#x11de9]
+                | [#x11ef3-#x11ef4]
+                | [#x11f00-#x11f01]
+                | [#x11f36-#x11f3a]
+                | #x11f40
+                | #x11f42
+                | [#x11f50-#x11f5a]
+                | #x13440
+                | [#x13447-#x13455]
+                | [#x1611e-#x16129]
+                | [#x1612d-#x16139]
+                | [#x16a60-#x16a69]
+                | [#x16ac0-#x16ac9]
+                | [#x16af0-#x16af4]
+                | [#x16b30-#x16b36]
+                | [#x16b50-#x16b59]
+                | [#x16d70-#x16d79]
+                | #x16f4f
+                | [#x16f8f-#x16f92]
+                | #x16fe4
+                | [#x1bc9d-#x1bc9e]
+                | [#x1ccf0-#x1ccf9]
+                | [#x1cf00-#x1cf2d]
+                | [#x1cf30-#x1cf46]
+                | [#x1d167-#x1d169]
+                | [#x1d17b-#x1d182]
+                | [#x1d185-#x1d18b]
+                | [#x1d1aa-#x1d1ad]
+                | [#x1d242-#x1d244]
+                | [#x1d7ce-#x1d7ff]
+                | [#x1da00-#x1da36]
+                | [#x1da3b-#x1da6c]
+                | #x1da75
+                | #x1da84
+                | [#x1da9b-#x1da9f]
+                | [#x1daa1-#x1daaf]
+                | [#x1e000-#x1e006]
+                | [#x1e008-#x1e018]
+                | [#x1e01b-#x1e021]
+                | [#x1e023-#x1e024]
+                | [#x1e026-#x1e02a]
+                | #x1e08f
+                | [#x1e130-#x1e136]
+                | [#x1e140-#x1e149]
+                | #x1e2ae
+                | [#x1e2ec-#x1e2f9]
+                | [#x1e4ec-#x1e4f9]
+                | [#x1e5ee-#x1e5ef]
+                | [#x1e5f1-#x1e5fa]
+                | #x1e6e3
+                | #x1e6e6
+                | [#x1e6ee-#x1e6ef]
+                | #x1e6f5
+                | [#x1e8d0-#x1e8d6]
+                | [#x1e944-#x1e94a]
+                | [#x1e950-#x1e959]
+                | [#x1fbf0-#x1fbf9]
+                | [#xe0100-#xe01ef]
+_alts_deleted_chars
+              ::= ';'
+                | '|'

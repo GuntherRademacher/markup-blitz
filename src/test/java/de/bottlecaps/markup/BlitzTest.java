@@ -752,6 +752,16 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testToREx() {
+    String rex = Blitz.toREx("S: A. A: ['0'-'9']+.");
+    assertTrue(rex.contains("::="));
+    assertTrue(rex.contains("<?TOKENS?>"));
+    assertEquals(rex, Blitz.toRExFromXml(
+        "<ixml><rule name='S'><alt><nonterminal name='A'/></alt></rule>"
+      + "<rule name='A'><alt><repeat1><inclusion><member from='0' to='9'/></inclusion></repeat1></alt></rule></ixml>"));
+  }
+
+  @Test
   public void testRejectConflictsAcceptsConflictFreeGrammar() {
     generate("S: A. A: ['0'-'9']+.", Option.REJECT_CONFLICTS);
     generate("S: digit+; letter+; empty. empty: . digit: ['0'-'9']. letter: ['a'-'z'].", Option.REJECT_CONFLICTS);

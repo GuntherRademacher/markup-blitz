@@ -1,0 +1,14 @@
+// Alternatives are followed by an <?ixml ...?> annotation that holds them in ixml notation, so that
+// they are not folded when they differ in what they yield. For alternatives that are just a
+// character or token, without deletion, the annotation is for information only, and is abbreviated
+// by ... when it is long.
+// In order to have REx take the annotations into account, use REx option: -a ixml
+
+_start        ::= S _end
+S             ::= A                               <?ixml ['a'-'b']?>
+                | A                               <?ixml ^A?>
+
+<?TOKENS?>
+
+_end          ::= $
+A             ::= [a-b]

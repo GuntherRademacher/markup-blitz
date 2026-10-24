@@ -19,6 +19,7 @@ import de.bottlecaps.markup.blitz.Parser;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.transform.BNF;
 import de.bottlecaps.markup.blitz.transform.Generator;
+import de.bottlecaps.markup.blitz.transform.ToREx;
 import de.bottlecaps.markup.blitz.xml.XmlGrammarInput;
 import de.bottlecaps.markup.blitz.Version;
 
@@ -77,6 +78,39 @@ public class Blitz {
   }
 
   /**
+   * Transform an Invisible XML grammar in ixml notation to REx notation. The result can be
+   * passed to REx in order to construct an LALR(k) or LR(k) parser. Alternatives are annotated
+   * with their ixml notation, which REx takes into account only when run with option
+   * {@code -a ixml}.
+   * With this option, successful construction proves that the grammar is unambiguous. Note that
+   * the grammar is transformed to BNF before conversion, so that REx will report any conflicts
+   * in terms of the BNF grammar, and that internal grammar transformations may remove some
+   * ambiguities beforehand.
+   *
+   * @param grammar the Invisible XML grammar in ixml notation.
+   * @param blitzOptions options for use at generation time
+   * @return the grammar in REx notation
+   * @throws BlitzException if any error is detected while transforming the grammar
+   */
+  public static String toREx(String grammar, Blitz.Option... blitzOptions) throws BlitzException {
+    Set<Blitz.Option> options = new HashSet<>(Arrays.asList(blitzOptions));
+    return ToREx.process(BNF.process(parse(grammar), options));
+  }
+
+  /**
+   * Transform an Invisible XML grammar in XML, passed as a String, to REx notation.
+   *
+   * @param xml the Invisible XML grammar in XML
+   * @param blitzOptions options for use at generation time
+   * @return the grammar in REx notation
+   * @throws BlitzException if any error is detected while transforming the grammar
+   * @see #toREx(String, Option...)
+   */
+  public static String toRExFromXml(String xml, Option... blitzOptions) throws BlitzException {
+    return toREx(new XmlGrammarInput(xml).toIxml(), blitzOptions);
+  }
+
+  /**
    * Generate a parser from an Invisible XML grammar in XML, passed as an InputStream.
    *
    * @param xml the Invisible XML grammar in XML
@@ -114,6 +148,7 @@ public class Blitz {
     System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
 
     Set<Option> options = new HashSet<>();
+    boolean toRex = false;
     int i = 0;
     for (; i < args.length; ++i) {
       if (args[i].equals("--indent"))
@@ -128,10 +163,24 @@ public class Blitz {
         options.add(Option.VERBOSE);
       else if (args[i].equals("--reject-conflicts"))
         options.add(Option.REJECT_CONFLICTS);
+      else if (args[i].equals("--to-rex"))
+        toRex = true;
       else if (args[i].startsWith("-"))
         usage(1);
       else
         break;
+    }
+
+    if (toRex) {
+      if (i != args.length - 1)
+        usage(1);
+      String grammarString = args[i].startsWith("!")
+                           ? args[i].substring(1)
+                           : urlContent(url(args[i]));
+      System.out.println(grammarString.stripLeading().startsWith("<")
+                       ? toRExFromXml(grammarString, options.toArray(Option[]::new))
+                       : toREx(grammarString, options.toArray(Option[]::new)));
+      return;
     }
 
     if (i != args.length - 2 && i != args.length - 1)
@@ -169,8 +218,11 @@ public class Blitz {
     System.err.println("  built " + Version.DATE);
     System.err.println();
     System.err.println("Usage: java " + origin + " [<OPTION>...] [<GRAMMAR>] <INPUT>");
+    System.err.println("       java " + origin + " --to-rex [<OPTION>...] <GRAMMAR>");
     System.err.println();
     System.err.println("  Compile an Invisible XML grammar, and parse input with the resulting parser.");
+    System.err.println("  With --to-rex, transform the grammar to REx notation instead, and write it to");
+    System.err.println("  standard output.");
     System.err.println();
     System.err.println("  <GRAMMAR>          the grammar (literal, file name or URL), in ixml notation or XML.");
     System.err.println("                     XML grammars are detected automatically. When omitted, the grammar");
@@ -188,6 +240,11 @@ public class Blitz {
     System.err.println("                        guarantees that it is unambiguous for every input. Note that");
     System.err.println("                        internal grammar transformations may remove some ambiguities");
     System.err.println("                        beforehand.");
+    System.err.println("    --to-rex            write the grammar in REx notation, and do not parse. Requires a");
+    System.err.println("                        grammar, and no input. When REx is run with option -a ixml,");
+    System.err.println("                        successful construction of an LALR(k) or LR(k) parser proves");
+    System.err.println("                        that the grammar is unambiguous. Note that internal grammar");
+    System.err.println("                        transformations may remove some ambiguities beforehand.");
     System.err.println();
     System.err.println("  A literal grammar or input must be preceded by an exclamation point (!).");
     System.err.println("  All inputs must be presented in UTF-8 encoding, and output is written in");

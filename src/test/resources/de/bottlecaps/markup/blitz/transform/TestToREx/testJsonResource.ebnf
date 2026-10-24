@@ -1,0 +1,158 @@
+// Alternatives are followed by an <?ixml ...?> annotation that holds them in ixml notation, so that
+// they are not folded when they differ in what they yield. For alternatives that are just a
+// character or token, without deletion, the annotation is for information only, and is abbreviated
+// by ... when it is long.
+// In order to have REx take the annotations into account, use REx option: -a ixml
+
+_start        ::= json _end
+json          ::= ws value ws                     <?ixml -ws, -value, -ws?>
+ws            ::=                                 <?ixml ?>
+                | ws _ws_choice                   <?ixml -ws, -_ws_choice?>
+_ws_choice    ::= _ws_deleted_chars               <?ixml -[#9-#a; #d]?>
+                | ' '                             <?ixml -[' ']?>
+value         ::= map                             <?ixml ^map?>
+                | array                           <?ixml ^array?>
+                | number                          <?ixml ^number?>
+                | string                          <?ixml ^string?>
+                | boolean                         <?ixml ^boolean?>
+                | null                            <?ixml ^null?>
+map           ::= '{' ws _map_list_option '}'     <?ixml -['{'], -ws, -_map_list_option, -['}']?>
+_map_list     ::= member ws                       <?ixml ^member, -ws?>
+                | _map_list ',' ws member ws      <?ixml -_map_list, -[','], -ws, ^member, -ws?>
+_map_list_option
+              ::=                                 <?ixml ?>
+                | _map_list                       <?ixml -_map_list?>
+array         ::= '[' ws _array_list_option ']'   <?ixml -['['], -ws, -_array_list_option, -[']']?>
+_array_list   ::= value ws                        <?ixml -value, -ws?>
+                | _array_list ',' ws value ws     <?ixml -_array_list, -[','], -ws, -value, -ws?>
+_array_list_option
+              ::=                                 <?ixml ?>
+                | _array_list                     <?ixml -_array_list?>
+number        ::= _number_option int _number_option_1 _number_option_2
+                                                  <?ixml -_number_option, -int, -_number_option_1, -_number_option_2?>
+_number_option
+              ::=                                 <?ixml ?>
+                | '-'                             <?ixml ['-']?>
+_number_option_1
+              ::=                                 <?ixml ?>
+                | frac                            <?ixml -frac?>
+_number_option_2
+              ::=                                 <?ixml ?>
+                | exp                             <?ixml -exp?>
+string        ::= '"' _string_list_option '"'     <?ixml -['"'], -_string_list_option, -['"']?>
+_string_list_option
+              ::=                                 <?ixml ?>
+                | _string_list_option char        <?ixml -_string_list_option, -char?>
+boolean       ::= 'f' 'a' 'l' 's' 'e'             <?ixml ['f'], ['a'], ['l'], ['s'], ['e']?>
+                | 't' 'r' 'u' 'e'                 <?ixml ['t'], ['r'], ['u'], ['e']?>
+null          ::= 'n' 'u' 'l' 'l'                 <?ixml -['n'], -['u'], -['l'], -['l']?>
+member        ::= key ws ':' ws value             <?ixml ^key, -ws, -[':'], -ws, ^value?>
+int           ::= '0'                             <?ixml ['0']?>
+                | digit1-9 _int_list_option       <?ixml ['1'-'9'], -_int_list_option?>
+DIGIT         ::= '0'                             <?ixml ['0']?>
+                | digit1-9                        <?ixml ['1'-'9']?>
+_int_list_option
+              ::=                                 <?ixml ?>
+                | _int_list_option DIGIT          <?ixml -_int_list_option, -DIGIT?>
+frac          ::= '.' _frac_list                  <?ixml ['.'], -_frac_list?>
+_frac_list    ::= DIGIT                           <?ixml -DIGIT?>
+                | _frac_list DIGIT                <?ixml -_frac_list, -DIGIT?>
+exp           ::= e _exp_option _frac_list        <?ixml -e, -_exp_option, -_frac_list?>
+e             ::= 'E'                             <?ixml ['E']?>
+                | 'e'                             <?ixml ['e']?>
+_exp_choice_1 ::= '+'                             <?ixml ['+']?>
+                | '-'                             <?ixml ['-']?>
+_exp_option   ::=                                 <?ixml ?>
+                | _exp_choice_1                   <?ixml -_exp_choice_1?>
+char          ::= _char_preserved_chars           <?ixml [#0-#8; #b-#c; #e-#1f; '!'; '#'-'*'; '...?>
+                | ' '                             <?ixml [' ']?>
+                | '+'                             <?ixml ['+']?>
+                | ','                             <?ixml [',']?>
+                | '-'                             <?ixml ['-']?>
+                | '.'                             <?ixml ['.']?>
+                | '/'                             <?ixml ['/']?>
+                | '0'                             <?ixml ['0']?>
+                | digit1-9                        <?ixml ['1'-'9']?>
+                | ':'                             <?ixml [':']?>
+                | _HEXDIG_preserved_chars         <?ixml ['A'-'D'; 'F'; 'c'-'d']?>
+                | 'E'                             <?ixml ['E']?>
+                | '['                             <?ixml ['[']?>
+                | ']'                             <?ixml [']']?>
+                | 'a'                             <?ixml ['a']?>
+                | 'b'                             <?ixml ['b']?>
+                | 'e'                             <?ixml ['e']?>
+                | 'f'                             <?ixml ['f']?>
+                | 'l'                             <?ixml ['l']?>
+                | 'n'                             <?ixml ['n']?>
+                | 'r'                             <?ixml ['r']?>
+                | 's'                             <?ixml ['s']?>
+                | 't'                             <?ixml ['t']?>
+                | 'u'                             <?ixml ['u']?>
+                | '{'                             <?ixml ['{']?>
+                | '}'                             <?ixml ['}']?>
+                | '\' escaped                     <?ixml -['\'], -escaped?>
+key           ::= string                          <?ixml -string?>
+escaped       ::= '"'                             <?ixml ['"']?>
+                | '/'                             <?ixml ['/']?>
+                | '\'                             <?ixml ['\']?>
+                | 'b'                             <?ixml -['b'], +#8?>
+                | 'f'                             <?ixml -['f'], +#c?>
+                | 'n'                             <?ixml -['n'], +#a?>
+                | 'r'                             <?ixml -['r'], +#d?>
+                | 't'                             <?ixml -['t'], +#9?>
+                | unicode                         <?ixml ^unicode?>
+unicode       ::= 'u' code                        <?ixml -['u'], @code?>
+code          ::= HEXDIG HEXDIG HEXDIG HEXDIG     <?ixml -HEXDIG, -HEXDIG, -HEXDIG, -HEXDIG?>
+HEXDIG        ::= '0'                             <?ixml ['0']?>
+                | digit1-9                        <?ixml ['1'-'9']?>
+                | _HEXDIG_preserved_chars         <?ixml ['A'-'D'; 'F'; 'c'-'d']?>
+                | 'E'                             <?ixml ['E']?>
+                | 'a'                             <?ixml ['a']?>
+                | 'b'                             <?ixml ['b']?>
+                | 'e'                             <?ixml ['e']?>
+                | 'f'                             <?ixml ['f']?>
+
+<?TOKENS?>
+
+_end          ::= $
+_ws_deleted_chars
+              ::= [#x9-#xa]
+                | #xd
+digit1-9      ::= [1-9]
+_char_preserved_chars
+              ::= [#x0-#x8]
+                | [#xb-#xc]
+                | [#xe-#x1f]
+                | '!'
+                | [#-*]
+                | [;-@]
+                | [G-Z]
+                | '^' | [_-`]
+                | [g-k]
+                | 'm'
+                | [o-q]
+                | [v-z]
+                | '|'
+                | [#x7e-#xd7ff]
+                | [#xe000-#xfdcf]
+                | [#xfdf0-#xfffd]
+                | [#x10000-#x1fffd]
+                | [#x20000-#x2fffd]
+                | [#x30000-#x3fffd]
+                | [#x40000-#x4fffd]
+                | [#x50000-#x5fffd]
+                | [#x60000-#x6fffd]
+                | [#x70000-#x7fffd]
+                | [#x80000-#x8fffd]
+                | [#x90000-#x9fffd]
+                | [#xa0000-#xafffd]
+                | [#xb0000-#xbfffd]
+                | [#xc0000-#xcfffd]
+                | [#xd0000-#xdfffd]
+                | [#xe0000-#xefffd]
+                | [#xf0000-#xffffd]
+                | [#x100000-#x10fffd]
+_HEXDIG_preserved_chars
+              ::= [A-D]
+                | 'F'
+                | [c-d]
