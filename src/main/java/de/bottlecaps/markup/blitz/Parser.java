@@ -1144,7 +1144,8 @@ public class Parser
               c1 = -1;
               l1 = 0;
             }
-            stack = stack.push(state);
+            if (reduce < 0)
+              stack = stack.push(state);
             state = shift;
           }
 
@@ -1169,8 +1170,9 @@ public class Parser
                 writeTrace(" ");
               writeTrace("reduce\" nonterminal=\"" + xmlEscape(nonterminal[nonterminalId]) + "\" count=\"" + symbols + "\"/>\n");
             }
-            if (symbols > 0) {
-              for (int i = 1; i < symbols; i++)
+            int pops = symbols - (shift >= 0 ? 1 : 0);
+            if (pops > 0) {
+              for (int i = 1; i < pops; i++)
                 stack = stack.pop();
               state = stack.getState();
               stack = stack.pop();
