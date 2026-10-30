@@ -1101,6 +1101,8 @@ public class Parser
           switch (action & ((1 << Action.Type.BITS) - 1)) {
           case 1: // SHIFT
             shift = argument;
+            stack = stack.push(state);
+            state = argument;
             break;
 
           case 2: // SHIFT+REDUCE
@@ -1144,9 +1146,6 @@ public class Parser
               c1 = -1;
               l1 = 0;
             }
-            if (reduce < 0)
-              stack = stack.push(state);
-            state = shift;
           }
 
           if (reduce < 0) {
