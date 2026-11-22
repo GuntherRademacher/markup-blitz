@@ -917,6 +917,16 @@ public class Parser
 
       for (;;) {
         for (ParsingThread t; (t = otherThreads.removeIfEqual(thread)) != null;) {
+          if (t.cost != thread.cost) {
+            // different costs: the cheaper alternative wins, this is not an ambiguity
+            if (trace) {
+              ParsingThread loser = t.cost > thread.cost ? t : thread;
+              writeTrace("  <parse thread=\"" + loser.id + "\" offset=\"" + loser.e0 + "\" state=\"" + loser.state + "\" action=\"discard\" reason=\"cost " + loser.cost + " > " + Math.min(t.cost, thread.cost) + "\"/>\n");
+            }
+            if (t.cost < thread.cost)
+              thread = t;
+            continue;
+          }
           if (trace)
             writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
           if (t.deferredEvent == null || t.deferredEvent.getQueueSize() < thread.deferredEvent.getQueueSize())
@@ -1019,6 +1029,8 @@ public class Parser
       public int b1, e1;
       public int c1, l1;
       public boolean isAmbiguous;
+      /** The sum of the costs of the reductions done by this thread. */
+      public long cost;
 
       private StackNode stack;
 
@@ -1056,6 +1068,7 @@ public class Parser
         b1 = other.b1;
         e1 = other.e1;
         isAmbiguous = other.isAmbiguous;
+        cost = other.cost;
       }
 
       public long priority() {
@@ -1188,6 +1201,7 @@ public class Parser
               state = stack.getState();
               stack = stack.pop();
             }
+            cost += reduceArgument.getCost();
             if (isUnambiguous)
               parseTreeBuilder.nonterminal(reduceArgument);
             else

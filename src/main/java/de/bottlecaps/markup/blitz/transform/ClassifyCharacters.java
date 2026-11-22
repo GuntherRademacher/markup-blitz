@@ -337,7 +337,8 @@ public class ClassifyCharacters extends Copy {
       }
       active.add(n.getName());
       if (rangeSet != null) {
-        if (n.getEffectiveMark() != Mark.DELETE) {
+        if (n.getEffectiveMark() != Mark.DELETE || n.getGrammar().getRule(n.getName()).getCost() != 0) {
+          // not inlined: a preserved nonterminal or one with a cost
           rangeSet = null;
         }
         else {

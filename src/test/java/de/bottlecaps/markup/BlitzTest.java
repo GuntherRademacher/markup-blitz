@@ -119,6 +119,46 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testCost() {
+    final String ambiguous = "ixml:state=\"ambiguous\"";
+    String input = "CHAPTER ONE\nCall me ishmael.\n\nCHAPTER TWO\nMore.\n";
+    String expected = "<parts><chapter>CHAPTER ONE</chapter><line>Call me ishmael.</line><line/>"
+                    + "<chapter>CHAPTER TWO</chapter><line>More.</line></parts>";
+    // without costs, a chapter is also a line
+    assertTrue(generate("parts = (chapter|line)*. line = ~[#a]*, -#a. chapter = 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input).contains(ambiguous));
+    // with a cost on line, chapter wins
+    assertEquals(expected,
+        generate("parts = (chapter|line)*. line =< ~[#a]*, -#a. chapter = 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input));
+    assertEquals(expected,
+        generate("parts = (chapter|line)*. line =<< ~[#a]*, -#a. chapter =< 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input));
+    // equal costs remain ambiguous
+    assertTrue(generate("parts = (chapter|line)*. line =< ~[#a]*, -#a. chapter =< 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input).contains(ambiguous));
+  }
+
+  @Test
+  public void testCostIsSummed() {
+    // a: x, x costs 1 + 1 = 2
+    assertEquals("<s><a><x>q</x><x>q</x></a></s>",
+        generate("s = a | b. a = x, x. b = y. x =< 'q'. y =<<< 'q', 'q'.").parse("qq"));
+    assertTrue(generate("s = a | b. a = x, x. b = y. x =< 'q'. y =<< 'q', 'q'.")
+        .parse("qq").contains("ixml:state=\"ambiguous\""));
+    assertEquals("<s><b><y>qq</y></b></s>",
+        generate("s = a | b. a = x, x. b = y. x =< 'q'. y = 'q', 'q'.").parse("qq"));
+  }
+
+  @Test
+  public void testCostOnInlinableRules() {
+    // deleted single character rules, that would otherwise be inlined
+    assertEquals("<s><y>a</y></s>", generate("s = x | y. -x =< ['a']. y = 'a'.").parse("a"));
+    // a rule with a cost is not shared with a group that has the same right hand side
+    assertEquals("<s>ab</s>", generate("s = ('a', 'b') | y. y =< 'a', 'b'.").parse("ab"));
+  }
+
+  @Test
   public void testAmbiguousInsertion() {
     Parser parser = generate(
         "S:'a', +'a'+.");

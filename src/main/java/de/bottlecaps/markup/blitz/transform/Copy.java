@@ -49,7 +49,7 @@ public class Copy extends Visitor {
   @Override
   public void visit(Rule r) {
     super.visit(r);
-    copy.addRule(new Rule(r.getMark(), r.getAlias(), r.getName(), alts.pop()));
+    copy.addRule(new Rule(r.getMark(), r.getAlias(), r.getName(), alts.pop(), r.getCost()));
   }
 
   @Override

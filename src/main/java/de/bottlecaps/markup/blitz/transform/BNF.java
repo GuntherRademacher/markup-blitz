@@ -111,7 +111,7 @@ public class BNF extends Visitor {
         copy.addRule(justAdded.remove(r.getName()));
       }
       else {
-        copy.addRule(new Rule(Mark.NONE, null, r.getName(), a));
+        copy.addRule(new Rule(Mark.NONE, null, r.getName(), a, r.getCost()));
         coveredRules.add(r.getName());
       }
       for (Rule rule : justAdded.values())

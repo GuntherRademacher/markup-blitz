@@ -51,7 +51,10 @@ public class GenerateAdditionalNames extends Visitor {
     this.nameByRhs = new HashMap<>();
 
     this.names = new HashSet<String>(grammar.getRules().keySet());
-    grammar.getRules().values().forEach(rule -> nameByRhs.put(rule.getAlts(), rule.getName()));
+    // a rule with a cost is not reused for an equal group, because the group has no cost
+    grammar.getRules().values().stream()
+      .filter(rule -> rule.getCost() == 0)
+      .forEach(rule -> nameByRhs.put(rule.getAlts(), rule.getName()));
 
     for (StringBuilder sb = new StringBuilder();; sb.append("_")) {
       String prefix = sb.toString();

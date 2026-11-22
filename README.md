@@ -123,6 +123,18 @@ numb = [N]+, ![N].
 
 Without the lookaheads, input `aaa123bbb` would be ambiguous, because `aaa` could also be split into several words.
 
+# Rule costs
+
+As another extension, a rule can be given a cost by writing `=<`, `=<<`, `=<<<`, ... (or `:<`, ...) instead of `=`, for a cost of 1, 2, 3, ... The cost of a parse is the sum of the costs of all rules used in it. When the input can be parsed in several ways, the parse with the lowest cost is chosen, and only if there are several with the same lowest cost, the result is reported as ambiguous. This allows specific rules to take precedence over generic ones:
+
+```ixml
+parts = (chapter | line)*.
+line =< ~[#a]*, -#a.
+chapter = "CHAPTER ", ~[#a]*, -#a.
+```
+
+Here a line starting with `CHAPTER ` is a `chapter`, rather than a `line`.
+
 # Proving that a grammar is unambiguous
 
 Ambiguity of context-free grammars is undecidable in general, but there are sufficient conditions that can be checked. If a parser can be constructed without conflicts, the grammar is unambiguous for every input. The converse does not hold: a conflict does not necessarily indicate ambiguity, as the grammar may just not be of the class that the construction handles. Also note that the check applies to the grammar after Markup Blitz has transformed it internally, which may remove some ambiguities beforehand.

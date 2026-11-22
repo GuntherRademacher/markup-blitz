@@ -16,9 +16,11 @@
 
          rule::= naming                                     <?java
                                                                alts.push(new Alts());
-                                                               grammar.addRule(new Rule(mark, alias, name, alts.peek()));
+                                                               grammar.addRule(rule = new Rule(mark, alias, name, alts.peek()));
                                                             ?>
-                                s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
+                                s ( '=' | ':' )
+                                  ( '<'                     <?java rule.incrementCost();?>
+                                        )* s alts '.'       <?java alts.pop();?>
        naming::= mark name ( s '>' s alias )?
          name::=                                            <?java nameBuilder.setLength(0);?>
                  namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
@@ -978,6 +980,7 @@ namefollower^token << '.' 'x'
                                                                 private String clazz;
                                                                 private java.util.List<Member> members;
                                                                 private Grammar grammar;
+                                                                private Rule rule;
                                                                 private Mark mark;
                                                                 private String name;
                                                                 private String alias;
