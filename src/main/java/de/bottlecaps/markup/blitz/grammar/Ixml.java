@@ -1,10 +1,11 @@
-// This file was generated on Thu Oct 8, 2026 10:34 (UTC+02) by REx v6.3-SNAPSHOT which is Copyright (c) 1979-2026 by Gunther Rademacher <grd@gmx.net>
-// REx command line: -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml ixml.ebnf
+// This file was generated on Sun Nov 22, 2026 20:28 (UTC) by REx v7.0 which is Copyright (c) 1979-2026 by Gunther Rademacher <grd@gmx.net>
+// REx command line: ixml.ebnf -glalr 1 -java -a java -name de.bottlecaps.markup.blitz.grammar.Ixml
 
 package de.bottlecaps.markup.blitz.grammar;
 
 import java.util.PriorityQueue;
 
+@SuppressWarnings("all")
 public class Ixml
 {
   public static class ParseException extends RuntimeException
@@ -144,6 +145,7 @@ public class Ixml
       return lhs == rhs;
     }
 
+
     public int lookback(int x, int y)
     {
       int i = LOOKBACK[y];
@@ -177,7 +179,6 @@ public class Ixml
       }
       return count;
     }
-
   }
 
   private static class DeferredCode
@@ -347,6 +348,7 @@ public class Ixml
         int shift = -1;
         int reduce = -1;
         int symbols = -1;
+        int pos = -1;
         switch (action & 7)
         {
         case 1: // SHIFT
@@ -393,18 +395,19 @@ public class Ixml
         {
           if (nonterminalId < 0)
           {
-            stack = new StackNode(state, lookback, b1, stack);
+            pos = b1;
             consume(l1);
           }
           else
           {
-            stack = new StackNode(state, lookback, 0, stack);
+            pos = 0;
           }
-          state = shift;
         }
 
         if (reduce < 0)
         {
+          stack = new StackNode(state, lookback, pos, stack);
+          state = shift;
           action = predict(state);
           return PARSING;
         }
@@ -425,12 +428,20 @@ public class Ixml
           }
           if (symbols > 0)
           {
-            for (int i = 1; i < symbols; i++)
+            int n = symbols;
+            if (shift >= 0)
             {
+              n -= 1;
+            }
+            if (n > 0)
+            {
+              for (int i = 1; i < n; i++)
+              {
+                stack = stack.link;
+              }
+              state = stack.state;
               stack = stack.link;
             }
-            state = stack.state;
-            stack = stack.link;
           }
           action = goTo(nonterminalId, state);
         }
@@ -477,21 +488,21 @@ public class Ixml
         {
                                                             // line 3 "ixml.ebnf"
                                                             if (grammar == null) grammar = new Grammar((String) null);
-                                                            // line 481 "Ixml.java"
+                                                            // line 492 "Ixml.java"
         }
         break;
       case 1:
         {
                                                             // line 5 "ixml.ebnf"
                                                             de.bottlecaps.markup.blitz.Errors.S01.thro();
-                                                            // line 488 "Ixml.java"
+                                                            // line 499 "Ixml.java"
         }
         break;
       case 2:
         {
                                                             // line 14 "ixml.ebnf"
                                                             grammar = new Grammar(stringBuilder.toString());
-                                                            // line 495 "Ixml.java"
+                                                            // line 506 "Ixml.java"
         }
         break;
       case 3:
@@ -499,28 +510,28 @@ public class Ixml
                                                             // line 18 "ixml.ebnf"
                                                             alts.push(new Alts());
                                                             grammar.addRule(new Rule(mark, alias, name, alts.peek()));
-                                                            // line 503 "Ixml.java"
+                                                            // line 514 "Ixml.java"
         }
         break;
       case 4:
         {
                                                             // line 21 "ixml.ebnf"
                                                             alts.pop();
-                                                            // line 510 "Ixml.java"
+                                                            // line 521 "Ixml.java"
         }
         break;
       case 5:
         {
                                                             // line 23 "ixml.ebnf"
                                                             nameBuilder.setLength(0);
-                                                            // line 517 "Ixml.java"
+                                                            // line 528 "Ixml.java"
         }
         break;
       case 6:
         {
                                                             // line 24 "ixml.ebnf"
                                                             nameBuilder.append(input.subSequence(b0, e0));
-                                                            // line 524 "Ixml.java"
+                                                            // line 535 "Ixml.java"
         }
         break;
       case 7:
@@ -528,7 +539,7 @@ public class Ixml
                                                             // line 27 "ixml.ebnf"
                                                             name = nameBuilder.toString();
                                                             alias = null;
-                                                            // line 532 "Ixml.java"
+                                                            // line 543 "Ixml.java"
         }
         break;
       case 8:
@@ -537,7 +548,7 @@ public class Ixml
                                                             if (! grammar.getVersion().isAtLeast(Grammar.Version.V1_1))
                                                               de.bottlecaps.markup.blitz.Errors.S12.thro(grammar.getVersion() + " does not support renaming");
                                                             savedName = name;
-                                                            // line 541 "Ixml.java"
+                                                            // line 552 "Ixml.java"
         }
         break;
       case 9:
@@ -545,269 +556,277 @@ public class Ixml
                                                             // line 44 "ixml.ebnf"
                                                             alias = name;
                                                             name = savedName;
-                                                            // line 549 "Ixml.java"
+                                                            // line 560 "Ixml.java"
         }
         break;
       case 10:
         {
                                                             // line 48 "ixml.ebnf"
                                                             alts.peek().addAlt(new Alt());
-                                                            // line 556 "Ixml.java"
+                                                            // line 567 "Ixml.java"
         }
         break;
       case 11:
         {
-                                                            // line 57 "ixml.ebnf"
+                                                            // line 58 "ixml.ebnf"
                                                             alts.push(new Alts());
-                                                            // line 563 "Ixml.java"
+                                                            // line 574 "Ixml.java"
         }
         break;
       case 12:
         {
-                                                            // line 59 "ixml.ebnf"
+                                                            // line 60 "ixml.ebnf"
                                                             Alts nested = alts.pop();
                                                             alts.peek().last().addAlts(nested);
-                                                            // line 571 "Ixml.java"
+                                                            // line 582 "Ixml.java"
         }
         break;
       case 13:
         {
-                                                            // line 63 "ixml.ebnf"
+                                                            // line 64 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, null);
-                                                            // line 579 "Ixml.java"
+                                                            // line 590 "Ixml.java"
         }
         break;
       case 14:
         {
-                                                            // line 67 "ixml.ebnf"
+                                                            // line 68 "ixml.ebnf"
                                                             Term sep = alts.peek().last().removeLast();
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_MORE, term, sep);
-                                                            // line 588 "Ixml.java"
+                                                            // line 599 "Ixml.java"
         }
         break;
       case 15:
         {
-                                                            // line 73 "ixml.ebnf"
+                                                            // line 74 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, null);
-                                                            // line 596 "Ixml.java"
+                                                            // line 607 "Ixml.java"
         }
         break;
       case 16:
         {
-                                                            // line 77 "ixml.ebnf"
+                                                            // line 78 "ixml.ebnf"
                                                             Term sep = alts.peek().last().removeLast();
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ONE_OR_MORE, term, sep);
-                                                            // line 605 "Ixml.java"
+                                                            // line 616 "Ixml.java"
         }
         break;
       case 17:
         {
-                                                            // line 83 "ixml.ebnf"
+                                                            // line 84 "ixml.ebnf"
                                                             Term term = alts.peek().last().removeLast();
                                                             alts.peek().last().addControl(Occurrence.ZERO_OR_ONE, term, null);
-                                                            // line 613 "Ixml.java"
+                                                            // line 624 "Ixml.java"
         }
         break;
       case 18:
         {
-                                                            // line 86 "ixml.ebnf"
+                                                            // line 87 "ixml.ebnf"
                                                             mark = Mark.ATTRIBUTE;
-                                                            // line 620 "Ixml.java"
+                                                            // line 631 "Ixml.java"
         }
         break;
       case 19:
         {
-                                                            // line 87 "ixml.ebnf"
+                                                            // line 88 "ixml.ebnf"
                                                             mark = Mark.NODE;
-                                                            // line 627 "Ixml.java"
+                                                            // line 638 "Ixml.java"
         }
         break;
       case 20:
         {
-                                                            // line 88 "ixml.ebnf"
+                                                            // line 89 "ixml.ebnf"
                                                             mark = Mark.DELETE;
-                                                            // line 634 "Ixml.java"
+                                                            // line 645 "Ixml.java"
         }
         break;
       case 21:
         {
-                                                            // line 89 "ixml.ebnf"
+                                                            // line 90 "ixml.ebnf"
                                                             mark = Mark.NONE;
-                                                            // line 641 "Ixml.java"
+                                                            // line 652 "Ixml.java"
         }
         break;
       case 22:
         {
-                                                            // line 92 "ixml.ebnf"
+                                                            // line 93 "ixml.ebnf"
                                                             alts.peek().last().addNonterminal(mark, alias, name);
-                                                            // line 648 "Ixml.java"
+                                                            // line 659 "Ixml.java"
         }
         break;
       case 23:
         {
-                                                            // line 93 "ixml.ebnf"
+                                                            // line 94 "ixml.ebnf"
                                                             deleted = false;
-                                                            // line 655 "Ixml.java"
+                                                            // line 666 "Ixml.java"
         }
         break;
       case 24:
         {
-                                                            // line 96 "ixml.ebnf"
+                                                            // line 97 "ixml.ebnf"
                                                             alts.peek().last().addCharset(new Charset(deleted, exclusion, members));
-                                                            // line 662 "Ixml.java"
+                                                            // line 673 "Ixml.java"
         }
         break;
       case 25:
         {
-                                                            // line 99 "ixml.ebnf"
+                                                            // line 100 "ixml.ebnf"
                                                             alts.peek().last().addString(deleted, stringBuilder.toString());
-                                                            // line 669 "Ixml.java"
+                                                            // line 680 "Ixml.java"
         }
         break;
       case 26:
         {
-                                                            // line 100 "ixml.ebnf"
+                                                            // line 101 "ixml.ebnf"
                                                             alts.peek().last().addCodepoint(deleted, codepoint);
-                                                            // line 676 "Ixml.java"
+                                                            // line 687 "Ixml.java"
         }
         break;
       case 27:
         {
-                                                            // line 102 "ixml.ebnf"
+                                                            // line 103 "ixml.ebnf"
                                                             deleted = true;
-                                                            // line 683 "Ixml.java"
+                                                            // line 694 "Ixml.java"
         }
         break;
       case 28:
         {
-                                                            // line 103 "ixml.ebnf"
+                                                            // line 104 "ixml.ebnf"
                                                             stringBuilder.setLength(0);
-                                                            // line 690 "Ixml.java"
+                                                            // line 701 "Ixml.java"
         }
         break;
       case 29:
         {
-                                                            // line 104 "ixml.ebnf"
+                                                            // line 105 "ixml.ebnf"
                                                             stringBuilder.append(input.subSequence(b0, e0));
-                                                            // line 697 "Ixml.java"
+                                                            // line 708 "Ixml.java"
         }
         break;
       case 30:
         {
-                                                            // line 109 "ixml.ebnf"
+                                                            // line 110 "ixml.ebnf"
                                                             validateStringChar(input.toString().codePointAt(b0));
-                                                            // line 704 "Ixml.java"
+                                                            // line 715 "Ixml.java"
         }
         break;
       case 31:
         {
-                                                            // line 111 "ixml.ebnf"
+                                                            // line 112 "ixml.ebnf"
                                                             hexBegin = b0;
-                                                            // line 711 "Ixml.java"
+                                                            // line 722 "Ixml.java"
         }
         break;
       case 32:
         {
-                                                            // line 112 "ixml.ebnf"
+                                                            // line 113 "ixml.ebnf"
                                                             codepoint = input.subSequence(hexBegin, e0).toString();
-                                                            // line 718 "Ixml.java"
+                                                            // line 729 "Ixml.java"
         }
         break;
       case 33:
         {
-                                                            // line 117 "ixml.ebnf"
+                                                            // line 118 "ixml.ebnf"
                                                             exclusion = false;
                                                             members = new java.util.ArrayList<>();
-                                                            // line 726 "Ixml.java"
+                                                            // line 737 "Ixml.java"
         }
         break;
       case 34:
         {
-                                                            // line 122 "ixml.ebnf"
+                                                            // line 123 "ixml.ebnf"
                                                             exclusion = true;
                                                             members = new java.util.ArrayList<>();
-                                                            // line 734 "Ixml.java"
+                                                            // line 745 "Ixml.java"
         }
         break;
       case 35:
         {
-                                                            // line 127 "ixml.ebnf"
+                                                            // line 128 "ixml.ebnf"
                                                             members.add(new StringMember(stringBuilder.toString(), false));
-                                                            // line 741 "Ixml.java"
+                                                            // line 752 "Ixml.java"
         }
         break;
       case 36:
         {
-                                                            // line 128 "ixml.ebnf"
+                                                            // line 129 "ixml.ebnf"
                                                             members.add(new StringMember(codepoint, true));
-                                                            // line 748 "Ixml.java"
+                                                            // line 759 "Ixml.java"
         }
         break;
       case 37:
         {
-                                                            // line 129 "ixml.ebnf"
+                                                            // line 130 "ixml.ebnf"
                                                             members.add(new RangeMember(firstCodepoint, lastCodepoint));
-                                                            // line 755 "Ixml.java"
+                                                            // line 766 "Ixml.java"
         }
         break;
       case 38:
         {
-                                                            // line 130 "ixml.ebnf"
+                                                            // line 131 "ixml.ebnf"
                                                             members.add(new ClassMember(clazz));
-                                                            // line 762 "Ixml.java"
+                                                            // line 773 "Ixml.java"
         }
         break;
       case 39:
         {
-                                                            // line 132 "ixml.ebnf"
+                                                            // line 133 "ixml.ebnf"
                                                             firstCodepoint = codepoint;
-                                                            // line 769 "Ixml.java"
+                                                            // line 780 "Ixml.java"
         }
         break;
       case 40:
         {
-                                                            // line 133 "ixml.ebnf"
+                                                            // line 134 "ixml.ebnf"
                                                             lastCodepoint = codepoint;
-                                                            // line 776 "Ixml.java"
+                                                            // line 787 "Ixml.java"
         }
         break;
       case 41:
         {
-                                                            // line 134 "ixml.ebnf"
+                                                            // line 135 "ixml.ebnf"
                                                             codepoint = input.subSequence(b0, e0).toString();
-                                                            // line 783 "Ixml.java"
+                                                            // line 794 "Ixml.java"
         }
         break;
       case 42:
         {
-                                                            // line 139 "ixml.ebnf"
+                                                            // line 140 "ixml.ebnf"
                                                             clazz += input.subSequence(b0, e0);
-                                                            // line 790 "Ixml.java"
+                                                            // line 801 "Ixml.java"
         }
         break;
       case 43:
         {
-                                                            // line 145 "ixml.ebnf"
+                                                            // line 146 "ixml.ebnf"
                                                             clazz = input.subSequence(b0, e0).toString();
-                                                            // line 797 "Ixml.java"
+                                                            // line 808 "Ixml.java"
         }
         break;
       case 44:
         {
-                                                            // line 146 "ixml.ebnf"
-                                                            alts.peek().last().addStringInsertion(stringBuilder.toString());
-                                                            // line 804 "Ixml.java"
+                                                            // line 148 "ixml.ebnf"
+                                                            Term operand = alts.peek().last().removeLast();
+                                                            alts.peek().last().addNot(operand);
+                                                            // line 816 "Ixml.java"
         }
         break;
       case 45:
         {
-                                                            // line 147 "ixml.ebnf"
+                                                            // line 151 "ixml.ebnf"
+                                                            alts.peek().last().addStringInsertion(stringBuilder.toString());
+                                                            // line 823 "Ixml.java"
+        }
+        break;
+      case 46:
+        {
+                                                            // line 152 "ixml.ebnf"
                                                             alts.peek().last().addHexInsertion(codepoint);
-                                                            // line 811 "Ixml.java"
+                                                            // line 830 "Ixml.java"
         }
         break;
       default:
@@ -947,10 +966,10 @@ public class Ixml
   {
     java.util.ArrayList<String> expected = new java.util.ArrayList<>();
     int s = tokenSetId < 0 ? - tokenSetId : INITIAL[tokenSetId] & 127;
-    for (int i = 0; i < 71; i += 32)
+    for (int i = 0; i < 72; i += 32)
     {
       int j = i;
-      int i0 = (i >> 5) * 70 + s - 1;
+      int i0 = (i >> 5) * 74 + s - 1;
       int f = EXPECTED[(i0 & 3) + EXPECTED[i0 >> 2]];
       for ( ; f != 0; f >>>= 1, ++j)
       {
@@ -963,19 +982,47 @@ public class Ixml
     return expected.toArray(new String[]{});
   }
 
+  private static void decode(String[] chunks, int[] target)
+  {
+    int n = 0;
+    for (String chunk : chunks)
+    {
+      int value = 0;
+      boolean negative = false;
+      for (int i = 0, length = chunk.length(); i < length; ++i)
+      {
+        char c = chunk.charAt(i);
+        if (c >= '0' && c <= '9')
+        {
+          value = value * 10 + (c - '0');
+        }
+        else if (c == '-')
+        {
+          negative = true;
+        }
+        else if (c == ',')
+        {
+          target[n++] = negative ? - value : value;
+          value = 0;
+          negative = false;
+        }
+      }
+      target[n++] = negative ? - value : value;
+    }
+  }
+
   private static final int[] MAP0 = new int[128];
   static
   {
     final String s1[] =
     {
-      /*   0 */ "67, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1",
-      /*  34 */ "3, 4, 1, 1, 1, 5, 6, 7, 8, 9, 10, 11, 12, 1, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 14, 15, 1, 16",
-      /*  62 */ "17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41",
-      /*  87 */ "42, 43, 44, 45, 46, 1, 47, 48, 49, 1, 50, 50, 50, 50, 51, 50, 52, 52, 53, 52, 52, 54, 55, 56, 57, 52",
-      /* 113 */ "52, 58, 59, 52, 52, 60, 52, 61, 52, 52, 62, 63, 64, 65, 1"
+      /*   0 */ "68, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3",
+      /*  34 */ "4, 5, 1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 1, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 16, 1, 17",
+      /*  62 */ "18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42",
+      /*  87 */ "43, 44, 45, 46, 47, 1, 48, 49, 50, 1, 51, 51, 51, 51, 52, 51, 53, 53, 54, 53, 53, 55, 56, 57, 58, 53",
+      /* 113 */ "53, 59, 60, 53, 53, 61, 53, 62, 53, 53, 63, 64, 65, 66, 1"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 128; ++i) {MAP0[i] = Integer.parseInt(s2[i]);}
+    decode(s1, MAP0);
   }
 
   private static final int[] MAP1 = new int[2345];
@@ -1075,38 +1122,37 @@ public class Ixml
       /* 1518 */ "1580, 1580, 1861, 1861, 1861, 1861, 1861, 1861, 2291, 2310, 2301, 1580, 1580, 2008, 1861, 2325, 2239",
       /* 1535 */ "1580, 2024, 2024, 2024, 1580, 1862, 1862, 1580, 1580, 1580, 1580, 1580, 1580, 1580, 1580, 1580, 1580",
       /* 1552 */ "1861, 1861, 1861, 1861, 1865, 1580, 1861, 1861, 1862, 1971, 1861, 1861, 1861, 1861, 1861, 1865, 2050",
-      /* 1569 */ "2317, 1580, 2125, 1843, 2125, 1811, 1861, 1861, 1861, 1863, 67, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2",
-      /* 1592 */ "1, 1, 2, 1, 1, 1, 1, 49, 49, 1, 49, 2, 1, 3, 4, 1, 1, 1, 5, 6, 7, 8, 9, 10, 11, 12, 1, 1, 1, 1, 1",
-      /* 1623 */ "49, 1, 66, 66, 66, 66, 1, 1, 49, 49, 49, 49, 13, 13, 13, 13, 13, 13, 13, 13, 14, 15, 1, 16, 17, 18",
-      /* 1649 */ "19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43",
-      /* 1674 */ "44, 45, 46, 1, 47, 48, 49, 1, 49, 1, 1, 1, 49, 49, 1, 49, 1, 1, 49, 1, 1, 1, 50, 50, 50, 50, 51, 50",
-      /* 1702 */ "52, 52, 58, 59, 52, 52, 60, 52, 53, 52, 52, 54, 55, 56, 57, 61, 52, 52, 62, 63, 64, 65, 1, 1, 1, 1",
-      /* 1728 */ "1, 66, 1, 66, 1, 1, 66, 66, 66, 1, 1, 1, 1, 49, 49, 49, 49, 1, 66, 66, 66, 66, 66, 1, 66, 1, 66, 66",
-      /* 1756 */ "1, 66, 66, 1, 66, 1, 1, 49, 49, 1, 49, 49, 49, 1, 49, 1, 49, 49, 49, 49, 49, 49, 1, 49, 66, 66, 66",
-      /* 1783 */ "66, 66, 66, 66, 1, 66, 66, 66, 66, 66, 66, 66, 49, 49, 66, 1, 66, 49, 1, 1, 1, 49, 49, 1, 1, 1, 1, 1",
-      /* 1811 */ "66, 66, 49, 49, 49, 49, 49, 49, 66, 66, 66, 66, 66, 66, 66, 49, 66, 66, 66, 66, 66, 66, 1, 49, 49",
-      /* 1836 */ "49, 66, 66, 1, 1, 66, 66, 66, 66, 1, 1, 1, 49, 49, 49, 49, 66, 49, 49, 1, 1, 66, 49, 1, 1, 49, 49",
-      /* 1863 */ "49, 49, 49, 49, 49, 49, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 66, 49, 1, 49, 49, 49, 49, 1, 1, 1, 1, 49",
-      /* 1892 */ "1, 66, 66, 49, 49, 49, 66, 1, 1, 66, 66, 1, 49, 49, 1, 1, 66, 49, 1, 66, 66, 1, 1, 66, 66, 1, 1, 66",
-      /* 1920 */ "66, 49, 49, 49, 49, 1, 1, 1, 49, 49, 1, 49, 1, 49, 49, 1, 49, 49, 1, 49, 49, 49, 49, 1, 49, 1, 49",
-      /* 1947 */ "66, 49, 49, 66, 66, 66, 66, 49, 49, 49, 1, 1, 49, 1, 1, 66, 66, 1, 66, 66, 49, 1, 1, 1, 1, 1, 1, 49",
-      /* 1975 */ "49, 49, 49, 49, 49, 49, 49, 1, 1, 66, 66, 66, 1, 66, 1, 1, 1, 66, 66, 49, 49, 49, 49, 66, 66, 1, 66",
-      /* 2002 */ "66, 66, 1, 1, 1, 66, 1, 1, 1, 49, 49, 49, 1, 1, 2, 49, 49, 49, 49, 49, 49, 49, 1, 49, 49, 49, 49, 49",
-      /* 2030 */ "49, 1, 49, 1, 1, 49, 49, 66, 66, 66, 1, 1, 1, 1, 66, 49, 49, 66, 66, 1, 1, 1, 1, 1, 66, 66, 66, 66",
-      /* 2058 */ "66, 1, 1, 1, 1, 49, 66, 1, 1, 1, 1, 1, 1, 66, 66, 1, 1, 49, 49, 49, 49, 49, 1, 66, 1, 1, 1, 66, 66",
-      /* 2087 */ "66, 2, 1, 66, 66, 66, 66, 1, 49, 49, 49, 49, 49, 49, 49, 49, 49, 66, 1, 66, 66, 66, 66, 49, 49, 1, 1",
-      /* 2114 */ "1, 1, 49, 49, 66, 66, 1, 1, 1, 66, 1, 66, 66, 66, 66, 66, 66, 66, 66, 1, 1, 1, 1, 1, 1, 1, 66, 66",
-      /* 2142 */ "66, 1, 66, 66, 66, 66, 1, 1, 1, 49, 66, 49, 49, 49, 49, 66, 49, 49, 49, 49, 49, 49, 49, 66, 1, 49",
-      /* 2168 */ "49, 1, 1, 66, 49, 49, 1, 1, 1, 49, 66, 66, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 49, 1, 1, 1",
-      /* 2199 */ "1, 49, 1, 1, 1, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 49, 49, 49, 49, 1, 1, 49, 49, 49, 49, 1, 1, 49",
-      /* 2227 */ "49, 49, 49, 1, 1, 49, 49, 49, 1, 1, 66, 66, 1, 1, 49, 49, 49, 1, 66, 1, 1, 1, 1, 49, 1, 1, 1, 1, 1",
-      /* 2256 */ "1, 1, 66, 1, 1, 1, 66, 66, 1, 1, 66, 1, 1, 1, 1, 1, 1, 49, 49, 49, 49, 66, 1, 1, 1, 1, 66, 1, 1, 49",
-      /* 2286 */ "49, 49, 1, 49, 49, 66, 49, 66, 66, 66, 49, 49, 66, 49, 49, 49, 66, 49, 1, 1, 1, 1, 1, 1, 66, 49, 49",
-      /* 2313 */ "49, 49, 49, 66, 66, 66, 66, 66, 1, 1, 66, 66, 49, 49, 49, 1, 66, 66, 1, 1, 1, 1, 66, 49, 49, 49, 1",
-      /* 2340 */ "1, 66, 1, 1, 1"
+      /* 1569 */ "2317, 1580, 2125, 1843, 2125, 1811, 1861, 1861, 1861, 1863, 68, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 2",
+      /* 1592 */ "1, 1, 2, 1, 1, 1, 1, 50, 50, 1, 50, 2, 3, 4, 5, 1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 1, 1, 1, 1, 1",
+      /* 1623 */ "50, 1, 67, 67, 67, 67, 1, 1, 50, 50, 50, 50, 14, 14, 14, 14, 14, 14, 14, 14, 15, 16, 1, 17, 18, 19",
+      /* 1649 */ "20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44",
+      /* 1674 */ "45, 46, 47, 1, 48, 49, 50, 1, 50, 1, 1, 1, 50, 50, 1, 50, 1, 1, 50, 1, 1, 1, 51, 51, 51, 51, 52, 51",
+      /* 1702 */ "53, 53, 59, 60, 53, 53, 61, 53, 54, 53, 53, 55, 56, 57, 58, 62, 53, 53, 63, 64, 65, 66, 1, 1, 1, 1",
+      /* 1728 */ "1, 67, 1, 67, 1, 1, 67, 67, 67, 1, 1, 1, 1, 50, 50, 50, 50, 1, 67, 67, 67, 67, 67, 1, 67, 1, 67, 67",
+      /* 1756 */ "1, 67, 67, 1, 67, 1, 1, 50, 50, 1, 50, 50, 50, 1, 50, 1, 50, 50, 50, 50, 50, 50, 1, 50, 67, 67, 67",
+      /* 1783 */ "67, 67, 67, 67, 1, 67, 67, 67, 67, 67, 67, 67, 50, 50, 67, 1, 67, 50, 1, 1, 1, 50, 50, 1, 1, 1, 1, 1",
+      /* 1811 */ "67, 67, 50, 50, 50, 50, 50, 50, 67, 67, 67, 67, 67, 67, 67, 50, 67, 67, 67, 67, 67, 67, 1, 50, 50",
+      /* 1836 */ "50, 67, 67, 1, 1, 67, 67, 67, 67, 1, 1, 1, 50, 50, 50, 50, 67, 50, 50, 1, 1, 67, 50, 1, 1, 50, 50",
+      /* 1863 */ "50, 50, 50, 50, 50, 50, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 67, 50, 1, 50, 50, 50, 50, 1, 1, 1, 1, 50",
+      /* 1892 */ "1, 67, 67, 50, 50, 50, 67, 1, 1, 67, 67, 1, 50, 50, 1, 1, 67, 50, 1, 67, 67, 1, 1, 67, 67, 1, 1, 67",
+      /* 1920 */ "67, 50, 50, 50, 50, 1, 1, 1, 50, 50, 1, 50, 1, 50, 50, 1, 50, 50, 1, 50, 50, 50, 50, 1, 50, 1, 50",
+      /* 1947 */ "67, 50, 50, 67, 67, 67, 67, 50, 50, 50, 1, 1, 50, 1, 1, 67, 67, 1, 67, 67, 50, 1, 1, 1, 1, 1, 1, 50",
+      /* 1975 */ "50, 50, 50, 50, 50, 50, 50, 1, 1, 67, 67, 67, 1, 67, 1, 1, 1, 67, 67, 50, 50, 50, 50, 67, 67, 1, 67",
+      /* 2002 */ "67, 67, 1, 1, 1, 67, 1, 1, 1, 50, 50, 50, 1, 1, 2, 50, 50, 50, 50, 50, 50, 50, 1, 50, 50, 50, 50, 50",
+      /* 2030 */ "50, 1, 50, 1, 1, 50, 50, 67, 67, 67, 1, 1, 1, 1, 67, 50, 50, 67, 67, 1, 1, 1, 1, 1, 67, 67, 67, 67",
+      /* 2058 */ "67, 1, 1, 1, 1, 50, 67, 1, 1, 1, 1, 1, 1, 67, 67, 1, 1, 50, 50, 50, 50, 50, 1, 67, 1, 1, 1, 67, 67",
+      /* 2087 */ "67, 2, 1, 67, 67, 67, 67, 1, 50, 50, 50, 50, 50, 50, 50, 50, 50, 67, 1, 67, 67, 67, 67, 50, 50, 1, 1",
+      /* 2114 */ "1, 1, 50, 50, 67, 67, 1, 1, 1, 67, 1, 67, 67, 67, 67, 67, 67, 67, 67, 1, 1, 1, 1, 1, 1, 1, 67, 67",
+      /* 2142 */ "67, 1, 67, 67, 67, 67, 1, 1, 1, 50, 67, 50, 50, 50, 50, 67, 50, 50, 50, 50, 50, 50, 50, 67, 1, 50",
+      /* 2168 */ "50, 1, 1, 67, 50, 50, 1, 1, 1, 50, 67, 67, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 50, 1, 1, 1",
+      /* 2199 */ "1, 50, 1, 1, 1, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 50, 50, 50, 50, 1, 1, 50, 50, 50, 50, 1, 1, 50",
+      /* 2227 */ "50, 50, 50, 1, 1, 50, 50, 50, 1, 1, 67, 67, 1, 1, 50, 50, 50, 1, 67, 1, 1, 1, 1, 50, 1, 1, 1, 1, 1",
+      /* 2256 */ "1, 1, 67, 1, 1, 1, 67, 67, 1, 1, 67, 1, 1, 1, 1, 1, 1, 50, 50, 50, 50, 67, 1, 1, 1, 1, 67, 1, 1, 50",
+      /* 2286 */ "50, 50, 1, 50, 50, 67, 50, 67, 67, 67, 50, 50, 67, 50, 50, 50, 67, 50, 1, 1, 1, 1, 1, 1, 67, 50, 50",
+      /* 2313 */ "50, 50, 50, 67, 67, 67, 67, 67, 1, 1, 67, 67, 50, 50, 50, 1, 67, 67, 1, 1, 1, 1, 67, 50, 50, 50, 1",
+      /* 2340 */ "1, 67, 1, 1, 1"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 2345; ++i) {MAP1[i] = Integer.parseInt(s2[i]);}
+    decode(s1, MAP1);
   }
 
   private static final int[] MAP2 = new int[1092];
@@ -1169,302 +1215,296 @@ public class Ixml
       /*  682 */ "126564, 126566, 126570, 126571, 126578, 126579, 126583, 126584, 126588, 126589, 126590, 126591",
       /*  694 */ "126601, 126602, 126619, 126624, 126627, 126628, 126633, 126634, 126651, 131069, 173782, 173823",
       /*  706 */ "177972, 177983, 178205, 194559, 195101, 196605, 262141, 327677, 393213, 458749, 524285, 589821",
-      /*  718 */ "655357, 720893, 786429, 851965, 917501, 917759, 917999, 983037, 1048573, 1114109, 1, 49, 1, 49, 1",
-      /*  733 */ "49, 1, 49, 1, 49, 66, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1",
-      /*  761 */ "66, 1, 66, 1, 49, 1, 49, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49",
-      /*  790 */ "1, 49, 1, 49, 1, 49, 1, 49, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1",
-      /*  819 */ "66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 66, 1, 66, 1, 66",
-      /*  847 */ "49, 1, 49, 1, 49, 1, 66, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 66, 1, 49, 66, 1, 66, 1, 66, 1",
-      /*  876 */ "49, 1, 66, 1, 66, 1, 49, 1, 66, 1, 66, 49, 66, 1, 66, 1, 66, 1, 66, 1, 49, 1, 66, 1, 49, 1, 66, 1",
-      /*  904 */ "49, 66, 1, 66, 1, 66, 1, 66, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 66, 49, 1, 49, 1, 66, 1",
-      /*  932 */ "66, 1, 66, 1, 66, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49",
-      /*  961 */ "1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1",
-      /*  990 */ "49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 66, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49",
-      /* 1019 */ "1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1",
-      /* 1048 */ "49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 49, 1, 1",
-      /* 1077 */ "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 66, 1, 1, 1"
+      /*  718 */ "655357, 720893, 786429, 851965, 917501, 917759, 917999, 983037, 1048573, 1114109, 1, 50, 1, 50, 1",
+      /*  733 */ "50, 1, 50, 1, 50, 67, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1",
+      /*  761 */ "67, 1, 67, 1, 50, 1, 50, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50",
+      /*  790 */ "1, 50, 1, 50, 1, 50, 1, 50, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1",
+      /*  819 */ "67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 67, 1, 67, 1, 67",
+      /*  847 */ "50, 1, 50, 1, 50, 1, 67, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 67, 1, 50, 67, 1, 67, 1, 67, 1",
+      /*  876 */ "50, 1, 67, 1, 67, 1, 50, 1, 67, 1, 67, 50, 67, 1, 67, 1, 67, 1, 67, 1, 50, 1, 67, 1, 50, 1, 67, 1",
+      /*  904 */ "50, 67, 1, 67, 1, 67, 1, 67, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 67, 50, 1, 50, 1, 67, 1",
+      /*  932 */ "67, 1, 67, 1, 67, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50",
+      /*  961 */ "1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1",
+      /*  990 */ "50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 67, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50",
+      /* 1019 */ "1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1",
+      /* 1048 */ "50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 50, 1, 1",
+      /* 1077 */ "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 67, 1, 1, 1"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 1092; ++i) {MAP2[i] = Integer.parseInt(s2[i]);}
+    decode(s1, MAP2);
   }
 
-  private static final int[] INITIAL = new int[67];
+  private static final int[] INITIAL = new int[71];
   static
   {
     final String s1[] =
     {
       /*  0 */ "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28",
       /* 28 */ "29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54",
-      /* 54 */ "55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67"
+      /* 54 */ "55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 67; ++i) {INITIAL[i] = Integer.parseInt(s2[i]);}
+    decode(s1, INITIAL);
   }
 
-  private static final int[] TRANSITION = new int[2133];
+  private static final int[] TRANSITION = new int[2103];
   static
   {
     final String s1[] =
     {
-      /*    0 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*   17 */ "2092, 1594, 1590, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*   34 */ "1701, 1088, 1117, 1119, 1693, 1697, 1127, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1166, 2092, 1426",
-      /*   51 */ "1585, 1139, 1165, 1160, 1174, 1179, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1612",
-      /*   68 */ "1193, 2091, 1224, 2084, 2089, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1254, 2092, 1243, 1635, 1251",
-      /*   85 */ "1253, 1262, 1280, 1285, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 2092, 2092",
-      /*  102 */ "2092, 1101, 1106, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1443, 2092, 1594, 1617, 1444, 1296, 2092",
-      /*  119 */ "1461, 1304, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 2092, 2054, 2092, 2092",
-      /*  136 */ "1230, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 2092, 1315, 2092, 1987, 1993",
-      /*  153 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1719, 1323, 2092, 2092, 1724, 2092",
-      /*  170 */ "2092, 2092, 2092, 2092, 2092, 2092, 1647, 2092, 1594, 1331, 1647, 1343, 1216, 1351, 1356, 2092, 2092",
-      /*  187 */ "2092, 2092, 2092, 2092, 2092, 1182, 2092, 1594, 1367, 1185, 1373, 2092, 1401, 1378, 2092, 2092, 2092",
-      /*  204 */ "2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590, 2092, 1381, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  221 */ "2092, 2092, 2092, 2092, 2092, 1131, 1640, 2092, 1288, 2092, 2092, 1644, 2092, 2092, 2092, 2092, 2092",
-      /*  238 */ "2092, 2092, 2092, 2092, 1594, 1541, 1545, 1481, 2092, 1478, 1398, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  255 */ "2092, 2092, 2092, 1335, 1235, 2092, 1109, 2092, 2092, 1239, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  272 */ "2115, 2092, 1594, 1590, 2092, 2116, 2092, 2092, 2016, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  289 */ "2092, 1594, 1590, 2092, 1409, 2092, 2092, 1268, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  306 */ "1594, 1590, 2092, 2092, 1307, 1417, 1422, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594",
-      /*  323 */ "1590, 1272, 1381, 1434, 1434, 1439, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590",
-      /*  340 */ "1272, 1381, 1452, 1452, 1457, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590, 1272",
-      /*  357 */ "1381, 1469, 1469, 1474, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590, 1272, 1381",
-      /*  374 */ "1489, 1489, 1494, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590, 1272, 1381, 1509",
-      /*  391 */ "1509, 1514, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1389, 2092, 1594, 1590, 1272, 1381, 1531, 1531",
-      /*  408 */ "1536, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1553, 1553, 1558",
-      /*  425 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1575, 1575, 1580, 2092",
-      /*  442 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1602, 1602, 1607, 2092, 2092",
-      /*  459 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1625, 1625, 1630, 2092, 2092, 2092",
-      /*  476 */ "2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1655, 1655, 1660, 2092, 2092, 2092, 2092",
-      /*  493 */ "2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1673, 1673, 1678, 2092, 2092, 2092, 2092, 2092",
-      /*  510 */ "2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1709, 1709, 1714, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  527 */ "2092, 2092, 2092, 1594, 1590, 1272, 1390, 1735, 1735, 1740, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  544 */ "2092, 2092, 1594, 1590, 1272, 1390, 1761, 1761, 1766, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  561 */ "2092, 1594, 1590, 1272, 1390, 1774, 1774, 1779, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  578 */ "1594, 1590, 1272, 1390, 1787, 1787, 1792, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594",
-      /*  595 */ "1590, 1272, 1390, 1800, 1800, 1805, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590",
-      /*  612 */ "1272, 1390, 1813, 1813, 1818, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272",
-      /*  629 */ "1390, 1826, 1826, 1831, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390",
-      /*  646 */ "1839, 1839, 1844, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1852",
-      /*  663 */ "1852, 1857, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1865, 1865",
-      /*  680 */ "1870, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1878, 1878, 1883",
-      /*  697 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1891, 1891, 1896, 2092",
-      /*  714 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1590, 1272, 1390, 1904, 1904, 1909, 2092, 2092",
-      /*  731 */ "2092, 2092, 2092, 2092, 2092, 2092, 2114, 1594, 2078, 1152, 2114, 2092, 2107, 2112, 2092, 2092, 2092",
-      /*  748 */ "2092, 2092, 2092, 2092, 2092, 2092, 1594, 1519, 1523, 1665, 1999, 2092, 2002, 2092, 2092, 2092, 2092",
-      /*  765 */ "2092, 2092, 2092, 2092, 2092, 1594, 1590, 2092, 1924, 1727, 1917, 1922, 2092, 2092, 2092, 2092, 2092",
-      /*  782 */ "2092, 2092, 2092, 2092, 1594, 1590, 2092, 1390, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  799 */ "2092, 1389, 2092, 1594, 1590, 1272, 1381, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  816 */ "1389, 1952, 1594, 1590, 1272, 1381, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /*  833 */ "2092, 1594, 1590, 1272, 1390, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1095",
-      /*  850 */ "1594, 1590, 1272, 1390, 1962, 1968, 1973, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1683, 1594",
-      /*  867 */ "1590, 1272, 1390, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2020, 1594, 1590",
-      /*  884 */ "1272, 1390, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1359, 1594, 1590, 1272",
-      /*  901 */ "1390, 1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1954, 1594, 1590, 1272, 1390",
-      /*  918 */ "1933, 1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2093, 1594, 1590, 1272, 1390, 1933",
-      /*  935 */ "1939, 1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1981, 1590, 1272, 1390, 1933, 1939",
-      /*  952 */ "1944, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2010, 1590, 1272, 1390, 2028, 2034, 2039",
-      /*  969 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1146, 1590, 1272, 1925, 1933, 1939, 1944, 2092",
-      /*  986 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 1753, 2047, 2062, 2064, 1745, 1749, 2072, 2092, 2092",
-      /* 1003 */ "2092, 2092, 2092, 2092, 2092, 2092, 2092, 1594, 1563, 1567, 1501, 2092, 1498, 2101, 2092, 2092, 2092",
-      /* 1020 */ "2092, 2092, 2092, 2092, 2092, 2092, 1594, 1688, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /* 1037 */ "2092, 2092, 2092, 2092, 2092, 1594, 1590, 1200, 1214, 2092, 1207, 1212, 2092, 2092, 2092, 2092, 2092",
-      /* 1054 */ "2092, 2092, 2092, 2092, 1594, 1590, 2092, 1390, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /* 1071 */ "2092, 2124, 2092, 2092, 2092, 2092, 2092, 2092, 2125, 2092, 2092, 2092, 2092, 2092, 2092, 2092, 2092",
-      /* 1088 */ "5956, 5956, 5956, 256, 0, 0, 5956, 0, 0, 8576, 0, 0, 0, 0, 0, 6912, 6912, 6912, 6912, 6912, 6912, 0",
-      /* 1110 */ "0, 0, 0, 0, 0, 7936, 7936, 5956, 5956, 0, 0, 5956, 5956, 5956, 5956, 5956, 5956, 5956, 5956, 5956",
-      /* 1130 */ "5956, 0, 0, 0, 0, 512, 640, 0, 7680, 6528, 0, 6528, 0, 0, 0, 6528, 0, 0, 8704, 0, 512, 640, 0, 0",
-      /* 1154 */ "8320, 0, 0, 0, 8320, 0, 0, 6528, 6528, 0, 6528, 6528, 0, 0, 6528, 0, 0, 0, 0, 0, 0, 6528, 6528, 6528",
-      /* 1178 */ "6528, 6528, 6528, 6528, 0, 0, 0, 0, 0, 0, 7552, 0, 0, 0, 7552, 6656, 0, 6656, 0, 0, 0, 6656, 0, 0",
-      /* 1202 */ "9088, 0, 0, 0, 9088, 0, 0, 9088, 9088, 9088, 9088, 9088, 9088, 0, 0, 0, 0, 0, 0, 0, 7424, 7424, 0",
-      /* 1225 */ "6656, 6656, 0, 6656, 6656, 0, 0, 837, 0, 896, 0, 0, 0, 256, 0, 0, 7936, 0, 0, 0, 0, 0, 512, 6784",
-      /* 1249 */ "6784, 0, 6784, 0, 6784, 0, 0, 0, 6784, 0, 0, 0, 0, 0, 6784, 6784, 0, 6784, 6784, 0, 0, 1152, 0, 0, 0",
-      /* 1274 */ "0, 0, 6272, 0, 0, 0, 0, 6784, 6784, 6784, 6784, 6784, 6784, 6784, 0, 0, 0, 0, 0, 0, 7680, 7680, 0",
-      /* 1297 */ "7040, 7040, 7040, 7040, 7040, 7040, 7040, 0, 7040, 7040, 0, 0, 0, 0, 0, 0, 8192, 8192, 0, 7238, 7238",
-      /* 1318 */ "7238, 7238, 7238, 7238, 7238, 0, 7296, 7296, 7296, 7296, 7296, 7296, 7296, 7424, 0, 0, 256, 0, 0, 0",
-      /* 1338 */ "0, 512, 640, 0, 7936, 7424, 0, 0, 0, 0, 7424, 0, 6016, 7424, 7424, 7424, 7424, 7424, 7424, 7424",
-      /* 1358 */ "7424, 0, 0, 0, 0, 0, 5120, 0, 0, 0, 7552, 0, 256, 0, 0, 0, 7552, 7552, 7552, 7552, 7552, 7552, 7552",
-      /* 1381 */ "0, 0, 0, 0, 0, 6144, 0, 6016, 6144, 0, 0, 0, 0, 0, 0, 0, 6016, 7808, 7808, 7808, 0, 0, 0, 0, 0, 7552",
-      /* 1407 */ "7552, 0, 0, 1152, 1152, 1152, 1152, 1152, 1152, 1152, 8192, 8192, 8192, 8192, 8192, 8192, 8192, 8192",
-      /* 1425 */ "0, 0, 0, 0, 0, 6528, 640, 6528, 0, 1280, 1280, 1280, 1280, 1280, 1280, 1280, 1280, 0, 0, 0, 0, 0",
-      /* 1447 */ "7040, 0, 0, 0, 7040, 1408, 1408, 1408, 1408, 1408, 1408, 1408, 1408, 0, 0, 0, 0, 0, 7040, 0, 7040",
-      /* 1468 */ "7040, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 0, 0, 0, 0, 0, 7808, 7808, 7808, 7808, 7808",
-      /* 1487 */ "7808, 7808, 1664, 1664, 1664, 1664, 1664, 1664, 1664, 1664, 0, 0, 0, 0, 0, 8960, 8960, 8960, 8960",
-      /* 1506 */ "8960, 8960, 8960, 1792, 1792, 1792, 1792, 1792, 1792, 1792, 1792, 0, 0, 0, 0, 0, 256, 0, 4608, 0, 0",
-      /* 1527 */ "4608, 4608, 0, 0, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 0, 0, 0, 0, 0, 256, 0, 7808, 0",
-      /* 1548 */ "7808, 7808, 7808, 0, 7808, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 0, 0, 0, 0, 0, 256, 0",
-      /* 1568 */ "8960, 0, 8960, 8960, 8960, 0, 8960, 2176, 2176, 2176, 2176, 2176, 2176, 2176, 2176, 0, 0, 0, 0, 0",
-      /* 1588 */ "256, 6528, 0, 0, 0, 256, 0, 0, 0, 0, 512, 640, 0, 0, 2304, 2304, 2304, 2304, 2304, 2304, 2304, 2304",
-      /* 1610 */ "0, 0, 0, 0, 0, 256, 6656, 0, 0, 0, 256, 0, 0, 0, 7040, 2432, 2432, 2432, 2432, 2432, 2432, 2432",
-      /* 1632 */ "2432, 0, 0, 0, 0, 0, 256, 6784, 0, 0, 0, 256, 0, 0, 7680, 0, 0, 0, 0, 0, 7424, 0, 0, 2560, 2560",
-      /* 1657 */ "2560, 2560, 2560, 2560, 2560, 2560, 0, 0, 0, 0, 0, 4608, 4608, 4608, 0, 0, 2688, 2688, 2688, 2688",
-      /* 1677 */ "2688, 2688, 2688, 2688, 0, 0, 0, 0, 0, 4864, 0, 0, 0, 0, 5760, 0, 0, 0, 0, 5956, 5956, 5956, 0, 5956",
-      /* 1701 */ "0, 0, 0, 5956, 512, 640, 0, 0, 2816, 2816, 2816, 2816, 2816, 2816, 2816, 2816, 0, 0, 0, 0, 0, 7296",
-      /* 1723 */ "0, 0, 0, 7296, 0, 0, 0, 0, 0, 0, 8448, 8448, 2944, 2944, 2944, 2944, 2944, 2944, 2944, 2944, 0, 0, 0",
-      /* 1746 */ "0, 0, 8832, 8832, 8832, 0, 8832, 0, 0, 0, 8832, 512, 640, 0, 0, 3072, 3072, 3072, 3072, 3072, 3072",
-      /* 1767 */ "3072, 3072, 0, 0, 0, 0, 0, 3200, 3200, 3200, 3200, 3200, 3200, 3200, 3200, 0, 0, 0, 0, 0, 3328, 3328",
-      /* 1789 */ "3328, 3328, 3328, 3328, 3328, 3328, 0, 0, 0, 0, 0, 3456, 3456, 3456, 3456, 3456, 3456, 3456, 3456, 0",
-      /* 1809 */ "0, 0, 0, 0, 3584, 3584, 3584, 3584, 3584, 3584, 3584, 3584, 0, 0, 0, 0, 0, 3712, 3712, 3712, 3712",
-      /* 1830 */ "3712, 3712, 3712, 3712, 0, 0, 0, 0, 0, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 0, 0, 0, 0, 0",
-      /* 1852 */ "3968, 3968, 3968, 3968, 3968, 3968, 3968, 3968, 0, 0, 0, 0, 0, 4096, 4096, 4096, 4096, 4096, 4096",
-      /* 1871 */ "4096, 4096, 0, 0, 0, 0, 0, 4224, 4224, 4224, 4224, 4224, 4224, 4224, 4224, 0, 0, 0, 0, 0, 4352, 4352",
-      /* 1893 */ "4352, 4352, 4352, 4352, 4352, 4352, 0, 0, 0, 0, 0, 4480, 4480, 4480, 4480, 4480, 4480, 4480, 4480, 0",
-      /* 1913 */ "0, 0, 0, 0, 8448, 8448, 8448, 8448, 8448, 8448, 8448, 8448, 0, 0, 0, 0, 0, 0, 0, 8704, 384, 0, 0",
-      /* 1936 */ "384, 0, 0, 384, 384, 384, 384, 384, 384, 384, 384, 0, 0, 0, 0, 0, 0, 4736, 0, 0, 0, 0, 0, 0, 5248, 0",
-      /* 1962 */ "8576, 0, 0, 8576, 0, 0, 8576, 8576, 8576, 8576, 8576, 8576, 8576, 8576, 0, 0, 0, 0, 0, 5504, 0, 0, 0",
-      /* 1985 */ "512, 640, 0, 0, 7168, 7168, 7168, 7168, 7168, 7168, 7238, 0, 0, 1024, 0, 0, 4608, 0, 0, 4608, 0, 0",
-      /* 2007 */ "0, 0, 0, 0, 5632, 0, 0, 512, 640, 0, 0, 8064, 0, 0, 0, 0, 0, 4992, 0, 0, 0, 5632, 0, 0, 5632, 0, 0",
-      /* 2034 */ "5632, 5632, 5632, 5632, 5632, 5632, 5632, 5632, 0, 0, 0, 0, 0, 8832, 8832, 8832, 8832, 0, 0, 8832, 0",
-      /* 2055 */ "837, 837, 837, 837, 837, 837, 837, 8832, 8832, 0, 0, 8832, 8832, 8832, 8832, 8832, 8832, 8832, 8832",
-      /* 2074 */ "8832, 0, 0, 0, 0, 0, 8320, 256, 0, 0, 0, 0, 6656, 6656, 6656, 6656, 6656, 6656, 0, 0, 0, 0, 0, 0, 0",
-      /* 2099 */ "0, 5376, 8960, 8960, 8960, 0, 0, 0, 0, 0, 8320, 8320, 8320, 8320, 8320, 8320, 0, 0, 0, 0, 0, 0, 0",
-      /* 2122 */ "8064, 8064, 0, 6400, 0, 0, 0, 0, 0, 0, 0"
+      /*    0 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*   17 */ "1212, 1285, 1439, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*   34 */ "1104, 1123, 1118, 1144, 1131, 1135, 1143, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285",
+      /*   51 */ "1439, 1212, 1212, 1212, 1110, 1152, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1190, 1212, 1988, 1171",
+      /*   68 */ "1994, 1189, 1184, 1198, 1199, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1207, 1221",
+      /*   85 */ "1211, 1237, 1256, 1258, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1921, 1212, 1912, 1266, 1918, 1920",
+      /*  102 */ "1279, 1305, 1306, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1212, 1212, 1212",
+      /*  119 */ "1159, 1163, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1228, 1212, 1285, 1479, 1229, 1485, 1212, 1212",
+      /*  136 */ "1314, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1212, 1333, 1212, 1212, 1360",
+      /*  153 */ "1341, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1212, 1350, 1212, 1321, 1325, 1358",
+      /*  170 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1871, 1368, 1212, 1212, 1868, 1212, 1212",
+      /*  187 */ "1212, 1212, 1212, 1212, 1212, 1243, 1212, 1285, 1376, 1243, 1248, 1443, 1391, 1392, 1212, 1212, 1212",
+      /*  204 */ "1212, 1212, 1212, 1212, 1380, 1212, 1285, 1400, 1383, 1414, 1212, 1212, 1406, 1212, 1212, 1212, 1212",
+      /*  221 */ "1212, 1212, 1212, 1422, 1212, 1285, 1439, 1212, 1297, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  238 */ "1212, 1212, 1212, 1212, 1799, 1432, 1212, 1898, 1212, 1212, 1748, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  255 */ "1212, 1212, 1212, 1285, 1451, 1455, 1463, 1212, 1212, 1464, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  272 */ "1212, 1212, 1813, 1472, 1212, 1176, 1212, 1212, 2060, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1423",
+      /*  289 */ "1212, 1285, 1439, 1212, 1271, 1212, 1212, 1424, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  306 */ "1285, 1439, 1212, 1493, 1212, 1212, 1823, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285",
+      /*  323 */ "1439, 1212, 1212, 1974, 1501, 1502, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439",
+      /*  340 */ "1969, 1297, 1510, 1510, 1511, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439, 1969",
+      /*  357 */ "1297, 1519, 1519, 1520, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439, 1969, 1297",
+      /*  374 */ "1528, 1528, 1529, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439, 1969, 1297, 1537",
+      /*  391 */ "1537, 1538, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439, 1969, 1297, 1546, 1546",
+      /*  408 */ "1547, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422, 1212, 1285, 1439, 1969, 1297, 1555, 1555, 1556",
+      /*  425 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1564, 1564, 1565, 1212",
+      /*  442 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1573, 1573, 1574, 1212, 1212",
+      /*  459 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1582, 1582, 1583, 1212, 1212, 1212",
+      /*  476 */ "1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1591, 1591, 1592, 1212, 1212, 1212, 1212",
+      /*  493 */ "1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1600, 1600, 1601, 1212, 1212, 1212, 1212, 1212",
+      /*  510 */ "1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1609, 1609, 1610, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  527 */ "1212, 1212, 1212, 1285, 1439, 1969, 1342, 1618, 1618, 1619, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  544 */ "1212, 1212, 1285, 1439, 1969, 1342, 1627, 1627, 1628, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  561 */ "1212, 1285, 1439, 1969, 1342, 1636, 1636, 1637, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  578 */ "1285, 1439, 1969, 1342, 1645, 1645, 1646, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285",
+      /*  595 */ "1439, 1969, 1342, 1654, 1654, 1655, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439",
+      /*  612 */ "1969, 1342, 1663, 1663, 1664, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969",
+      /*  629 */ "1342, 1672, 1672, 1673, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342",
+      /*  646 */ "1681, 1681, 1682, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1690",
+      /*  663 */ "1690, 1691, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1699, 1699",
+      /*  680 */ "1700, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1708, 1708, 1709",
+      /*  697 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1717, 1717, 1718, 1212",
+      /*  714 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1726, 1726, 1727, 1212, 1212",
+      /*  731 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1285, 1439, 1969, 1342, 1735, 1735, 1736, 1212, 1212, 1212",
+      /*  748 */ "1212, 1212, 1212, 1212, 1212, 1762, 1285, 1744, 1756, 1762, 1212, 1771, 1773, 1212, 1212, 1212, 1212",
+      /*  765 */ "1212, 1212, 1212, 1212, 1212, 1285, 1781, 1785, 1793, 1807, 1212, 1857, 1212, 1212, 1212, 1212, 1212",
+      /*  782 */ "1212, 1212, 1212, 1212, 1285, 1439, 1212, 1821, 1940, 1831, 1832, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  799 */ "1212, 1212, 1212, 1285, 1439, 1212, 1342, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  816 */ "1422, 1212, 1285, 1439, 1969, 1297, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1422",
+      /*  833 */ "1855, 1285, 1439, 1969, 1297, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /*  850 */ "1285, 1439, 1969, 1342, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1865, 1285",
+      /*  867 */ "1439, 1969, 1342, 1879, 1885, 1886, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1894, 1285, 1439",
+      /*  884 */ "1969, 1342, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1935, 1285, 1439, 1969",
+      /*  901 */ "1342, 1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1291, 1285, 1439, 1969, 1342",
+      /*  918 */ "1840, 1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 2076, 1285, 1439, 1969, 1342, 1840",
+      /*  935 */ "1846, 1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1213, 1285, 1439, 1969, 1342, 1840, 1846",
+      /*  952 */ "1847, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1906, 1439, 1969, 1342, 1840, 1846, 1847",
+      /*  969 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1929, 1439, 1969, 1342, 1948, 1954, 1955, 1212",
+      /*  986 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1963, 1439, 1969, 1763, 1840, 1846, 1847, 1212, 1212",
+      /* 1003 */ "1212, 1212, 1212, 1212, 1212, 1212, 1212, 1982, 2027, 2002, 2004, 2012, 2016, 2024, 1212, 1212, 1212",
+      /* 1020 */ "1212, 1212, 1212, 1212, 1212, 1212, 1285, 2035, 2039, 2047, 1212, 1212, 2048, 1212, 1212, 1212, 1212",
+      /* 1037 */ "1212, 1212, 1212, 1212, 1212, 1285, 2056, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /* 1054 */ "1212, 1212, 1212, 1212, 1285, 1439, 2068, 2074, 1212, 2084, 2086, 1212, 1212, 1212, 1212, 1212, 1212",
+      /* 1071 */ "1212, 1212, 1212, 1285, 1439, 1212, 1342, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212",
+      /* 1088 */ "2094, 1212, 1212, 1212, 1212, 1212, 1212, 2095, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 1212, 0, 0",
+      /* 1106 */ "0, 5960, 512, 640, 0, 0, 0, 0, 0, 6528, 0, 6528, 5960, 5960, 0, 0, 5960, 5960, 5960, 5960, 256, 0, 0",
+      /* 1129 */ "5960, 0, 0, 0, 0, 5960, 5960, 5960, 0, 5960, 0, 0, 5960, 5960, 0, 0, 0, 5960, 5960, 5960, 5960, 5960",
+      /* 1151 */ "5960, 6528, 6528, 6528, 6528, 6528, 6528, 6528, 0, 0, 0, 0, 7040, 7040, 7040, 7040, 7040, 7040, 7040",
+      /* 1170 */ "0, 0, 0, 0, 256, 6656, 0, 0, 0, 0, 0, 0, 8064, 8064, 0, 6656, 6656, 0, 6656, 6656, 0, 0, 6656, 0, 0",
+      /* 1195 */ "0, 0, 0, 0, 6656, 6656, 6656, 6656, 6656, 6656, 6656, 0, 0, 0, 0, 256, 6784, 0, 0, 0, 0, 0, 0, 0, 0",
+      /* 1220 */ "5376, 6784, 0, 6784, 0, 0, 0, 6784, 0, 0, 0, 0, 7168, 0, 0, 0, 7168, 0, 6784, 6784, 0, 6784, 6784, 0",
+      /* 1244 */ "0, 0, 0, 0, 7552, 0, 0, 0, 0, 7552, 0, 6016, 0, 0, 6784, 6784, 6784, 6784, 6784, 6784, 6784, 0, 0, 0",
+      /* 1268 */ "0, 256, 6912, 0, 0, 0, 0, 0, 0, 8192, 8192, 0, 6912, 6912, 0, 6912, 6912, 0, 0, 0, 0, 512, 640, 0, 0",
+      /* 1293 */ "0, 0, 0, 5120, 0, 0, 0, 0, 0, 6144, 0, 6016, 0, 6912, 6912, 6912, 6912, 6912, 6912, 6912, 0, 7168, 0",
+      /* 1316 */ "7168, 7168, 0, 7168, 7168, 0, 0, 0, 0, 7296, 7296, 7296, 7296, 7296, 7296, 7370, 0, 0, 841, 841, 841",
+      /* 1337 */ "841, 841, 841, 841, 896, 0, 0, 0, 0, 0, 0, 0, 6016, 0, 7370, 7370, 7370, 7370, 7370, 7370, 7370, 0",
+      /* 1359 */ "1024, 0, 0, 0, 0, 0, 0, 841, 0, 0, 7424, 7424, 7424, 7424, 7424, 7424, 7424, 7552, 0, 0, 256, 0, 0",
+      /* 1382 */ "0, 0, 0, 0, 7680, 0, 0, 0, 7680, 7552, 7552, 7552, 7552, 7552, 7552, 7552, 7552, 0, 0, 7680, 0, 256",
+      /* 1404 */ "0, 0, 0, 7680, 7680, 0, 7680, 7680, 7680, 0, 0, 7680, 7680, 7680, 7680, 7680, 7680, 7680, 6144, 0, 0",
+      /* 1425 */ "0, 0, 0, 0, 0, 8192, 0, 0, 0, 0, 256, 0, 0, 7808, 0, 0, 0, 256, 0, 0, 0, 0, 0, 0, 7552, 7552, 0, 0",
+      /* 1453 */ "0, 256, 0, 7936, 0, 7936, 7936, 7936, 0, 7936, 0, 7936, 7936, 7936, 7936, 7936, 7936, 7936, 0, 0, 0",
+      /* 1474 */ "0, 256, 0, 0, 8064, 0, 0, 0, 256, 0, 0, 0, 7168, 7168, 7168, 7168, 7168, 7168, 7168, 0, 1152, 1152",
+      /* 1496 */ "1152, 1152, 1152, 1152, 1152, 8320, 8320, 8320, 8320, 8320, 8320, 8320, 8320, 0, 1280, 1280, 1280",
+      /* 1513 */ "1280, 1280, 1280, 1280, 1280, 0, 1408, 1408, 1408, 1408, 1408, 1408, 1408, 1408, 0, 1536, 1536, 1536",
+      /* 1531 */ "1536, 1536, 1536, 1536, 1536, 0, 1664, 1664, 1664, 1664, 1664, 1664, 1664, 1664, 0, 1792, 1792, 1792",
+      /* 1549 */ "1792, 1792, 1792, 1792, 1792, 0, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 1920, 0, 2048, 2048, 2048",
+      /* 1567 */ "2048, 2048, 2048, 2048, 2048, 0, 2176, 2176, 2176, 2176, 2176, 2176, 2176, 2176, 0, 2304, 2304, 2304",
+      /* 1585 */ "2304, 2304, 2304, 2304, 2304, 0, 2432, 2432, 2432, 2432, 2432, 2432, 2432, 2432, 0, 2560, 2560, 2560",
+      /* 1603 */ "2560, 2560, 2560, 2560, 2560, 0, 2688, 2688, 2688, 2688, 2688, 2688, 2688, 2688, 0, 2816, 2816, 2816",
+      /* 1621 */ "2816, 2816, 2816, 2816, 2816, 0, 2944, 2944, 2944, 2944, 2944, 2944, 2944, 2944, 0, 3072, 3072, 3072",
+      /* 1639 */ "3072, 3072, 3072, 3072, 3072, 0, 3200, 3200, 3200, 3200, 3200, 3200, 3200, 3200, 0, 3328, 3328, 3328",
+      /* 1657 */ "3328, 3328, 3328, 3328, 3328, 0, 3456, 3456, 3456, 3456, 3456, 3456, 3456, 3456, 0, 3584, 3584, 3584",
+      /* 1675 */ "3584, 3584, 3584, 3584, 3584, 0, 3712, 3712, 3712, 3712, 3712, 3712, 3712, 3712, 0, 3840, 3840, 3840",
+      /* 1693 */ "3840, 3840, 3840, 3840, 3840, 0, 3968, 3968, 3968, 3968, 3968, 3968, 3968, 3968, 0, 4096, 4096, 4096",
+      /* 1711 */ "4096, 4096, 4096, 4096, 4096, 0, 4224, 4224, 4224, 4224, 4224, 4224, 4224, 4224, 0, 4352, 4352, 4352",
+      /* 1729 */ "4352, 4352, 4352, 4352, 4352, 0, 4480, 4480, 4480, 4480, 4480, 4480, 4480, 4480, 0, 0, 0, 8448, 256",
+      /* 1748 */ "0, 0, 0, 0, 0, 0, 7808, 0, 0, 0, 8448, 0, 0, 0, 8448, 0, 0, 0, 0, 0, 0, 0, 8832, 0, 0, 8448, 8448",
+      /* 1775 */ "8448, 8448, 8448, 8448, 8448, 0, 0, 0, 0, 256, 0, 4608, 0, 0, 4608, 4608, 0, 0, 0, 0, 0, 4608, 4608",
+      /* 1798 */ "4608, 0, 0, 0, 0, 512, 640, 0, 7808, 0, 0, 4608, 0, 0, 4608, 0, 0, 0, 0, 512, 640, 0, 8064, 8576, 0",
+      /* 1823 */ "0, 0, 0, 0, 0, 0, 1152, 0, 8576, 8576, 8576, 8576, 8576, 8576, 8576, 8576, 0, 384, 0, 0, 384, 0, 0",
+      /* 1846 */ "384, 384, 384, 384, 384, 384, 384, 384, 0, 0, 4736, 0, 0, 0, 0, 0, 0, 4608, 0, 0, 0, 8704, 0, 0, 0",
+      /* 1871 */ "0, 0, 0, 7424, 0, 0, 0, 7424, 8704, 0, 0, 8704, 0, 0, 8704, 8704, 8704, 8704, 8704, 8704, 8704, 8704",
+      /* 1893 */ "0, 0, 0, 0, 4864, 0, 0, 0, 0, 0, 0, 7808, 7808, 5504, 0, 0, 0, 512, 640, 0, 0, 0, 0, 512, 6912, 6912",
+      /* 1919 */ "0, 6912, 0, 0, 0, 6912, 0, 0, 0, 0, 0, 5632, 0, 0, 512, 640, 0, 0, 0, 0, 4992, 0, 0, 0, 0, 0, 0",
+      /* 1946 */ "8576, 8576, 5632, 0, 0, 5632, 0, 0, 5632, 5632, 5632, 5632, 5632, 5632, 5632, 5632, 0, 0, 0, 8832, 0",
+      /* 1967 */ "512, 640, 0, 0, 0, 0, 6272, 0, 0, 0, 0, 0, 0, 8320, 8320, 0, 0, 0, 8960, 512, 640, 0, 0, 0, 0, 6656",
+      /* 1993 */ "640, 6656, 0, 6656, 0, 0, 0, 6656, 0, 8960, 8960, 0, 0, 8960, 8960, 8960, 8960, 8960, 8960, 0, 0, 0",
+      /* 2015 */ "8960, 8960, 8960, 0, 8960, 0, 0, 8960, 8960, 0, 0, 0, 8960, 8960, 8960, 8960, 0, 0, 8960, 0, 0, 0, 0",
+      /* 2038 */ "256, 0, 9088, 0, 9088, 9088, 9088, 0, 9088, 0, 9088, 9088, 9088, 9088, 9088, 9088, 9088, 0, 0, 0, 0",
+      /* 2059 */ "5760, 0, 0, 0, 0, 0, 0, 8064, 0, 0, 0, 9216, 0, 0, 0, 9216, 0, 0, 0, 0, 0, 0, 0, 5248, 0, 0, 0, 9216",
+      /* 2087 */ "9216, 9216, 9216, 9216, 9216, 9216, 0, 0, 6400, 0, 0, 0, 0, 0, 0, 0"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 2133; ++i) {TRANSITION[i] = Integer.parseInt(s2[i]);}
+    decode(s1, TRANSITION);
   }
 
-  private static final int[] EXPECTED = new int[183];
+  private static final int[] EXPECTED = new int[197];
   static
   {
     final String s1[] =
     {
-      /*   0 */ "145, 145, 145, 145, 145, 143, 146, 145, 145, 145, 53, 54, 58, 59, 63, 63, 65, 81, 91, 69, 79, 85, 89",
-      /*  23 */ "95, 99, 103, 107, 111, 115, 119, 123, 127, 131, 135, 139, 145, 145, 150, 145, 141, 145, 156, 179, 159",
-      /*  44 */ "163, 167, 169, 152, 72, 75, 173, 176, 145, 0, 480, 480, 480, 480, -508, -512, -512, -508, -508, -508",
-      /*  64 */ "-508, -508, -508, -28, 0, 67108864, 1073741824, 0, 16, 16, 6, 22, 22, 71, 87, 0, 32, 64, 128, 32768",
-      /*  84 */ "131072, 256, 512, 1024, 2048, 0, 8192, 262144, 1048576, 4194304, 33554432, 1310720, 671088640",
-      /*  97 */ "33562624, 67117056, 8192, 4096, 1835008, 268435464, 671096832, 339738624, 1843200, 268443656, 1835008",
-      /* 108 */ "356515840, 268509192, 301998088, 1843200, 356524032, 35389440, 364904448, 364912640, 365174792",
-      /* 117 */ "365961224, 398499848, 2109743104, 2109759488, 2055, 1835015, 1835023, 10247, 1843207, 1843215",
-      /* 127 */ "-2113927161, -2113918969, -2113787897, -2112608249, -2101606393, -2101598201, -1828976633",
-      /* 134 */ "-1766062073, -1761867769, -1828968441, -1766053881, -1761859577, -251889, 8192, 0, 0, 8, 16, 0, 0, 0",
-      /* 148 */ "0, 2, 1, 0, 4, 0, 0, 20, 16, 16, 17, 16, 48, 65, 32, 48, 48, 81, 48, 67, 32, 48, 48, 48, 56, 103, 103",
-      /* 175 */ "103, 119, 119, 119, 0, 32, 16, 32"
+      /*   0 */ "58, 58, 58, 58, 58, 56, 59, 58, 58, 58, 63, 64, 68, 69, 73, 73, 73, 75, 193, 89, 79, 191, 83, 87, 93",
+      /*  25 */ "97, 101, 105, 109, 113, 117, 121, 125, 129, 133, 137, 141, 58, 58, 147, 58, 143, 58, 153, 163, 167",
+      /*  46 */ "171, 175, 177, 149, 156, 159, 181, 185, 188, 58, 8, 16, 0, 0, 0, 0, 2, 0, 480, 480, 480, 480, -508",
+      /*  69 */ "-512, -512, -508, -508, -508, -508, -508, -508, -28, 0, 134217728, -2147483648, 0, 16, 256, 512, 1024",
+      /*  86 */ "2048, 0, 8192, 524288, 2097152, 8388608, 67108864, 2621440, 1342177280, 67117056, 134225920, 8192",
+      /*  98 */ "4096, 3670016, 536870920, 1342185472, 679477248, 3678208, 536879112, 3670016, 713031680, 536944648",
+      /* 108 */ "603987976, 3678208, 713039872, 70778880, 729808896, 729817088, 730341384, 731914248, 796958728",
+      /* 117 */ "-75489280, -75472896, 2055, 3670023, 3670031, 10247, 3678215, 3678223, 67110919, 67119111, 67250183",
+      /* 128 */ "69740551, 70780935, 70789127, 91752455, 92014599, 91760647, 92022791, 637274119, 763103239, 771491847",
+      /* 138 */ "637282311, 763111431, 771500039, -251889, 8192, 0, 0, 16, 32, 2, 0, 8, 0, 0, 40, 32, 32, 34, 32, 32",
+      /* 158 */ "13, 45, 45, 143, 175, 0, 64, 32, 64, 32, 96, 130, 64, 96, 96, 162, 96, 134, 64, 96, 96, 96, 112, 143",
+      /* 182 */ "143, 175, 175, 207, 207, 207, 239, 239, 239, 0, 32, 64, 128, 32768, 131072"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 183; ++i) {EXPECTED[i] = Integer.parseInt(s2[i]);}
+    decode(s1, EXPECTED);
   }
 
-  private static final int[] CASEID = new int[1757];
+  private static final int[] CASEID = new int[1780];
   static
   {
     final String s1[] =
     {
-      /*    0 */ "612, 629, 585, 682, 589, 595, 598, 602, 710, 616, 621, 629, 624, 628, 633, 639, 664, 617, 664, 608",
-      /*   20 */ "644, 647, 651, 736, 663, 664, 664, 715, 664, 608, 669, 672, 676, 765, 680, 664, 664, 836, 786, 761",
-      /*   40 */ "686, 689, 693, 664, 703, 612, 629, 585, 664, 708, 612, 629, 585, 664, 708, 612, 629, 585, 664, 708",
-      /*   60 */ "595, 598, 602, 710, 714, 719, 722, 726, 730, 734, 644, 647, 651, 736, 663, 719, 722, 740, 744, 734",
-      /*   80 */ "664, 664, 960, 635, 608, 1096, 664, 965, 857, 926, 748, 751, 755, 664, 769, 923, 664, 974, 935, 774",
-      /*  100 */ "664, 664, 715, 664, 608, 612, 629, 585, 780, 633, 612, 629, 585, 664, 708, 920, 664, 895, 909, 784",
-      /*  120 */ "790, 793, 797, 806, 810, 816, 819, 823, 664, 835, 923, 664, 974, 935, 774, 644, 647, 651, 840, 844",
-      /*  140 */ "686, 689, 693, 664, 703, 612, 629, 585, 850, 633, 605, 664, 960, 826, 800, 664, 664, 664, 854, 861",
-      /*  160 */ "612, 629, 585, 867, 633, 664, 664, 960, 871, 608, 790, 793, 797, 877, 810, 612, 629, 585, 881, 888",
-      /*  180 */ "664, 664, 960, 654, 800, 612, 629, 585, 881, 888, 664, 664, 960, 654, 800, 612, 629, 585, 881, 888",
-      /*  200 */ "664, 664, 960, 654, 800, 605, 664, 960, 826, 800, 664, 664, 960, 871, 829, 1093, 664, 983, 1051, 946",
-      /*  220 */ "664, 664, 664, 664, 894, 664, 664, 1038, 664, 664, 664, 664, 960, 664, 657, 899, 902, 906, 913, 917",
-      /*  240 */ "664, 664, 664, 932, 664, 644, 647, 651, 939, 943, 644, 647, 651, 939, 943, 644, 647, 651, 939, 943",
-      /*  260 */ "664, 664, 664, 932, 952, 959, 664, 664, 964, 664, 1128, 664, 664, 1131, 664, 591, 629, 969, 871, 608",
-      /*  280 */ "664, 664, 664, 664, 973, 790, 793, 797, 978, 810, 758, 664, 988, 1105, 1137, 1125, 664, 997, 1118",
-      /*  299 */ "1140, 982, 664, 664, 987, 664, 1004, 664, 664, 1004, 664, 802, 992, 996, 1001, 664, 664, 664, 664",
-      /*  318 */ "664, 894, 605, 664, 960, 826, 800, 959, 664, 664, 1032, 664, 1128, 664, 664, 1007, 664, 664, 664",
-      /*  337 */ "884, 640, 800, 664, 664, 960, 763, 608, 959, 664, 664, 1037, 664, 1128, 664, 664, 1013, 664, 605",
-      /*  356 */ "664, 960, 826, 800, 664, 664, 715, 664, 608, 664, 664, 664, 1042, 664, 664, 664, 664, 1090, 664, 664",
-      /*  376 */ "664, 664, 1055, 664, 591, 629, 1077, 871, 608, 664, 664, 960, 871, 608, 664, 664, 665, 928, 696, 802",
-      /*  396 */ "992, 1081, 1001, 664, 664, 664, 664, 1109, 664, 664, 664, 960, 610, 608, 664, 664, 884, 640, 800",
-      /*  415 */ "664, 664, 664, 664, 1122, 664, 664, 1064, 664, 664, 664, 664, 664, 1147, 664, 664, 664, 1016, 664",
-      /*  434 */ "664, 664, 664, 664, 812, 664, 664, 664, 664, 770, 664, 664, 664, 863, 664, 664, 664, 664, 1019, 664",
-      /*  454 */ "664, 664, 664, 664, 846, 664, 664, 664, 664, 955, 1022, 664, 664, 873, 664, 664, 664, 664, 664, 1028",
-      /*  474 */ "1045, 1048, 664, 664, 1143, 1058, 664, 664, 948, 664, 664, 664, 664, 664, 1151, 664, 664, 664, 664",
-      /*  493 */ "664, 1155, 664, 664, 704, 664, 664, 664, 664, 890, 664, 664, 664, 664, 664, 1159, 664, 664, 664, 664",
-      /*  513 */ "1061, 664, 1099, 664, 1163, 699, 1102, 664, 664, 664, 1025, 664, 664, 664, 1134, 664, 664, 664, 664",
-      /*  532 */ "1167, 831, 1067, 664, 664, 1171, 1175, 1070, 1010, 664, 1179, 1183, 1084, 1010, 664, 1179, 1073",
-      /*  549 */ "1084, 664, 664, 1187, 1033, 1087, 664, 664, 664, 659, 664, 664, 664, 664, 1191, 664, 664, 664, 664",
-      /*  568 */ "1112, 664, 664, 664, 664, 1195, 664, 664, 664, 664, 1115, 664, 664, 664, 664, 776, 664, 1200, 1237",
-      /*  587 */ "1233, 1361, 1426, 1210, 1237, 1237, 1199, 1206, 1239, 1237, 1227, 1217, 1217, 1217, 1217, 1228, 1237",
-      /*  604 */ "1238, 1237, 1199, 1236, 1237, 1210, 1237, 1237, 1234, 1237, 1199, 1206, 1271, 1237, 1237, 1237, 1232",
-      /*  621 */ "1234, 1199, 1206, 1206, 1237, 1233, 1361, 1425, 1206, 1206, 1206, 1206, 1200, 1221, 1237, 1237, 1233",
-      /*  638 */ "1235, 1405, 1237, 1237, 1237, 1236, 1519, 1237, 1244, 1249, 1249, 1249, 1249, 1245, 1237, 1518, 1237",
-      /*  655 */ "1234, 1202, 1236, 1210, 1237, 1237, 1735, 1237, 1268, 1237, 1237, 1237, 1237, 1256, 1212, 1237, 1453",
-      /*  672 */ "1285, 1285, 1285, 1285, 1454, 1237, 1211, 1289, 1414, 1210, 1237, 1237, 1235, 1233, 1677, 1237, 1301",
-      /*  689 */ "1306, 1306, 1306, 1306, 1302, 1237, 1676, 1237, 1257, 1237, 1237, 1259, 1261, 1263, 1677, 1237, 1237",
-      /*  706 */ "1237, 1264, 1234, 1210, 1237, 1237, 1240, 1238, 1224, 1237, 1237, 1237, 1279, 1363, 1237, 1310, 1315",
-      /*  723 */ "1315, 1315, 1315, 1311, 1237, 1366, 1279, 1363, 1365, 1364, 1366, 1319, 1210, 1237, 1237, 1253, 1297",
-      /*  740 */ "1311, 1237, 1366, 1289, 1235, 1237, 1364, 1366, 1462, 1237, 1340, 1345, 1345, 1345, 1345, 1341, 1237",
-      /*  757 */ "1461, 1237, 1275, 1525, 1237, 1296, 1237, 1237, 1235, 1237, 1213, 1211, 1462, 1237, 1237, 1237, 1291",
-      /*  774 */ "1444, 1352, 1237, 1237, 1281, 1237, 1425, 1201, 1426, 1424, 1473, 1442, 1237, 1237, 1336, 1295, 1498",
-      /*  791 */ "1237, 1374, 1379, 1379, 1379, 1379, 1375, 1237, 1497, 1237, 1423, 1237, 1237, 1555, 1560, 1501, 1503",
-      /*  808 */ "1502, 1500, 1375, 1502, 1237, 1237, 1354, 1593, 1492, 1237, 1383, 1388, 1388, 1388, 1388, 1384, 1237",
-      /*  825 */ "1491, 1237, 1425, 1202, 1236, 1450, 1237, 1237, 1681, 1688, 1492, 1237, 1237, 1237, 1295, 1657, 1392",
-      /*  842 */ "1396, 1398, 1402, 1411, 1237, 1237, 1419, 1237, 1425, 1206, 1426, 1424, 1683, 1675, 1430, 1237, 1432",
-      /*  859 */ "1328, 1330, 1437, 1532, 1237, 1237, 1566, 1237, 1425, 1206, 1235, 1424, 1425, 1236, 1237, 1237, 1615",
-      /*  876 */ "1237, 1501, 1379, 1502, 1500, 1425, 1201, 1235, 1233, 1237, 1237, 1361, 1200, 1450, 1237, 1237, 1655",
-      /*  893 */ "1237, 1472, 1237, 1237, 1237, 1358, 1509, 1237, 1477, 1482, 1482, 1482, 1482, 1478, 1237, 1508, 1237",
-      /*  910 */ "1439, 1370, 1441, 1512, 1482, 1510, 1511, 1478, 1513, 1237, 1237, 1440, 1443, 1237, 1350, 1353, 1237",
-      /*  927 */ "1334, 1237, 1237, 1255, 1237, 1683, 1675, 1237, 1237, 1445, 1349, 1351, 1657, 1486, 1624, 1297, 1402",
-      /*  944 */ "1651, 1237, 1237, 1466, 1237, 1237, 1699, 1237, 1490, 1532, 1237, 1237, 1468, 1468, 1604, 1578, 1237",
-      /*  961 */ "1237, 1237, 1361, 1719, 1237, 1237, 1237, 1417, 1206, 1237, 1237, 1361, 1517, 1237, 1237, 1237, 1446",
-      /*  978 */ "1501, 1379, 1499, 1500, 1550, 1237, 1237, 1237, 1459, 1551, 1237, 1237, 1237, 1524, 1560, 1560, 1560",
-      /*  995 */ "1560, 1561, 1237, 1237, 1237, 1537, 1407, 1565, 1237, 1237, 1549, 1237, 1237, 1570, 1237, 1237, 1573",
-      /* 1012 */ "1711, 1237, 1577, 1237, 1237, 1587, 1237, 1237, 1599, 1237, 1237, 1609, 1237, 1237, 1611, 1237, 1237",
-      /* 1029 */ "1626, 1621, 1628, 1725, 1237, 1237, 1237, 1723, 1731, 1237, 1237, 1237, 1740, 1737, 1237, 1237, 1237",
-      /* 1046 */ "1627, 1237, 1237, 1632, 1636, 1237, 1638, 1458, 1460, 1673, 1675, 1237, 1237, 1644, 1237, 1237, 1661",
-      /* 1063 */ "1237, 1237, 1663, 1237, 1237, 1687, 1237, 1237, 1703, 1237, 1237, 1715, 1709, 1711, 1200, 1237, 1237",
-      /* 1080 */ "1361, 1556, 1237, 1237, 1237, 1717, 1237, 1237, 1729, 1237, 1237, 1739, 1237, 1237, 1639, 1460, 1237",
-      /* 1097 */ "1433, 1335, 1237, 1260, 1263, 1237, 1262, 1237, 1237, 1274, 1523, 1525, 1595, 1582, 1237, 1237, 1744",
-      /* 1114 */ "1237, 1237, 1750, 1237, 1237, 1752, 1536, 1538, 1539, 1237, 1237, 1237, 1753, 1538, 1237, 1496, 1237",
-      /* 1131 */ "1237, 1507, 1237, 1237, 1526, 1237, 1237, 1530, 1237, 1237, 1543, 1237, 1237, 1545, 1643, 1645, 1322",
-      /* 1148 */ "1237, 1237, 1237, 1324, 1649, 1237, 1237, 1705, 1237, 1237, 1237, 1589, 1237, 1237, 1237, 1258, 1237",
-      /* 1165 */ "1237, 1667, 1600, 1237, 1237, 1671, 1605, 1237, 1237, 1692, 1697, 1237, 1237, 1693, 1571, 1237, 1237",
-      /* 1182 */ "1710, 1589, 1572, 1709, 1711, 1583, 1237, 1237, 1237, 1617, 1237, 1237, 1237, 1746, 1237, 1237, 1237",
-      /* 1199 */ "0, 65830, 65830, 65830, 0, 65830, 0, 65830, 65830, 65830, 65830, 25266, 0, 0, 0, 49156, 0, 0, 4, 4",
-      /* 1219 */ "4, 4, 25266, 65830, 65830, 0, 4, 4, 0, 4, 4, 4, 0, 99178, 0, 0, 0, 65830, 0, 0, 0, 0, 4, 0, 0, 0",
-      /* 1245 */ "573444, 573444, 573444, 0, 573444, 573444, 573444, 573444, 0, 90130, 0, 0, 131076, 0, 0, 0, 837782",
-      /* 1262 */ "837782, 837782, 0, 0, 0, 845938, 0, 81938, 573444, 0, 4, 14, 0, 0, 1163268, 1163268, 1163268, 0",
-      /* 1280 */ "107058, 0, 0, 147720, 0, 49156, 49156, 49156, 49156, 0, 123218, 0, 0, 180242, 0, 0, 163844, 0, 0, 0",
-      /* 1300 */ "73746, 0, 229380, 229380, 229380, 0, 229380, 229380, 229380, 229380, 0, 82454, 82454, 82454, 0",
-      /* 1315 */ "82454, 82454, 82454, 82454, 0, 82454, 82454, 0, 16650, 0, 0, 435874, 0, 196644, 0, 196644, 196644",
-      /* 1332 */ "65830, 0, 32782, 196644, 0, 0, 0, 163844, 0, 262152, 262152, 262152, 0, 262152, 262152, 262152",
-      /* 1348 */ "262152, 212996, 0, 212996, 212996, 212996, 0, 0, 0, 172050, 0, 246806, 278536, 0, 16706, 0, 0, 82454",
-      /* 1366 */ "0, 0, 0, 82454, 246806, 0, 49166, 246806, 0, 344068, 344068, 344068, 0, 344068, 344068, 344068",
-      /* 1382 */ "344068, 0, 294916, 294916, 294916, 0, 294916, 294916, 294916, 294916, 638980, 262162, 360468, 270354",
-      /* 1396 */ "0, 65550, 360468, 0, 0, 73746, 638980, 81934, 573444, 0, 25330, 0, 0, 98318, 370754, 0, 360468",
-      /* 1413 */ "638980, 0, 49156, 49156, 0, 16398, 0, 0, 180328, 0, 25266, 65830, 0, 0, 65830, 65830, 0, 0, 704520",
-      /* 1432 */ "0, 0, 196644, 196644, 196644, 868356, 720904, 0, 0, 246806, 246806, 246806, 0, 0, 0, 212996, 212996",
-      /* 1449 */ "0, 25266, 0, 65830, 0, 49156, 49156, 49156, 0, 622596, 0, 622596, 0, 0, 0, 262152, 0, 622596, 622596",
-      /* 1468 */ "0, 0, 328806, 0, 452770, 0, 0, 0, 278536, 0, 393220, 393220, 393220, 0, 393220, 393220, 393220",
-      /* 1485 */ "393220, 638980, 262162, 0, 270354, 868356, 0, 0, 0, 294916, 0, 802824, 0, 0, 0, 344068, 0, 0, 344068",
-      /* 1504 */ "344068, 0, 344068, 837554, 0, 0, 0, 393220, 0, 0, 393220, 393220, 0, 901124, 0, 0, 0, 573444, 0",
-      /* 1523 */ "1163268, 0, 1163268, 0, 0, 0, 589842, 1163268, 1163268, 0, 0, 376850, 0, 1146884, 0, 1146884, 0, 0",
-      /* 1541 */ "0, 688146, 1146884, 1146884, 0, 0, 376852, 311314, 737284, 0, 0, 0, 737284, 0, 0, 1130504, 1130504",
-      /* 1558 */ "1130504, 0, 1130504, 1130504, 1130504, 1130504, 936378, 114702, 0, 0, 0, 737298, 894914, 0, 0, 0",
-      /* 1574 */ "771942, 771942, 771942, 928418, 0, 0, 0, 786440, 576114, 0, 0, 0, 936378, 0, 163858, 0, 0, 493298, 0",
-      /* 1593 */ "0, 172050, 0, 0, 567778, 370754, 761874, 0, 0, 0, 983060, 238706, 0, 0, 0, 1114132, 0, 238722, 0, 0",
-      /* 1613 */ "581650, 0, 0, 786450, 0, 0, 600610, 0, 288066, 0, 361782, 0, 65550, 0, 0, 361782, 0, 0, 0, 0, 294930",
-      /* 1634 */ "303122, 319506, 327698, 0, 0, 0, 622596, 622596, 622596, 376852, 0, 376852, 0, 0, 0, 444290, 0, 0, 0",
-      /* 1653 */ "638980, 0, 860178, 0, 0, 0, 638980, 638980, 501714, 0, 0, 0, 704530, 0, 0, 837782, 0, 845938, 0",
-      /* 1672 */ "131086, 0, 0, 753668, 0, 0, 0, 229380, 0, 0, 1081364, 0, 0, 753668, 370754, 131086, 983060, 0, 0, 0",
-      /* 1692 */ "0, 1114132, 0, 0, 0, 1097752, 0, 0, 0, 802834, 0, 1114132, 1114132, 0, 0, 819218, 0, 771942, 0",
-      /* 1711 */ "771942, 0, 0, 0, 501714, 0, 771942, 771942, 0, 0, 829138, 0, 624946, 0, 0, 0, 886498, 0, 0, 624962",
-      /* 1731 */ "0, 0, 920082, 0, 0, 630802, 0, 0, 1064964, 0, 0, 0, 819204, 608946, 0, 0, 0, 1083978, 0, 1084122, 0",
-      /* 1752 */ "0, 0, 1146884, 1146884, 1146884"
+      /*    0 */ "632, 641, 595, 630, 599, 1022, 607, 611, 1020, 620, 625, 641, 636, 640, 628, 645, 709, 621, 709",
+      /*   19 */ "1018, 650, 653, 657, 684, 669, 709, 709, 646, 709, 1018, 772, 674, 678, 770, 682, 709, 709, 670, 710",
+      /*   39 */ "614, 688, 691, 695, 709, 697, 632, 641, 595, 709, 702, 632, 641, 595, 709, 702, 632, 641, 595, 709",
+      /*   59 */ "702, 1022, 607, 611, 1020, 708, 724, 714, 718, 722, 728, 650, 653, 657, 684, 669, 724, 714, 734, 764",
+      /*   79 */ "728, 709, 709, 1126, 962, 1018, 660, 709, 1080, 912, 663, 738, 741, 745, 709, 747, 758, 709, 748",
+      /*   98 */ "947, 795, 709, 709, 646, 709, 1018, 632, 641, 595, 752, 628, 632, 641, 595, 709, 702, 792, 709, 815",
+      /*  118 */ "978, 838, 776, 785, 789, 801, 779, 805, 808, 812, 709, 814, 758, 709, 748, 947, 795, 650, 653, 657",
+      /*  138 */ "819, 823, 688, 691, 695, 709, 697, 632, 641, 595, 829, 628, 835, 709, 1126, 767, 847, 709, 709, 709",
+      /*  158 */ "844, 853, 632, 641, 595, 859, 628, 709, 709, 1126, 863, 1018, 632, 641, 595, 869, 897, 776, 785, 789",
+      /*  178 */ "916, 779, 632, 641, 595, 920, 897, 709, 709, 1126, 761, 847, 632, 641, 595, 951, 897, 709, 709, 1126",
+      /*  198 */ "761, 847, 632, 641, 595, 951, 897, 709, 709, 1126, 761, 847, 835, 709, 1126, 767, 847, 709, 709",
+      /*  217 */ "1126, 863, 832, 875, 709, 1085, 893, 878, 709, 709, 709, 709, 961, 709, 709, 1103, 709, 709, 709",
+      /*  236 */ "709, 1126, 709, 755, 966, 982, 986, 1002, 969, 709, 709, 709, 1006, 709, 650, 653, 657, 1026, 1033",
+      /*  255 */ "650, 653, 657, 1043, 1033, 650, 653, 657, 1056, 1033, 650, 653, 657, 1056, 1033, 709, 709, 709, 1006",
+      /*  274 */ "1069, 1079, 709, 709, 1084, 709, 900, 709, 709, 903, 709, 616, 641, 1089, 863, 1018, 709, 709, 709",
+      /*  293 */ "709, 1093, 776, 785, 789, 1098, 779, 923, 709, 1153, 1075, 926, 929, 709, 1144, 1065, 932, 1102, 709",
+      /*  312 */ "709, 1102, 709, 909, 709, 709, 906, 709, 781, 1107, 1111, 1116, 709, 709, 709, 709, 709, 961, 835",
+      /*  331 */ "709, 1126, 767, 847, 1079, 709, 709, 1120, 709, 900, 709, 709, 935, 709, 709, 709, 603, 698, 847",
+      /*  350 */ "709, 709, 1126, 630, 1018, 1079, 709, 709, 1125, 709, 900, 709, 709, 938, 709, 835, 709, 1126, 767",
+      /*  369 */ "847, 709, 709, 646, 709, 1018, 709, 709, 709, 1130, 709, 709, 709, 709, 1012, 709, 709, 709, 709",
+      /*  388 */ "1135, 709, 616, 641, 1139, 863, 1018, 709, 709, 1126, 863, 1018, 709, 709, 1094, 797, 941, 781, 1107",
+      /*  407 */ "1143, 1116, 709, 709, 709, 709, 1148, 709, 709, 709, 1126, 601, 1018, 709, 709, 603, 698, 847, 709",
+      /*  426 */ "709, 709, 709, 944, 709, 709, 890, 709, 709, 709, 709, 709, 1152, 709, 709, 709, 954, 709, 709, 709",
+      /*  446 */ "709, 709, 1112, 709, 709, 709, 709, 1162, 709, 709, 709, 825, 709, 709, 709, 709, 972, 709, 709, 709",
+      /*  466 */ "709, 709, 865, 709, 709, 709, 709, 1039, 887, 709, 709, 849, 709, 709, 709, 709, 709, 998, 1009, 975",
+      /*  486 */ "709, 709, 1029, 1036, 709, 709, 730, 709, 709, 709, 709, 709, 1157, 709, 709, 709, 709, 709, 1161",
+      /*  505 */ "709, 709, 1121, 709, 709, 709, 709, 855, 709, 709, 709, 709, 709, 1166, 709, 709, 709, 709, 989, 709",
+      /*  525 */ "992, 709, 1170, 957, 995, 709, 709, 709, 872, 709, 709, 709, 881, 709, 709, 709, 709, 1174, 665",
+      /*  544 */ "1015, 709, 709, 1178, 1182, 1046, 1049, 709, 1186, 1190, 1059, 1049, 709, 1186, 1052, 1059, 709, 709",
+      /*  562 */ "1194, 1131, 884, 709, 709, 709, 704, 709, 709, 709, 709, 1198, 709, 709, 709, 709, 1062, 709, 709",
+      /*  581 */ "709, 709, 1202, 709, 709, 709, 709, 1072, 709, 709, 709, 709, 840, 709, 1369, 1307, 1303, 1694, 1367",
+      /*  600 */ "1719, 1307, 1307, 1303, 1307, 1307, 1694, 1206, 1206, 1206, 1206, 1211, 1307, 1308, 1307, 1271, 1307",
+      /*  617 */ "1307, 1368, 1362, 1215, 1307, 1307, 1307, 1229, 1304, 1368, 1362, 1362, 1219, 1307, 1307, 1304, 1307",
+      /*  634 */ "1368, 1362, 1362, 1307, 1303, 1694, 1360, 1362, 1362, 1362, 1362, 1223, 1307, 1307, 1307, 1247, 1399",
+      /*  651 */ "1307, 1235, 1243, 1243, 1243, 1243, 1236, 1307, 1398, 1307, 1295, 1302, 1307, 1300, 1307, 1307, 1488",
+      /*  668 */ "1706, 1240, 1307, 1307, 1307, 1271, 1255, 1255, 1255, 1255, 1260, 1307, 1230, 1264, 1258, 1719, 1307",
+      /*  685 */ "1307, 1354, 1307, 1631, 1307, 1275, 1280, 1280, 1280, 1280, 1276, 1307, 1630, 1307, 1307, 1307, 1305",
+      /*  702 */ "1303, 1719, 1307, 1307, 1455, 1307, 1209, 1307, 1307, 1307, 1307, 1270, 1284, 1284, 1284, 1284, 1289",
+      /*  719 */ "1307, 1331, 1247, 1331, 1333, 1332, 1307, 1288, 1284, 1287, 1719, 1307, 1307, 1485, 1307, 1289, 1307",
+      /*  736 */ "1331, 1264, 1672, 1307, 1313, 1318, 1318, 1318, 1318, 1314, 1307, 1671, 1307, 1307, 1307, 1328, 1360",
+      /*  753 */ "1369, 1367, 1305, 1719, 1307, 1307, 1322, 1330, 1307, 1303, 1366, 1305, 1307, 1332, 1307, 1303, 1364",
+      /*  770 */ "1305, 1307, 1231, 1307, 1259, 1255, 1587, 1307, 1411, 1532, 1410, 1307, 1307, 1554, 1559, 1532, 1532",
+      /*  787 */ "1532, 1532, 1412, 1307, 1586, 1307, 1341, 1346, 1307, 1323, 1307, 1307, 1503, 1307, 1410, 1412, 1530",
+      /*  804 */ "1588, 1625, 1307, 1379, 1384, 1384, 1384, 1384, 1380, 1307, 1624, 1307, 1307, 1307, 1351, 1470, 1388",
+      /*  821 */ "1392, 1396, 1403, 1461, 1307, 1307, 1576, 1307, 1360, 1362, 1367, 1305, 1735, 1307, 1307, 1368, 1306",
+      /*  838 */ "1307, 1374, 1307, 1307, 1508, 1307, 1566, 1416, 1458, 1307, 1407, 1307, 1307, 1641, 1307, 1422, 1225",
+      /*  855 */ "1307, 1307, 1670, 1307, 1360, 1362, 1365, 1305, 1303, 1370, 1307, 1307, 1766, 1307, 1303, 1370, 1304",
+      /*  872 */ "1307, 1418, 1307, 1307, 1431, 1502, 1307, 1435, 1307, 1307, 1442, 1307, 1307, 1452, 1307, 1307, 1467",
+      /*  889 */ "1307, 1307, 1482, 1307, 1307, 1499, 1436, 1501, 1362, 1735, 1307, 1307, 1507, 1307, 1307, 1512, 1307",
+      /*  906 */ "1307, 1522, 1307, 1307, 1523, 1307, 1307, 1524, 1293, 1296, 1410, 1532, 1530, 1588, 1360, 1369, 1365",
+      /*  923 */ "1307, 1536, 1775, 1307, 1540, 1307, 1307, 1545, 1765, 1307, 1549, 1307, 1307, 1574, 1307, 1307, 1580",
+      /*  940 */ "1307, 1307, 1592, 1307, 1307, 1604, 1307, 1307, 1605, 1324, 1337, 1303, 1369, 1365, 1307, 1609, 1307",
+      /*  957 */ "1307, 1620, 1683, 1622, 1440, 1307, 1307, 1307, 1365, 1250, 1307, 1426, 1446, 1425, 1307, 1307, 1629",
+      /*  974 */ "1307, 1307, 1651, 1655, 1307, 1656, 1375, 1342, 1446, 1446, 1446, 1446, 1427, 1307, 1249, 1307, 1676",
+      /*  991 */ "1307, 1307, 1682, 1623, 1307, 1691, 1307, 1307, 1696, 1647, 1698, 1425, 1446, 1449, 1251, 1566, 1416",
+      /* 1008 */ "1307, 1307, 1697, 1307, 1307, 1710, 1307, 1307, 1716, 1307, 1307, 1719, 1307, 1307, 1309, 1307, 1210",
+      /* 1025 */ "1206, 1514, 1473, 1357, 1307, 1721, 1660, 1723, 1403, 1514, 1307, 1307, 1722, 1307, 1307, 1728, 1728",
+      /* 1042 */ "1635, 1470, 1464, 1479, 1307, 1732, 1307, 1307, 1739, 1585, 1307, 1743, 1746, 1584, 1514, 1464, 1479",
+      /* 1059 */ "1307, 1745, 1307, 1307, 1760, 1307, 1307, 1762, 1550, 1764, 1497, 1225, 1307, 1307, 1770, 1307, 1307",
+      /* 1076 */ "1772, 1541, 1774, 1712, 1307, 1307, 1307, 1491, 1611, 1307, 1307, 1307, 1501, 1362, 1307, 1307, 1694",
+      /* 1093 */ "1518, 1307, 1307, 1307, 1592, 1410, 1532, 1528, 1588, 1520, 1307, 1307, 1307, 1594, 1559, 1559, 1559",
+      /* 1110 */ "1559, 1560, 1307, 1307, 1307, 1615, 1347, 1564, 1307, 1307, 1643, 1307, 1307, 1307, 1637, 1678, 1307",
+      /* 1127 */ "1307, 1307, 1694, 1708, 1307, 1307, 1307, 1750, 1566, 1568, 1307, 1307, 1369, 1307, 1307, 1694, 1555",
+      /* 1144 */ "1307, 1307, 1307, 1764, 1570, 1598, 1307, 1307, 1618, 1307, 1307, 1307, 1774, 1266, 1664, 1307, 1307",
+      /* 1161 */ "1600, 1307, 1307, 1307, 1776, 1493, 1307, 1307, 1307, 1620, 1307, 1307, 1687, 1704, 1307, 1307, 1702",
+      /* 1178 */ "1752, 1307, 1307, 1754, 1727, 1307, 1307, 1754, 1582, 1307, 1307, 1584, 1493, 1582, 1746, 1584, 1666",
+      /* 1195 */ "1307, 1307, 1307, 1475, 1307, 1307, 1307, 1756, 1307, 1307, 1307, 4, 4, 4, 4, 0, 4, 4, 4, 0, 4, 0, 4",
+      /* 1218 */ "14, 0, 25266, 65830, 65830, 0, 25330, 0, 0, 0, 385042, 99178, 0, 0, 0, 49156, 0, 0, 573444, 573444",
+      /* 1238 */ "573444, 0, 73746, 0, 81938, 573444, 573444, 573444, 573444, 0, 107058, 0, 0, 0, 393220, 0, 0, 49156",
+      /* 1256 */ "49156, 49156, 49156, 0, 49156, 49156, 49156, 0, 0, 123218, 0, 0, 0, 452258, 163844, 0, 163844, 0, 0",
+      /* 1275 */ "0, 229380, 229380, 229380, 0, 229380, 229380, 229380, 229380, 82454, 82454, 82454, 82454, 0, 82454",
+      /* 1290 */ "82454, 82454, 0, 196644, 196644, 0, 196644, 196644, 196644, 65830, 0, 32782, 196644, 0, 0, 0, 65830",
+      /* 1307 */ "0, 0, 0, 0, 4, 0, 0, 262152, 262152, 262152, 0, 262152, 262152, 262152, 262152, 0, 212996, 212996",
+      /* 1325 */ "212996, 0, 212996, 0, 212996, 212996, 0, 0, 0, 82454, 0, 0, 212996, 212996, 212996, 212996, 0",
+      /* 1342 */ "246806, 246806, 246806, 246806, 246806, 0, 0, 0, 98318, 0, 246806, 278536, 0, 0, 90130, 0, 0, 65550",
+      /* 1360 */ "0, 0, 65830, 65830, 65830, 65830, 0, 65830, 0, 65830, 65830, 65830, 0, 0, 278536, 246806, 246806, 0",
+      /* 1378 */ "49166, 0, 294916, 294916, 294916, 0, 294916, 294916, 294916, 294916, 638980, 638980, 262162, 360468",
+      /* 1392 */ "270354, 0, 65550, 360468, 0, 360468, 0, 0, 0, 573444, 0, 73746, 638980, 81934, 573444, 0, 25266",
+      /* 1409 */ "65830, 0, 0, 344068, 344068, 344068, 0, 378946, 753668, 0, 0, 0, 598034, 0, 868356, 720904, 0, 0",
+      /* 1427 */ "393220, 393220, 393220, 0, 0, 622596, 622596, 622596, 0, 622596, 622596, 0, 622596, 0, 469154, 0, 0",
+      /* 1444 */ "0, 606226, 393220, 393220, 393220, 393220, 0, 393220, 0, 0, 641346, 0, 0, 647186, 0, 0, 704520, 0, 0",
+      /* 1463 */ "360468, 638980, 638980, 262162, 0, 0, 238722, 0, 0, 278546, 638980, 638980, 0, 0, 0, 616994, 270354",
+      /* 1480 */ "0, 65550, 0, 0, 720914, 0, 0, 819218, 0, 0, 1081364, 0, 16398, 0, 0, 0, 509682, 0, 868356, 0, 0, 0",
+      /* 1502 */ "622596, 0, 0, 0, 131076, 802824, 0, 0, 0, 147720, 0, 853938, 0, 0, 0, 638980, 0, 901124, 0, 0, 0",
+      /* 1523 */ "737284, 0, 0, 0, 196644, 344068, 0, 344068, 0, 344068, 344068, 344068, 344068, 0, 1179652, 1179652",
+      /* 1539 */ "1179652, 0, 1179652, 1179652, 0, 1179652, 0, 1163268, 1163268, 1163268, 0, 1163268, 1163268, 0",
+      /* 1553 */ "1163268, 0, 1130504, 1130504, 1130504, 0, 1130504, 1130504, 1130504, 1130504, 936378, 378946, 114702",
+      /* 1566 */ "0, 0, 0, 753668, 0, 0, 0, 584162, 0, 911298, 0, 0, 0, 753682, 0, 944802, 0, 0, 0, 771942, 0, 0, 0",
+      /* 1589 */ "344068, 0, 0, 0, 131076, 0, 0, 0, 819204, 378946, 592498, 0, 0, 0, 835602, 704530, 0, 0, 0, 212996",
+      /* 1609 */ "0, 163858, 0, 0, 0, 845522, 172050, 0, 172050, 0, 16650, 0, 0, 0, 837782, 0, 0, 0, 294916, 0, 778258",
+      /* 1630 */ "0, 0, 0, 229380, 0, 0, 238706, 0, 0, 0, 862322, 0, 802834, 0, 0, 0, 902882, 0, 296258, 0, 361782, 0",
+      /* 1652 */ "303122, 311314, 327698, 335890, 0, 0, 0, 246806, 319506, 376852, 0, 376852, 0, 460674, 0, 0, 0",
+      /* 1669 */ "936378, 876562, 0, 0, 0, 262152, 0, 0, 518098, 0, 0, 0, 936466, 0, 837782, 837782, 837782, 837782, 0",
+      /* 1688 */ "837782, 0, 862322, 0, 837782, 837782, 0, 16706, 0, 0, 0, 361782, 0, 0, 0, 131086, 0, 0, 0, 983060, 0",
+      /* 1709 */ "0, 0, 1064964, 0, 0, 0, 786440, 0, 131086, 983060, 0, 25266, 0, 0, 0, 376852, 0, 0, 1097752, 0, 0, 0",
+      /* 1731 */ "328806, 0, 1114132, 1114132, 0, 25266, 0, 65830, 0, 771942, 771942, 771942, 0, 518098, 0, 771942",
+      /* 1747 */ "771942, 0, 771942, 0, 641330, 0, 0, 0, 1114132, 0, 0, 0, 1083978, 0, 625330, 0, 0, 0, 1163268, 0, 0",
+      /* 1768 */ "0, 180328, 0, 1084122, 0, 0, 0, 1179652, 0, 0, 0, 180242"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 1757; ++i) {CASEID[i] = Integer.parseInt(s2[i]);}
+    decode(s1, CASEID);
   }
 
-  private static final int[] TOKENSET = new int[117];
+  private static final int[] TOKENSET = new int[119];
   static
   {
     final String s1[] =
     {
-      /*   0 */ "55, 54, 66, 27, 54, 19, 56, 30, 48, 51, 51, 51, 54, 57, 54, 56, 30, 46, 48, 47, 19, 64, 51, 47, 61",
-      /*  25 */ "48, 47, 62, 48, 65, 42, 40, 63, 32, 62, 59, 39, 59, 39, 59, 39, 42, 38, 42, 8, 0, 26, 60, 28, 58, 58",
-      /*  51 */ "58, 34, 20, 21, 53, 8, 60, 42, 42, 20, 21, 50, 8, 42, 20, 21, 33, 24, 20, 21, 42, 19, 2, 3, 22, 52",
-      /*  77 */ "32, 25, 49, 28, 25, 33, 18, 12, 1, 11, 23, 7, 17, 9, 6, 31, 15, 35, 41, 16, 22, 10, 0, 14, 2, 3, 45",
-      /* 104 */ "4, 13, 37, 36, 43, 44, 29, 5, 2, 3, 2, 3, 6"
+      /*   0 */ "55, 54, 70, 27, 54, 19, 56, 30, 48, 51, 51, 51, 54, 57, 54, 56, 30, 46, 48, 47, 19, 68, 51, 47, 65",
+      /*  25 */ "48, 47, 66, 48, 69, 42, 40, 67, 32, 59, 66, 63, 39, 62, 39, 62, 39, 42, 38, 42, 8, 0, 26, 64, 28, 58",
+      /*  51 */ "61, 60, 60, 34, 20, 21, 53, 8, 64, 42, 42, 20, 21, 50, 8, 42, 20, 21, 33, 24, 20, 21, 42, 19, 2, 3",
+      /*  77 */ "22, 52, 32, 25, 49, 28, 25, 33, 18, 12, 1, 11, 23, 7, 17, 9, 6, 31, 15, 35, 41, 16, 22, 10, 0, 14, 2",
+      /* 104 */ "3, 45, 4, 13, 37, 36, 43, 44, 29, 5, 2, 3, 2, 3, 6"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 117; ++i) {TOKENSET[i] = Integer.parseInt(s2[i]);}
+    decode(s1, TOKENSET);
   }
 
   private static final int[] APPENDIX = new int[18];
@@ -1472,11 +1512,10 @@ public class Ixml
   {
     final String s1[] =
     {
-      /*  0 */ "2, 339977, 8353, 98322, 12633, 98322, 123403, 139268, 45065, 319490, 40969, 319490, 283889, 376834",
-      /* 14 */ "288057, 376834, 491530, 540682"
+      /*  0 */ "2, 348169, 8353, 98322, 12633, 98322, 123403, 139268, 45065, 319490, 40969, 319490, 292081, 376834",
+      /* 14 */ "296249, 376834, 491530, 540682"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 18; ++i) {APPENDIX[i] = Integer.parseInt(s2[i]);}
+    decode(s1, APPENDIX);
   }
 
   private static final int[] LOOKBACK = new int[556];
@@ -1509,80 +1548,79 @@ public class Ixml
       /* 511 */ "150, 150, 0, 155, 155, 0, 158, 157, 0, 158, 159, 0, 162, 162, 160, 160, 0, 161, 161, 0, 163, 163, 0",
       /* 534 */ "173, 173, 164, 164, 0, 167, 166, 0, 167, 168, 0, 171, 171, 169, 169, 0, 170, 170, 0, 172, 172, 0"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 556; ++i) {LOOKBACK[i] = Integer.parseInt(s2[i]);}
+    decode(s1, LOOKBACK);
   }
 
-  private static final int[] GOTO = new int[920];
+  private static final int[] GOTO = new int[947];
   static
   {
     final String s1[] =
     {
-      /*   0 */ "332, 399, 399, 399, 552, 399, 434, 399, 486, 399, 399, 399, 471, 399, 399, 399, 483, 495, 399, 399",
-      /*  20 */ "338, 399, 399, 399, 344, 399, 399, 399, 399, 399, 411, 399, 542, 399, 488, 399, 350, 399, 399, 399",
-      /*  40 */ "356, 399, 399, 399, 362, 399, 399, 399, 399, 399, 434, 399, 504, 399, 399, 399, 480, 495, 399, 399",
-      /*  60 */ "526, 399, 399, 399, 368, 399, 399, 399, 374, 399, 399, 399, 446, 399, 399, 399, 399, 399, 533, 399",
-      /*  80 */ "380, 399, 399, 399, 386, 399, 399, 399, 392, 399, 399, 399, 346, 399, 399, 399, 428, 399, 399, 398",
-      /* 100 */ "516, 399, 400, 399, 399, 399, 340, 399, 382, 404, 394, 410, 464, 399, 488, 399, 415, 399, 399, 399",
-      /* 120 */ "421, 399, 399, 399, 399, 406, 427, 540, 432, 399, 399, 399, 438, 399, 399, 399, 511, 399, 399, 398",
-      /* 140 */ "444, 399, 399, 399, 450, 399, 399, 399, 456, 399, 399, 399, 462, 399, 399, 399, 468, 399, 399, 399",
-      /* 160 */ "477, 399, 399, 399, 492, 399, 399, 399, 501, 399, 399, 399, 399, 399, 399, 510, 399, 399, 515, 399",
-      /* 180 */ "399, 399, 399, 523, 520, 399, 399, 399, 399, 399, 399, 532, 399, 334, 399, 549, 388, 404, 394, 410",
-      /* 200 */ "376, 537, 394, 410, 376, 546, 394, 410, 399, 423, 427, 540, 399, 352, 399, 399, 399, 576, 399, 399",
-      /* 220 */ "558, 399, 399, 399, 399, 399, 399, 440, 554, 399, 399, 398, 399, 399, 399, 528, 399, 399, 399, 506",
-      /* 240 */ "399, 399, 399, 561, 399, 399, 399, 564, 399, 358, 571, 549, 399, 399, 575, 399, 580, 399, 399, 399",
-      /* 260 */ "399, 352, 399, 399, 399, 576, 399, 399, 584, 399, 399, 399, 588, 399, 399, 399, 399, 370, 399, 399",
-      /* 280 */ "399, 473, 399, 399, 592, 399, 399, 399, 596, 399, 399, 399, 399, 399, 399, 452, 399, 399, 399, 458",
-      /* 300 */ "399, 364, 399, 549, 600, 399, 399, 399, 604, 399, 399, 399, 399, 399, 417, 399, 399, 358, 608, 549",
-      /* 320 */ "399, 497, 567, 399, 612, 399, 399, 399, 616, 399, 399, 399, 620, 645, 646, 646, 623, 800, 657, 666",
-      /* 340 */ "646, 646, 646, 916, 772, 671, 646, 646, 662, 646, 717, 645, 646, 646, 677, 646, 638, 645, 646, 646",
-      /* 360 */ "708, 865, 635, 645, 646, 646, 723, 646, 684, 645, 646, 646, 746, 646, 687, 645, 646, 646, 750, 646",
-      /* 380 */ "807, 666, 646, 646, 750, 812, 790, 645, 646, 646, 750, 834, 796, 645, 646, 646, 763, 646, 739, 646",
-      /* 400 */ "646, 646, 646, 667, 755, 759, 646, 646, 769, 776, 802, 646, 646, 646, 676, 840, 645, 646, 646, 780",
-      /* 420 */ "646, 720, 645, 646, 646, 824, 776, 779, 646, 646, 646, 681, 855, 645, 646, 646, 829, 646, 861, 645",
-      /* 440 */ "646, 646, 838, 646, 867, 645, 646, 646, 849, 646, 907, 645, 646, 646, 893, 646, 877, 645, 646, 646",
-      /* 460 */ "899, 646, 626, 645, 646, 646, 914, 646, 889, 645, 646, 646, 651, 646, 646, 646, 887, 629, 645, 646",
-      /* 480 */ "646, 652, 656, 646, 647, 656, 646, 645, 646, 646, 646, 847, 732, 645, 646, 646, 661, 646, 646, 646",
-      /* 500 */ "905, 895, 645, 646, 646, 666, 646, 646, 740, 646, 672, 646, 646, 646, 690, 788, 646, 646, 646, 745",
-      /* 520 */ "901, 645, 646, 646, 693, 646, 646, 671, 646, 646, 741, 646, 794, 646, 646, 646, 765, 811, 816, 646",
-      /* 540 */ "646, 784, 646, 646, 827, 646, 811, 820, 646, 646, 806, 646, 646, 714, 646, 646, 646, 844, 632, 645",
-      /* 560 */ "646, 646, 853, 646, 646, 859, 646, 646, 911, 646, 646, 641, 871, 875, 646, 881, 646, 646, 646, 833",
-      /* 580 */ "711, 645, 646, 646, 696, 645, 646, 646, 702, 645, 646, 646, 883, 645, 646, 646, 751, 666, 646, 646",
-      /* 600 */ "726, 645, 646, 646, 729, 645, 646, 646, 735, 871, 875, 646, 705, 645, 646, 646, 699, 645, 646, 646, 6",
-      /* 621 */ "0, 4121, 0, 0, 237577, 0, 0, 245780, 0, 0, 253972, 0, 0, 255073, 0, 0, 262156, 0, 0, 270348, 0, 0",
-      /* 643 */ "275569, 483332, 8409, 0, 0, 0, 0, 24649, 12697, 0, 0, 0, 24681, 28681, 0, 0, 0, 49201, 32777, 0, 0, 0",
-      /* 665 */ "106985, 53561, 0, 0, 0, 114697, 61665, 0, 0, 0, 168729, 65545, 0, 0, 0, 246625, 0, 372745, 377369, 0",
-      /* 685 */ "0, 356361, 0, 0, 360457, 0, 0, 377433, 0, 0, 406569, 0, 0, 451713, 0, 0, 451777, 0, 0, 454665, 0, 0",
-      /* 707 */ "475145, 0, 0, 499716, 0, 0, 589860, 0, 20521, 57348, 0, 0, 278540, 0, 0, 303116, 0, 0, 319497, 0, 0",
-      /* 728 */ "324777, 0, 0, 327689, 0, 0, 328485, 0, 0, 337073, 483332, 111217, 0, 0, 0, 262153, 0, 98348, 0, 0, 0",
-      /* 749 */ "300289, 122889, 0, 0, 0, 307209, 389129, 188420, 188420, 188420, 32777, 0, 212996, 212996, 0, 212996",
-      /* 765 */ "0, 0, 94681, 0, 168713, 172777, 344068, 0, 57433, 348281, 16388, 0, 335876, 176913, 425988, 0, 0, 0",
-      /* 783 */ "331785, 398137, 0, 0, 180233, 0, 442380, 0, 0, 98313, 0, 0, 233481, 0, 0, 102409, 0, 0, 241673, 0, 0",
-      /* 804 */ "127697, 0, 398137, 0, 0, 0, 364553, 294916, 0, 0, 0, 385673, 32777, 221212, 212996, 212996, 32777",
-      /* 821 */ "237596, 212996, 212996, 168713, 0, 344068, 0, 69641, 0, 0, 16441, 0, 250833, 0, 0, 0, 385721, 258057",
-      /* 839 */ "0, 0, 0, 139849, 0, 0, 425993, 377369, 0, 74177, 0, 0, 78281, 0, 0, 267145, 0, 0, 192521, 0, 0",
-      /* 860 */ "271353, 0, 0, 196617, 0, 0, 434185, 0, 0, 201385, 0, 278537, 0, 516100, 475140, 438281, 0, 0, 0",
-      /* 879 */ "204809, 0, 0, 458780, 0, 0, 204844, 0, 304457, 0, 0, 0, 208905, 0, 0, 468249, 0, 0, 213753, 0, 0",
-      /* 900 */ "472417, 0, 0, 229385, 0, 0, 540676, 0, 0, 229396, 0, 0, 507940, 524292, 0, 155660, 0, 0, 94713, 0"
+      /*   0 */ "340, 407, 407, 407, 537, 407, 360, 407, 572, 407, 407, 407, 493, 407, 407, 407, 563, 502, 407, 407",
+      /*  20 */ "346, 407, 407, 407, 352, 407, 407, 407, 407, 407, 544, 407, 459, 407, 594, 407, 358, 407, 407, 407",
+      /*  40 */ "364, 407, 407, 407, 370, 407, 407, 407, 407, 407, 360, 407, 511, 407, 407, 407, 490, 502, 407, 407",
+      /*  60 */ "520, 407, 407, 407, 376, 407, 407, 407, 382, 407, 407, 407, 465, 407, 407, 407, 407, 407, 408, 407",
+      /*  80 */ "388, 407, 407, 407, 394, 407, 407, 407, 400, 407, 407, 407, 378, 407, 407, 407, 424, 407, 407, 406",
+      /* 100 */ "527, 407, 407, 412, 407, 407, 413, 407, 390, 417, 419, 423, 483, 407, 594, 407, 428, 407, 407, 407",
+      /* 120 */ "434, 407, 407, 407, 407, 430, 440, 560, 445, 407, 407, 407, 451, 407, 407, 407, 457, 407, 407, 407",
+      /* 140 */ "441, 407, 407, 406, 463, 407, 407, 407, 469, 407, 407, 407, 475, 407, 407, 407, 481, 407, 407, 407",
+      /* 160 */ "487, 407, 407, 407, 499, 407, 407, 407, 508, 407, 407, 407, 517, 407, 407, 407, 407, 407, 407, 534",
+      /* 180 */ "407, 407, 526, 407, 407, 407, 407, 554, 531, 407, 407, 407, 407, 407, 407, 543, 407, 342, 407, 557",
+      /* 200 */ "384, 551, 407, 423, 396, 417, 419, 423, 384, 548, 477, 423, 384, 578, 477, 423, 407, 453, 440, 560",
+      /* 220 */ "407, 402, 407, 407, 407, 539, 407, 407, 585, 407, 407, 407, 407, 407, 407, 471, 574, 407, 407, 406",
+      /* 240 */ "407, 407, 407, 436, 407, 407, 407, 495, 407, 407, 407, 566, 407, 407, 407, 569, 407, 513, 589, 557",
+      /* 260 */ "407, 407, 593, 407, 598, 407, 407, 407, 407, 402, 407, 407, 407, 539, 407, 407, 602, 407, 407, 407",
+      /* 280 */ "606, 407, 407, 407, 407, 447, 407, 407, 407, 504, 407, 407, 610, 407, 407, 407, 614, 407, 407, 407",
+      /* 300 */ "407, 407, 407, 366, 407, 407, 407, 372, 407, 522, 407, 557, 618, 407, 407, 407, 622, 407, 407, 407",
+      /* 320 */ "407, 407, 348, 407, 407, 513, 626, 557, 407, 354, 581, 407, 630, 407, 407, 407, 634, 407, 407, 407",
+      /* 340 */ "638, 684, 685, 685, 653, 842, 701, 705, 685, 685, 685, 926, 799, 710, 685, 685, 685, 932, 674, 684",
+      /* 360 */ "685, 685, 686, 685, 668, 684, 685, 685, 736, 685, 662, 684, 685, 685, 739, 685, 718, 684, 685, 685",
+      /* 380 */ "774, 685, 721, 684, 685, 685, 783, 685, 853, 705, 685, 685, 783, 875, 890, 684, 685, 685, 783, 895",
+      /* 400 */ "943, 684, 685, 685, 784, 685, 888, 685, 685, 685, 685, 706, 778, 685, 685, 685, 711, 788, 792, 685",
+      /* 420 */ "685, 796, 685, 779, 685, 685, 685, 715, 822, 684, 685, 685, 803, 812, 754, 684, 685, 685, 816, 685",
+      /* 440 */ "815, 685, 685, 685, 724, 838, 684, 685, 685, 827, 685, 844, 684, 685, 685, 865, 812, 881, 684, 685",
+      /* 460 */ "685, 868, 685, 916, 684, 685, 685, 870, 685, 644, 684, 685, 685, 879, 685, 928, 684, 685, 685, 922",
+      /* 480 */ "685, 656, 684, 685, 685, 941, 685, 934, 684, 685, 685, 696, 695, 685, 690, 685, 685, 685, 894, 659",
+      /* 500 */ "684, 685, 685, 700, 685, 685, 685, 920, 760, 684, 685, 685, 705, 685, 685, 745, 899, 641, 684, 685",
+      /* 520 */ "685, 710, 685, 685, 757, 685, 836, 685, 685, 685, 773, 647, 684, 685, 685, 831, 685, 685, 751, 685",
+      /* 540 */ "685, 685, 874, 650, 685, 685, 685, 806, 852, 857, 685, 685, 848, 685, 685, 910, 685, 685, 820, 685",
+      /* 560 */ "685, 820, 826, 685, 691, 695, 685, 671, 685, 685, 677, 685, 685, 684, 685, 685, 685, 885, 852, 861",
+      /* 580 */ "685, 685, 938, 685, 685, 665, 684, 685, 685, 680, 905, 909, 685, 914, 685, 685, 685, 808, 748, 684",
+      /* 600 */ "685, 685, 727, 684, 685, 685, 733, 684, 685, 685, 901, 684, 685, 685, 832, 705, 685, 685, 763, 684",
+      /* 620 */ "685, 685, 766, 684, 685, 685, 769, 905, 909, 685, 742, 684, 685, 685, 730, 684, 685, 685, 6, 0, 4121",
+      /* 641 */ "0, 0, 221945, 0, 0, 229396, 0, 0, 237577, 0, 0, 241673, 0, 0, 245769, 0, 0, 245780, 0, 0, 253972, 0",
+      /* 663 */ "0, 262156, 0, 0, 263265, 0, 0, 270348, 0, 0, 275337, 0, 0, 278540, 0, 0, 279545, 0, 0, 283761, 483332",
+      /* 684 */ "8409, 0, 0, 0, 0, 16441, 12697, 0, 0, 0, 24649, 28681, 0, 0, 0, 24681, 32777, 0, 0, 0, 49201, 53561",
+      /* 706 */ "0, 0, 0, 94681, 61665, 0, 0, 0, 94713, 0, 380937, 385561, 0, 0, 364553, 0, 0, 368649, 0, 0, 385625, 0",
+      /* 728 */ "0, 459905, 0, 0, 459969, 0, 0, 462857, 0, 0, 476441, 0, 0, 480609, 0, 0, 483337, 0, 0, 499716, 0, 0",
+      /* 750 */ "598052, 0, 20521, 57348, 0, 0, 303116, 0, 0, 327689, 0, 0, 328485, 0, 0, 332969, 0, 0, 335881, 0, 0",
+      /* 771 */ "345265, 483332, 98348, 0, 0, 0, 106985, 114697, 0, 0, 0, 127697, 122889, 0, 0, 0, 254817, 397321",
+      /* 789 */ "188420, 188420, 188420, 32777, 0, 212996, 212996, 0, 188420, 212996, 0, 57433, 356473, 16388, 172809",
+      /* 804 */ "176873, 344068, 0, 65545, 0, 0, 74177, 0, 0, 335876, 181009, 425988, 0, 0, 0, 270345, 0, 406329, 0, 0",
+      /* 824 */ "143945, 0, 184329, 0, 0, 0, 308481, 172825, 0, 0, 0, 315401, 0, 442380, 0, 0, 196617, 0, 0, 249865, 0",
+      /* 845 */ "0, 200713, 0, 32777, 0, 573460, 573460, 294916, 0, 0, 0, 372745, 32777, 221212, 212996, 212996, 32777",
+      /* 862 */ "237596, 212996, 212996, 172809, 0, 344068, 0, 69641, 0, 0, 78281, 0, 259025, 0, 0, 0, 393865, 0",
+      /* 880 */ "266249, 0, 0, 204809, 0, 0, 434185, 385561, 0, 111217, 0, 0, 98313, 0, 270345, 0, 0, 0, 393913, 0",
+      /* 900 */ "442377, 0, 0, 204844, 0, 286729, 0, 516100, 475140, 446473, 0, 0, 0, 414761, 0, 458780, 0, 0, 209577",
+      /* 919 */ "0, 312649, 0, 0, 0, 212996, 0, 339977, 0, 0, 0, 213001, 0, 0, 540676, 0, 0, 217097, 0, 0, 507940",
+      /* 940 */ "524292, 0, 155660, 0, 0, 102409, 0"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 920; ++i) {GOTO[i] = Integer.parseInt(s2[i]);}
+    decode(s1, GOTO);
   }
 
-  private static final int[] REDUCTION = new int[146];
+  private static final int[] REDUCTION = new int[148];
   static
   {
     final String s1[] =
     {
-      /*   0 */ "42, 0, 0, -1, 1, -1, 1, 1, 2, -1, 3, -1, 4, -1, 5, -1, 43, 2, 6, -1, 44, 3, 7, 4, 8, -1, 46, 6, 45, 5",
-      /*  30 */ "9, 7, 10, -1, 11, -1, 47, 8, 12, 9, 13, -1, 48, 10, 14, -1, 15, -1, 49, 11, 16, 12, 16, -1, 17, 14",
-      /*  56 */ "17, 13, 18, 16, 18, 15, 19, 17, 20, 20, 20, 19, 20, 18, 20, 21, 21, -1, 22, 22, 51, 24, 50, 23, 23",
-      /*  81 */ "-1, 24, 26, 24, 25, 25, 27, 25, -1, 53, 29, 52, 28, 26, -1, 27, 30, 28, 30, 54, 31, 29, 32, 30, -1",
-      /* 106 */ "55, 33, 31, -1, 56, 34, 32, -1, 33, -1, 34, 38, 34, 37, 34, 36, 34, 35, 35, -1, 36, 39, 37, 40, 57",
-      /* 131 */ "41, 38, -1, 39, 42, 39, -1, 40, 43, 59, 45, 58, 44, 41, -1"
+      /*   0 */ "43, 0, 0, -1, 1, -1, 1, 1, 2, -1, 3, -1, 4, -1, 5, -1, 44, 2, 6, -1, 45, 3, 7, 4, 8, -1, 47, 6, 46, 5",
+      /*  30 */ "9, 7, 10, -1, 11, -1, 48, 8, 12, 9, 13, -1, 49, 10, 14, -1, 15, -1, 50, 11, 16, 12, 16, -1, 17, 14",
+      /*  56 */ "17, 13, 18, 16, 18, 15, 19, 17, 20, 20, 20, 19, 20, 18, 20, 21, 21, -1, 22, 22, 52, 24, 51, 23, 23",
+      /*  81 */ "-1, 24, 26, 24, 25, 25, 27, 25, -1, 54, 29, 53, 28, 26, -1, 27, 30, 28, 30, 55, 31, 29, 32, 30, -1",
+      /* 106 */ "56, 33, 31, -1, 57, 34, 32, -1, 33, -1, 34, 38, 34, 37, 34, 36, 34, 35, 35, -1, 36, 39, 37, 40, 58",
+      /* 131 */ "41, 38, -1, 39, 42, 39, -1, 40, 43, 41, 44, 60, 46, 59, 45, 42, -1"
     };
-    String[] s2 = java.util.Arrays.toString(s1).replaceAll("[ \\[\\]]", "").split(",");
-    for (int i = 0; i < 146; ++i) {REDUCTION[i] = Integer.parseInt(s2[i]);}
+    decode(s1, REDUCTION);
   }
 
   private static final String[] TOKEN =
@@ -1637,6 +1675,7 @@ public class Ixml
     "hexdigit",
     "letter",
     "end-of-input",
+    "'!'",
     "'\"'",
     "'#'",
     "''''",
@@ -1660,7 +1699,7 @@ public class Ixml
     "'~'"
   };
 
-                                                            // line 967 "ixml.ebnf"
+                                                            // line 972 "ixml.ebnf"
                                                             private int hexBegin;
                                                               private boolean deleted;
                                                               private boolean exclusion;
@@ -1710,5 +1749,5 @@ public class Ixml
                                                                  de.bottlecaps.markup.blitz.Errors.S11.thro("#" + Integer.toHexString(codepoint));
                                                               }
                                                             }
-                                                            // line 1714 "Ixml.java"
+                                                            // line 1753 "Ixml.java"
 // End

@@ -14,6 +14,7 @@ import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -129,6 +130,12 @@ public class PostProcess extends Visitor {
 
   @Override
   public void visit(Nonterminal n) {
+    visitPreOrder(n);
+    visitPostOrder(n);
+  }
+
+  @Override
+  public void visit(Not n) {
     visitPreOrder(n);
     visitPostOrder(n);
   }

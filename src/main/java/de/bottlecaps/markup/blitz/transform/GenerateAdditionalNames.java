@@ -17,6 +17,7 @@ import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Node;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Occurrence;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
@@ -36,6 +37,8 @@ public class GenerateAdditionalNames extends Visitor {
   private final Map<Alts, String> nameByRhs;
   /** Prefix for making newly generated names distinct from user-defined ones. */
   private final String additionalNamePrefix;
+  /** Names by negative lookahead. */
+  private final Map<Not, String> nameByNot = new HashMap<>();
   /** The smallest context for each range set. */
   private final Map<RangeSet, String> smallestContext;
 
@@ -95,6 +98,14 @@ public class GenerateAdditionalNames extends Visitor {
   public void visit(Insertion i) {
     String additionalName = getAdditionalName(i.getRule().getName(), i, "insertion");
     addAdditionalNames(i, additionalName);
+  }
+
+  @Override
+  public void visit(Not n) {
+    // not shared with user-defined rules, because the additional rule is
+    // different from a rule consisting of just this negative lookahead
+    String additionalName = nameByNot.computeIfAbsent(n, k -> getAdditionalName(n.getRule().getName(), "not"));
+    addAdditionalNames(n, additionalName);
   }
 
   @Override

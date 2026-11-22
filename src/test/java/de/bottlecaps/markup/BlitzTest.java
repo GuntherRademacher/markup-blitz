@@ -69,6 +69,56 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testNotCharset() {
+    Parser parser = generate(
+        "sent = (word|numb)+. word = [L]+, ![L]. numb = [N]+, ![N].");
+    assertEquals(
+        "<sent><word>aaa</word><numb>123</numb><word>bbb</word></sent>",
+        parser.parse("aaa123bbb"));
+  }
+
+  @Test
+  public void testNotStringAndHex() {
+    Parser parser = generate("S: 'a'+, !'b', 'b'*.");
+    assertEquals("<S>aa</S>", parser.parse("aa"));
+    assertTrue(parser.parse("aab").contains("ixml:state=\"failed\""));
+
+    parser = generate("S: 'x', !#61, ['a'-'z']*.");
+    assertEquals("<S>xyz</S>", parser.parse("xyz"));
+    assertTrue(parser.parse("xaz").contains("ixml:state=\"failed\""));
+  }
+
+  @Test
+  public void testNotNonterminal() {
+    Parser parser = generate("S: w, !end, [L]*. -end: 'end'; ('st', 'op'). w: 'go'.");
+    assertEquals("<S><w>go</w>foo</S>", parser.parse("gofoo"));
+    assertEquals("<S><w>go</w>sto</S>", parser.parse("gosto"));
+    assertTrue(parser.parse("gostop").contains("ixml:state=\"failed\""));
+    assertTrue(parser.parse("goend").contains("ixml:state=\"failed\""));
+  }
+
+  @Test
+  public void testNotKeyword() {
+    Parser parser = generate(
+          "S: (-' '*, (kw; id))+, -' '*.\n"
+        + "kw: ('if'; 'else'), !namechar.\n"
+        + "id: namestart, namechar*, !namechar.\n"
+        + "-namestart: ['a'-'z'].\n"
+        + "-namechar: ['a'-'z'; '0'-'9'].");
+    assertEquals(
+        "<S><id>ifx</id><id>elsey</id><id>x</id></S>",
+        parser.parse("ifx elsey x"));
+    assertThrows(BlitzException.class, () -> generate("S: !k, 'a'. k: 'b', !'c'."));
+  }
+
+  @Test
+  public void testNotUnsupportedOperand() {
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x'*."));
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x', r; 'y'."));
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x'; ."));
+  }
+
+  @Test
   public void testAmbiguousInsertion() {
     Parser parser = generate(
         "S:'a', +'a'+.");

@@ -12,6 +12,8 @@ public class Alt extends Node {
   private final List<Term> terms;
   // metadata
   private int reductionId;
+  /** Negative lookahead to be checked when reducing this (empty) alternative. */
+  private Not not;
 
   public Alt() {
     terms = new ArrayList<>();
@@ -27,6 +29,14 @@ public class Alt extends Node {
 
   public int getReductionId() {
     return reductionId;
+  }
+
+  public Not getNot() {
+    return not;
+  }
+
+  public void setNot(Not not) {
+    this.not = not;
   }
 
   public Term removeLast() {
@@ -67,6 +77,10 @@ public class Alt extends Node {
     terms.add(new Insertion(hex, true));
   }
 
+  public void addNot(Term operand) {
+    terms.add(new Not(operand));
+  }
+
   @Override
   public void accept(Visitor v) {
     v.visit(this);
@@ -78,12 +92,16 @@ public class Alt extends Node {
     Alt alt = new Alt();
     for (Term term : terms)
       alt.getTerms().add(term.copy());
+    alt.not = not;
     return alt;
   }
 
   @Override
   public String toString() {
-    return terms.stream().map(Term::toString).collect(Collectors.joining(", "));
+    String string = terms.stream().map(Term::toString).collect(Collectors.joining(", "));
+    if (not != null)
+      string += (string.isEmpty() ? "" : ", ") + not.toString();
+    return string;
   }
 
   @Override
@@ -91,6 +109,7 @@ public class Alt extends Node {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((terms == null) ? 0 : terms.hashCode());
+    result = prime * result + ((not == null) ? 0 : not.hashCode());
     return result;
   }
 
@@ -107,6 +126,8 @@ public class Alt extends Node {
     }
     else if (!terms.equals(other.terms))
       return false;
-    return true;
+    if (not == null)
+      return other.not == null;
+    return not.equals(other.not);
   }
 }

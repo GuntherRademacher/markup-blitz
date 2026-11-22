@@ -51,6 +51,7 @@
                | option
                | repeat0
                | repeat1
+               | not
        factor::= terminal
                | nonterminal
                | insertion
@@ -143,6 +144,10 @@
                  | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
                  | 'V' | 'W' | 'X' | 'Y' | 'Z'
                  )                                          <?java clazz = input.subSequence(b0, e0).toString();?>
+          not::= '!' s ( terminal | nonterminal )            <?java
+                                                              Term operand = alts.peek().last().removeLast();
+                                                              alts.peek().last().addNot(operand);
+                                                            ?>
     insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
                                 | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
                                       ) s

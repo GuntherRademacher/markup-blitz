@@ -30,6 +30,7 @@ import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -305,6 +306,11 @@ public class ClassifyCharacters extends Copy {
 
     @Override
     public void visit(Insertion i) {
+      rangeSet = null;
+    }
+
+    @Override
+    public void visit(Not n) {
       rangeSet = null;
     }
 

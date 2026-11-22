@@ -111,6 +111,18 @@ Usage: java -jar markup-blitz.jar [<OPTION>...] [<GRAMMAR>] <INPUT>
 
 When the grammar is omitted, Markup Blitz uses its built-in [grammar of ixml][ixml-grammar] to parse the input as an ixml grammar, producing its XML representation.
 
+# Negative lookahead
+
+As an extension to Invisible XML, a term may be a negative lookahead `!operand`. It matches the empty string, but only if the remaining input does not start with something that matches the operand. The operand can be a string, an encoded character, a character set, or the name of a rule that matches a finite set of fixed sequences of characters (no repetitions, options, empty alternatives, recursion or nested `!`). This makes it possible to require a repetition to consume as much as possible:
+
+```ixml
+sent = (word | numb)+.
+word = [L]+, ![L].
+numb = [N]+, ![N].
+```
+
+Without the lookaheads, input `aaa123bbb` would be ambiguous, because `aaa` could also be split into several words.
+
 # Proving that a grammar is unambiguous
 
 Ambiguity of context-free grammars is undecidable in general, but there are sufficient conditions that can be checked. If a parser can be constructed without conflicts, the grammar is unambiguous for every input. The converse does not hold: a conflict does not necessarily indicate ambiguity, as the grammar may just not be of the class that the construction handles. Also note that the check applies to the grammar after Markup Blitz has transformed it internally, which may remove some ambiguities beforehand.
