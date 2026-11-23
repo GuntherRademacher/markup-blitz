@@ -429,7 +429,10 @@ public class Generator {
         State state = terminalTransitions.get(conflictToken);
         if (terminalTransitions.containsKey(conflictToken)) {
           if (state.isLr0ReduceState()) {
-            int argument = ((Alt) state.kernel.keySet().iterator().next()).getReductionId();
+            // the kernel item is an Alt, or an Insertion at the end of an Alt
+            Node node = state.kernel.keySet().iterator().next();
+            Alt alt = (Alt) (node instanceof Alt ? node : node.getParent());
+            int argument = alt.getReductionId();
             forkList.add(Action.code(Action.Type.SHIFT_REDUCE, argument));
           }
           else {

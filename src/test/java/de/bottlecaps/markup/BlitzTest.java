@@ -69,6 +69,16 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testConflictOnShiftToInsertion() {
+    // shift-reduce conflict on 'x', where the shift leads to a state that reduces
+    // an alternative ending in an insertion
+    Parser parser = generate("s = c, a | a. c = . a = 'x', +'y'.");
+    assertEquals(
+        "<s xmlns:ixml=\"" + Parser.IXML_NAMESPACE + "\" ixml:state=\"ambiguous\"><a>xy</a></s>",
+        parser.parse("x"));
+  }
+
+  @Test
   public void testAmbiguousInsertion() {
     Parser parser = generate(
         "S:'a', +'a'+.");
