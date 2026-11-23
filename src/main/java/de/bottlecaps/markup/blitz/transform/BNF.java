@@ -18,6 +18,7 @@ import de.bottlecaps.markup.blitz.grammar.Charset;
 import de.bottlecaps.markup.blitz.grammar.Control;
 import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Node;
@@ -54,6 +55,7 @@ public class BNF extends Visitor {
 
     if (timing)
       t0 = System.currentTimeMillis();
+    ResolveNot.process(g);
     ClassifyCharacters cc = new ClassifyCharacters(new Grammar(g));
     Grammar grammar = cc.combine(g, options);
 
@@ -109,7 +111,7 @@ public class BNF extends Visitor {
         copy.addRule(justAdded.remove(r.getName()));
       }
       else {
-        copy.addRule(new Rule(Mark.NONE, null, r.getName(), a));
+        copy.addRule(new Rule(Mark.NONE, null, r.getName(), a, r.getCost()));
         coveredRules.add(r.getName());
       }
       for (Rule rule : justAdded.values())
@@ -286,6 +288,23 @@ public class BNF extends Visitor {
         coveredRules.add(additionalRule.getName());
         justAdded.put(additionalRule.getName(), additionalRule);
       }
+    }
+  }
+
+  @Override
+  public void visit(Not n) {
+    // replace by reference to an additional rule with a single empty alternative,
+    // that carries the lookahead to be checked when reducing it.
+    String name = grammar.getAdditionalNames().get(n)[0];
+    alts.peek().last().getTerms().add(new Nonterminal(Mark.DELETE, null, name));
+    if (! coveredRules.contains(name)) {
+      Alts alts = new Alts();
+      Alt alt = new Alt();
+      alt.setNot(n.copy());
+      alts.addAlt(alt);
+      Rule additionalRule = new Rule(Mark.NONE, null, name, alts);
+      coveredRules.add(additionalRule.getName());
+      justAdded.put(additionalRule.getName(), additionalRule);
     }
   }
 

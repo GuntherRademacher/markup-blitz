@@ -69,6 +69,96 @@ public class BlitzTest extends TestBase {
   }
 
   @Test
+  public void testNotCharset() {
+    Parser parser = generate(
+        "sent = (word|numb)+. word = [L]+, ![L]. numb = [N]+, ![N].");
+    assertEquals(
+        "<sent><word>aaa</word><numb>123</numb><word>bbb</word></sent>",
+        parser.parse("aaa123bbb"));
+  }
+
+  @Test
+  public void testNotStringAndHex() {
+    Parser parser = generate("S: 'a'+, !'b', 'b'*.");
+    assertEquals("<S>aa</S>", parser.parse("aa"));
+    assertTrue(parser.parse("aab").contains("ixml:state=\"failed\""));
+
+    parser = generate("S: 'x', !#61, ['a'-'z']*.");
+    assertEquals("<S>xyz</S>", parser.parse("xyz"));
+    assertTrue(parser.parse("xaz").contains("ixml:state=\"failed\""));
+  }
+
+  @Test
+  public void testNotNonterminal() {
+    Parser parser = generate("S: w, !end, [L]*. -end: 'end'; ('st', 'op'). w: 'go'.");
+    assertEquals("<S><w>go</w>foo</S>", parser.parse("gofoo"));
+    assertEquals("<S><w>go</w>sto</S>", parser.parse("gosto"));
+    assertTrue(parser.parse("gostop").contains("ixml:state=\"failed\""));
+    assertTrue(parser.parse("goend").contains("ixml:state=\"failed\""));
+  }
+
+  @Test
+  public void testNotKeyword() {
+    Parser parser = generate(
+          "S: (-' '*, (kw; id))+, -' '*.\n"
+        + "kw: ('if'; 'else'), !namechar.\n"
+        + "id: namestart, namechar*, !namechar.\n"
+        + "-namestart: ['a'-'z'].\n"
+        + "-namechar: ['a'-'z'; '0'-'9'].");
+    assertEquals(
+        "<S><id>ifx</id><id>elsey</id><id>x</id></S>",
+        parser.parse("ifx elsey x"));
+    assertThrows(BlitzException.class, () -> generate("S: !k, 'a'. k: 'b', !'c'."));
+  }
+
+  @Test
+  public void testNotUnsupportedOperand() {
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x'*."));
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x', r; 'y'."));
+    assertThrows(BlitzException.class, () -> generate("S: !r, 'a'. r: 'x'; ."));
+  }
+
+  @Test
+  public void testCost() {
+    final String ambiguous = "ixml:state=\"ambiguous\"";
+    String input = "CHAPTER ONE\nCall me ishmael.\n\nCHAPTER TWO\nMore.\n";
+    String expected = "<parts><chapter>CHAPTER ONE</chapter><line>Call me ishmael.</line><line/>"
+                    + "<chapter>CHAPTER TWO</chapter><line>More.</line></parts>";
+    // without costs, a chapter is also a line
+    assertTrue(generate("parts = (chapter|line)*. line = ~[#a]*, -#a. chapter = 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input).contains(ambiguous));
+    // with a cost on line, chapter wins
+    assertEquals(expected,
+        generate("parts = (chapter|line)*. line =< ~[#a]*, -#a. chapter = 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input));
+    assertEquals(expected,
+        generate("parts = (chapter|line)*. line =<< ~[#a]*, -#a. chapter =< 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input));
+    // equal costs remain ambiguous
+    assertTrue(generate("parts = (chapter|line)*. line =< ~[#a]*, -#a. chapter =< 'CHAPTER ', ~[#a]*, -#a.")
+        .parse(input).contains(ambiguous));
+  }
+
+  @Test
+  public void testCostIsSummed() {
+    // a: x, x costs 1 + 1 = 2
+    assertEquals("<s><a><x>q</x><x>q</x></a></s>",
+        generate("s = a | b. a = x, x. b = y. x =< 'q'. y =<<< 'q', 'q'.").parse("qq"));
+    assertTrue(generate("s = a | b. a = x, x. b = y. x =< 'q'. y =<< 'q', 'q'.")
+        .parse("qq").contains("ixml:state=\"ambiguous\""));
+    assertEquals("<s><b><y>qq</y></b></s>",
+        generate("s = a | b. a = x, x. b = y. x =< 'q'. y = 'q', 'q'.").parse("qq"));
+  }
+
+  @Test
+  public void testCostOnInlinableRules() {
+    // deleted single character rules, that would otherwise be inlined
+    assertEquals("<s><y>a</y></s>", generate("s = x | y. -x =< ['a']. y = 'a'.").parse("a"));
+    // a rule with a cost is not shared with a group that has the same right hand side
+    assertEquals("<s>ab</s>", generate("s = ('a', 'b') | y. y =< 'a', 'b'.").parse("ab"));
+  }
+
+  @Test
   public void testAmbiguousInsertion() {
     Parser parser = generate(
         "S:'a', +'a'+.");

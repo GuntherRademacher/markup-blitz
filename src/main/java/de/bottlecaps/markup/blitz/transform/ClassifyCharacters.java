@@ -30,6 +30,7 @@ import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 import de.bottlecaps.markup.blitz.grammar.Node;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -309,6 +310,11 @@ public class ClassifyCharacters extends Copy {
     }
 
     @Override
+    public void visit(Not n) {
+      rangeSet = null;
+    }
+
+    @Override
     public void visit(Literal l) {
       if (rangeSet != null) {
         int[] codepoints = l.getCodepoints();
@@ -331,7 +337,8 @@ public class ClassifyCharacters extends Copy {
       }
       active.add(n.getName());
       if (rangeSet != null) {
-        if (n.getEffectiveMark() != Mark.DELETE) {
+        if (n.getEffectiveMark() != Mark.DELETE || n.getGrammar().getRule(n.getName()).getCost() != 0) {
+          // not inlined: a preserved nonterminal or one with a cost
           rangeSet = null;
         }
         else {

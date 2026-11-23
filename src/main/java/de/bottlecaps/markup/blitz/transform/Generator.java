@@ -257,7 +257,11 @@ public class Generator {
         + ", id " + nonterminalId
         + ", nonterminal " + nonterminal[nonterminalId]
         + (marks.length == 0 ? "" : ", marks " + Arrays.stream(marks).map(Mark::toString).collect(Collectors.joining()))
-        + (insertion == null ? "" : ", insert " + new Insertion(insertion));
+        + (reduceArgument.getCost() == 0 ? "" : ", cost " + reduceArgument.getCost())
+        + (insertion == null ? "" : ", insert " + new Insertion(insertion))
+        + (reduceArgument.getNot() == null ? "" : ", not " + Arrays.stream(reduceArgument.getNot())
+            .map(s -> Arrays.stream(s).map(RangeSet::shortName).collect(Collectors.joining(" ")))
+            .collect(Collectors.joining(" | ")));
   }
 
   private class State {
@@ -726,7 +730,9 @@ public class Generator {
             marks.toArray(Mark[]::new),
             aliases.stream().mapToInt(Integer::intValue).toArray(),
             insertion,
-            code);
+            code,
+            alt.getNot() == null ? null : alt.getNot().getSequences(),
+            rule.getCost());
         int newId = reductionId.size();
         Integer id = reductionId.putIfAbsent(reduction, newId);
         alt.setReductionId(id == null ? newId : id);

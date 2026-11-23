@@ -917,6 +917,16 @@ public class Parser
 
       for (;;) {
         for (ParsingThread t; (t = otherThreads.removeIfEqual(thread)) != null;) {
+          if (t.cost != thread.cost) {
+            // different costs: the cheaper alternative wins, this is not an ambiguity
+            if (trace) {
+              ParsingThread loser = t.cost > thread.cost ? t : thread;
+              writeTrace("  <parse thread=\"" + loser.id + "\" offset=\"" + loser.e0 + "\" state=\"" + loser.state + "\" action=\"discard\" reason=\"cost " + loser.cost + " > " + Math.min(t.cost, thread.cost) + "\"/>\n");
+            }
+            if (t.cost < thread.cost)
+              thread = t;
+            continue;
+          }
           if (trace)
             writeTrace("  <parse thread=\"" + thread.id + "\" offset=\"" + thread.e0 + "\" state=\"" + thread.state + "\" action=\"discard\"/>\n");
           if (t.deferredEvent == null || t.deferredEvent.getQueueSize() < thread.deferredEvent.getQueueSize())
@@ -1019,6 +1029,8 @@ public class Parser
       public int b1, e1;
       public int c1, l1;
       public boolean isAmbiguous;
+      /** The sum of the costs of the reductions done by this thread. */
+      public long cost;
 
       private StackNode stack;
 
@@ -1056,6 +1068,7 @@ public class Parser
         b1 = other.b1;
         e1 = other.e1;
         isAmbiguous = other.isAmbiguous;
+        cost = other.cost;
       }
 
       public long priority() {
@@ -1164,6 +1177,18 @@ public class Parser
             ReduceArgument reduceArgument = reduceArguments[reduce];
             int symbols = reduceArgument.getMarks().length;
             nonterminalId = reduceArgument.getNonterminalId();
+            if (reduceArgument.getNot() != null && lookaheadMatches(reduceArgument.getNot(), b1)) {
+              // negative lookahead: the remaining input starts with something that is
+              // excluded here, so this thread fails.
+              if (trace) {
+                if (shift >= 0)
+                  writeTrace(" ");
+                writeTrace("reduce\" nonterminal=\"" + xmlEscape(nonterminal[nonterminalId]) + "\" count=\"" + symbols + "\"/>\n");
+                writeTrace("  <parse thread=\"" + id + "\" offset=\"" + e0 + "\" state=\"" + state + "\" action=\"fail\" reason=\"negative lookahead\"/>\n");
+              }
+              status = Status.ERROR;
+              return -1;
+            }
             if (trace) {
               if (shift >= 0)
                 writeTrace(" ");
@@ -1176,6 +1201,7 @@ public class Parser
               state = stack.getState();
               stack = stack.pop();
             }
+            cost += reduceArgument.getCost();
             if (isUnambiguous)
               parseTreeBuilder.nonterminal(reduceArgument);
             else
@@ -1183,6 +1209,41 @@ public class Parser
             action = nonterminalTransitions.get(state * numberOfNonterminals + nonterminalId);
           }
         }
+      }
+
+      /**
+       * Check whether the input at the given position starts with any of the given
+       * sequences of character sets.
+       *
+       * @param sequences the sequences
+       * @param pos the input position
+       * @return true, if there is a match
+       */
+      private boolean lookaheadMatches(RangeSet[][] sequences, int pos) {
+        for (RangeSet[] sequence : sequences) {
+          int p = pos;
+          boolean matches = true;
+          for (RangeSet rangeSet : sequence) {
+            if (p >= size) {
+              matches = false;
+              break;
+            }
+            int codepoint = input.codePointAt(p);
+            p += Character.charCount(codepoint);
+            if (codepoint == 0xD && normalizeEol) {
+              if (p < size && input.charAt(p) == 0xA)
+                ++p;
+              codepoint = 0xA;
+            }
+            if (! rangeSet.containsCodepoint(codepoint)) {
+              matches = false;
+              break;
+            }
+          }
+          if (matches)
+            return true;
+        }
+        return false;
       }
 
       private int match() {

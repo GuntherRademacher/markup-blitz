@@ -12,6 +12,7 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -48,7 +49,7 @@ public class Copy extends Visitor {
   @Override
   public void visit(Rule r) {
     super.visit(r);
-    copy.addRule(new Rule(r.getMark(), r.getAlias(), r.getName(), alts.pop()));
+    copy.addRule(new Rule(r.getMark(), r.getAlias(), r.getName(), alts.pop(), r.getCost()));
   }
 
   @Override
@@ -82,6 +83,11 @@ public class Copy extends Visitor {
   @Override
   public void visit(Insertion i) {
     alts.peek().last().getTerms().add(i.copy());
+  }
+
+  @Override
+  public void visit(Not n) {
+    alts.peek().last().getTerms().add(n.copy());
   }
 
   @Override

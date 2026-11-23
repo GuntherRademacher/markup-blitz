@@ -11,12 +11,27 @@ public class Rule extends Node {
   private final String alias;
   private final String name;
   private final Alts alts;
+  /** The cost of using this rule, given as =&lt;, =&lt;&lt;, ... for 1, 2, ... */
+  private int cost;
 
   public Rule(Mark mark, String alias, String name, Alts alts) {
+    this(mark, alias, name, alts, 0);
+  }
+
+  public Rule(Mark mark, String alias, String name, Alts alts, int cost) {
     this.mark = mark;
     this.alias = alias;
     this.name = name;
     this.alts = alts;
+    this.cost = cost;
+  }
+
+  public int getCost() {
+    return cost;
+  }
+
+  public void incrementCost() {
+    ++cost;
   }
 
   public Mark getMark() {
@@ -43,13 +58,13 @@ public class Rule extends Node {
   @SuppressWarnings("unchecked")
   @Override
   public Rule copy() {
-    return new Rule(mark, alias, name, alts.copy());
+    return new Rule(mark, alias, name, alts.copy(), cost);
   }
 
   @Override
   public String toString() {
     String padding2 = "               ";
-    String prefix = mark + name + (alias != null ? ">" + alias : "") + ": ";
+    String prefix = mark + name + (alias != null ? ">" + alias : "") + ":" + "<".repeat(cost) + " ";
     int padding1Length = padding2.length() - prefix.length();
     String padding1 = padding2.substring(0, Math.max(0, padding1Length));
     if (padding1Length < 0) {
@@ -66,6 +81,7 @@ public class Rule extends Node {
     result = prime * result + ((alts == null) ? 0 : alts.hashCode());
     result = prime * result + ((mark == null) ? 0 : mark.hashCode());
     result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + cost;
     return result;
   }
 
@@ -89,6 +105,8 @@ public class Rule extends Node {
     else if (!alts.equals(other.alts))
       return false;
     if (mark != other.mark)
+      return false;
+    if (cost != other.cost)
       return false;
     if (name == null) {
       if (other.name != null)

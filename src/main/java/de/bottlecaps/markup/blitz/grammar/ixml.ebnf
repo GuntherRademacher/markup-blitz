@@ -16,9 +16,11 @@
 
          rule::= naming                                     <?java
                                                                alts.push(new Alts());
-                                                               grammar.addRule(new Rule(mark, alias, name, alts.peek()));
+                                                               grammar.addRule(rule = new Rule(mark, alias, name, alts.peek()));
                                                             ?>
-                                s ( '=' | ':' ) s alts '.'  <?java alts.pop();?>
+                                s ( '=' | ':' )
+                                  ( '<'                     <?java rule.incrementCost();?>
+                                        )* s alts '.'       <?java alts.pop();?>
        naming::= mark name ( s '>' s alias )?
          name::=                                            <?java nameBuilder.setLength(0);?>
                  namestart                                  <?java nameBuilder.append(input.subSequence(b0, e0));?>
@@ -51,6 +53,7 @@
                | option
                | repeat0
                | repeat1
+               | not
        factor::= terminal
                | nonterminal
                | insertion
@@ -143,6 +146,10 @@
                  | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
                  | 'V' | 'W' | 'X' | 'Y' | 'Z'
                  )                                          <?java clazz = input.subSequence(b0, e0).toString();?>
+          not::= '!' s ( terminal | nonterminal )            <?java
+                                                              Term operand = alts.peek().last().removeLast();
+                                                              alts.peek().last().addNot(operand);
+                                                            ?>
     insertion::= '+' s ( string                             <?java alts.peek().last().addStringInsertion(stringBuilder.toString());?>
                                 | hex                       <?java alts.peek().last().addHexInsertion(codepoint);?>
                                       ) s
@@ -973,6 +980,7 @@ namefollower^token << '.' 'x'
                                                                 private String clazz;
                                                                 private java.util.List<Member> members;
                                                                 private Grammar grammar;
+                                                                private Rule rule;
                                                                 private Mark mark;
                                                                 private String name;
                                                                 private String alias;

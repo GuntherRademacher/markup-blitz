@@ -10,6 +10,7 @@ import de.bottlecaps.markup.blitz.grammar.Grammar;
 import de.bottlecaps.markup.blitz.grammar.Insertion;
 import de.bottlecaps.markup.blitz.grammar.Literal;
 import de.bottlecaps.markup.blitz.grammar.Nonterminal;
+import de.bottlecaps.markup.blitz.grammar.Not;
 import de.bottlecaps.markup.blitz.grammar.Rule;
 import de.bottlecaps.markup.blitz.grammar.Term;
 
@@ -45,6 +46,15 @@ public abstract class Visitor {
   }
 
   public void visit(Nonterminal n) {
+  }
+
+  /**
+   * Visit a negative lookahead. The operand is not visited, because it does not
+   * consume any input, so it is not part of the grammar proper.
+   *
+   * @param n the negative lookahead
+   */
+  public void visit(Not n) {
   }
 
   public void visit(Rule r) {

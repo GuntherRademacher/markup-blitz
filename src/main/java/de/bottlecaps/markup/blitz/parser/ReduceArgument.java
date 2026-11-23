@@ -4,6 +4,7 @@ package de.bottlecaps.markup.blitz.parser;
 
 import java.util.Arrays;
 
+import de.bottlecaps.markup.blitz.codepoints.RangeSet;
 import de.bottlecaps.markup.blitz.grammar.Mark;
 
 public class ReduceArgument {
@@ -15,12 +16,33 @@ public class ReduceArgument {
   private final int[] insertion;
   /** Nonterminal to create. */
   private final int nonterminalId;
+  /**
+   * Negative lookahead: the reduction fails if the remaining input starts with any of
+   * these sequences of character sets, null if there is no such lookahead.
+   */
+  private final RangeSet[][] not;
+  /** Cost of the reduction, from the rule's cost =&lt;, =&lt;&lt;, ... */
+  private final int cost;
 
   public ReduceArgument(Mark[] marks, int[] aliases, int[] insertion, int nonterminalCode) {
+    this(marks, aliases, insertion, nonterminalCode, null, 0);
+  }
+
+  public ReduceArgument(Mark[] marks, int[] aliases, int[] insertion, int nonterminalCode, RangeSet[][] not, int cost) {
     this.marks = marks;
     this.aliases = aliases;
     this.insertion = insertion;
     this.nonterminalId = nonterminalCode;
+    this.not = not;
+    this.cost = cost;
+  }
+
+  public int getCost() {
+    return cost;
+  }
+
+  public RangeSet[][] getNot() {
+    return not;
   }
 
   public Mark[] getMarks() {
@@ -47,6 +69,8 @@ public class ReduceArgument {
     result = prime * result + Arrays.hashCode(marks);
     result = prime * result + Arrays.hashCode(aliases);
     result = prime * result + nonterminalId;
+    result = prime * result + Arrays.deepHashCode(not);
+    result = prime * result + cost;
     return result;
   }
 
@@ -64,6 +88,10 @@ public class ReduceArgument {
     if (!Arrays.equals(aliases, other.aliases))
       return false;
     if (nonterminalId != other.nonterminalId)
+      return false;
+    if (!Arrays.deepEquals(not, other.not))
+      return false;
+    if (cost != other.cost)
       return false;
     return true;
   }
