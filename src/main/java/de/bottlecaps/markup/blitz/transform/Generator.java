@@ -143,13 +143,7 @@ public class Generator {
         for (int j = 0; j < 2; ++j) {
           int code = ci.forks[2 * i + j];
           Action action = Action.of(code);
-          System.err.print(action);
-          if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE) {
-            System.err.print(" (");
-            System.err.print(ci.toString(ci.reduceArguments[action.getArgument()]));
-            System.err.print(")");
-          }
-          System.err.println();
+          System.err.println(ci.toString(action));
         }
       }
 
@@ -249,6 +243,12 @@ public class Generator {
     return rangeMap;
   }
 
+  private String toString(Action action) {
+    return action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE
+         ? action + " (" + toString(reduceArguments[action.getArgument()]) + ")"
+         : action.toString();
+  }
+
   private String toString(ReduceArgument reduceArgument) {
     final int nonterminalId = reduceArgument.getNonterminalId();
     Mark[] marks = reduceArgument.getMarks();
@@ -279,16 +279,31 @@ public class Generator {
       kernel = new IdentityHashMap<>();
     }
 
-    public boolean isLr0ReduceState() {
+    private static boolean isReduceItem(Node node) {
+      return node instanceof Alt || node instanceof Insertion;
+    }
+
+    private static Alt getAlt(Node node) {
+      return (Alt) (node instanceof Alt ? node : node.getParent());
+    }
+
+    private Alt getLr0ReduceAlt() {
       if (kernel.size() != 1)
-        return false;
-      Node node = kernel.keySet().iterator().next();
-      if (! (node instanceof Alt || node instanceof Insertion))
-        return false;
-      Alt alt = node instanceof Alt
-              ? (Alt) node
-              : (Alt) node.getParent();
-      return reduceArguments[alt.getReductionId()].getNonterminalId() != 0;
+        return null;
+      final Node node = kernel.keySet().iterator().next();
+      if (! isReduceItem(node))
+        return null;
+      final Alt alt = getAlt(node);
+      // Keep the augmented start rule's state to check for end-of-input
+      // before reducing to nonterminal 0 and accepting.
+      return reduceArguments[alt.getReductionId()].getNonterminalId() != 0 ? alt : null;
+    }
+
+    private int shiftCode() {
+      final Alt alt = getLr0ReduceAlt();
+      return alt == null
+           ? Action.code(Action.Type.SHIFT, id)
+           : Action.code(Action.Type.SHIFT_REDUCE, alt.getReductionId());
     }
 
     public void close() {
@@ -342,10 +357,8 @@ public class Generator {
         .forEach(e -> {
           Node node = e.getKey();
           TokenSet lookahead = e.getValue();
-          if (node instanceof Alt || node instanceof Insertion) {
-            Alt alt = node instanceof Alt
-                    ? (Alt) node
-                    : (Alt) node.getParent();
+          if (isReduceItem(node)) {
+            Alt alt = getAlt(node);
             for (int token = lookahead.nextToken(EPSILON); token >= EPSILON; token = lookahead.nextToken(token + 1))
               reductions.compute(token, (k, v) -> {
                 if (v == null)
@@ -396,7 +409,7 @@ public class Generator {
       )) {
         for (Map.Entry<Integer, State> e : transitions.entrySet()) {
           State newState = e.getValue();
-          if (! newState.isLr0ReduceState()) {
+          if (newState.getLr0ReduceAlt() == null) {
             State state = states.putIfAbsent(newState, newState);
             if (state == null) {
               newState.id = states.size() - 1;
@@ -427,18 +440,8 @@ public class Generator {
       for (int conflictToken : conflictTokens) {
         List<Integer> forkList = new ArrayList<>();
         State state = terminalTransitions.get(conflictToken);
-        if (terminalTransitions.containsKey(conflictToken)) {
-          if (state.isLr0ReduceState()) {
-            // the kernel item is an Alt, or an Insertion at the end of an Alt
-            Node node = state.kernel.keySet().iterator().next();
-            Alt alt = (Alt) (node instanceof Alt ? node : node.getParent());
-            int argument = alt.getReductionId();
-            forkList.add(Action.code(Action.Type.SHIFT_REDUCE, argument));
-          }
-          else {
-            forkList.add(Action.code(Action.Type.SHIFT, state.id));
-          }
-        }
+        if (terminalTransitions.containsKey(conflictToken))
+          forkList.add(state.shiftCode());
         for (Alt alt : reductions.get(conflictToken))
           forkList.add(Action.code(Action.Type.REDUCE, alt.getReductionId()));
 
@@ -469,34 +472,12 @@ public class Generator {
         terminalTransitionData.put(id, terminalId, code);
       });
       terminalTransitions.forEach((terminalId, state) -> {
-        if (! conflicts.containsKey(terminalId)) {
-          final int code;
-          if (state.isLr0ReduceState()) {
-            Node node = state.kernel.keySet().iterator().next();
-            Alt alt = node instanceof Alt
-                    ? (Alt) node
-                    : (Alt) node.getParent();
-            code = Action.code(Action.Type.SHIFT_REDUCE, alt.getReductionId());
-          }
-          else {
-            code = Action.code(Action.Type.SHIFT, state.id);
-          }
-          terminalTransitionData.put(id, terminalId, code);
-        }
+        if (! conflicts.containsKey(terminalId))
+          terminalTransitionData.put(id, terminalId, state.shiftCode());
       });
-      nonterminalTransitions.forEach((nonterminalId, state) -> {
-        final int code;
-        if (state.isLr0ReduceState()) {
-          Node node = state.kernel.keySet().iterator().next();
-          Alt alt = (Alt)  (node instanceof Alt ? node : node.getParent());
-          int argument = alt.getReductionId();
-          code = Action.code(Action.Type.SHIFT_REDUCE, argument);
-        }
-        else {
-          code = Action.code(Action.Type.SHIFT, state.id);
-        }
-        nonterminalTransitionData.put(id, nonterminalId, code);
-      });
+      nonterminalTransitions.forEach((nonterminalId, state) ->
+        nonterminalTransitionData.put(id, nonterminalId, state.shiftCode())
+      );
       reductions.forEach((terminalId, alts) -> {
         if (! conflicts.containsKey(terminalId)) {
           if (alts.size() != 1)
@@ -528,7 +509,7 @@ public class Generator {
         )
         .map(item -> toString(item))
         .collect(Collectors.joining("\n"));
-      String conflictsString = conflicts.entrySet().stream()
+      String conflictsString = conflicts == null ? "" : conflicts.entrySet().stream()
         .map(e -> {
           int t = e.getKey();
           StringBuilder sb = new StringBuilder("\n");
@@ -547,12 +528,8 @@ public class Generator {
     }
 
     private Action action(Node node) {
-      Alt alt = node instanceof Alt
-             ? (Alt) node
-             : (Alt) (node.getParent());
-      if (node instanceof Alt || node instanceof Insertion) {
-        return new Action(Action.Type.REDUCE, alt.getReductionId());
-      }
+      if (isReduceItem(node))
+        return new Action(Action.Type.REDUCE, getAlt(node).getReductionId());
       State toState;
       if (node instanceof Nonterminal) {
         int code = nonterminalCode.get(((Nonterminal) node).getName());
@@ -565,10 +542,7 @@ public class Generator {
       else {
         throw new IllegalStateException("Unexpected type: " + node.getClass().getSimpleName());
       }
-      if (toState.isLr0ReduceState())
-        return new Action(Action.Type.SHIFT_REDUCE, alt.getReductionId());
-      else
-        return new Action(Action.Type.SHIFT, toState.id);
+      return Action.of(toState.shiftCode());
     }
 
     private String toString(Map.Entry<Node, TokenSet> item) {
@@ -576,9 +550,7 @@ public class Generator {
       Node node = item.getKey();
       TokenSet lookahead = item.getValue();
       sb.append("[").append(node.getRule().getMark()).append(node.getRule().getName()).append(":");
-      Alt alt = (Alt) (node instanceof Alt
-          ? node
-          : node.getParent());
+      final Alt alt = getAlt(node);
       for (Term term : alt.getTerms()) {
         if (term == node)
           sb.append(" ").append(".");
@@ -596,12 +568,7 @@ public class Generator {
       if (nonterminalTransitions != null &&
           terminalTransitions != null
           ) {
-        final Action action = action(node);
-        sb.append(action);
-        if (action.getType() == Action.Type.REDUCE || action.getType() == Action.Type.SHIFT_REDUCE)
-          sb.append(" (")
-            .append(Generator.this.toString(reduceArguments[action.getArgument()]))
-            .append(")");
+        sb.append(Generator.this.toString(action(node)));
       }
       return sb.toString();
     }
